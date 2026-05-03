@@ -2,47 +2,14 @@
 
 ## 系统依赖
 
-### FFmpeg（必需）
+### Python（必需）
 
-FFmpeg用于从视频中提取关键帧，是必需依赖。
-
-#### Windows
-
-```powershell
-# 使用 Chocolatey
-choco install ffmpeg
-
-# 或使用 Scoop
-scoop install ffmpeg
-
-# 或手动下载
-# 访问 https://ffmpeg.org/download.html 下载并添加到PATH
-```
-
-#### macOS
-
-```bash
-brew install ffmpeg
-```
-
-#### Linux (Ubuntu/Debian)
-
-```bash
-sudo apt update
-sudo apt install ffmpeg
-```
-
-#### Linux (CentOS/RHEL)
-
-```bash
-sudo yum install epel-release
-sudo yum install ffmpeg
-```
+本 skill 使用 Python 直接调用 Bilibili 公共接口、OpenCV 抽帧、ImageHash 去重，不依赖 `.NET` 或 `ffmpeg`。
 
 #### 验证安装
 
 ```bash
-ffmpeg -version
+python --version
 ```
 
 ## Python依赖
@@ -54,25 +21,28 @@ source venv/bin/activate  # Linux/macOS
 .\venv\Scripts\activate   # Windows
 
 # 安装依赖
-pip install requests
+pip install opencv-python-headless pillow ImageHash
 ```
 
 ### 依赖说明
 
 | 包 | 版本 | 用途 |
 |---|------|------|
-| `requests` | >=2.28.0 | HTTP 请求、视频元数据与文件下载 |
-
-> 与 .NET 版本不同，本 skill 仅使用 `requests` + `ffmpeg`，不依赖 `yt-dlp`，
-> 视频下载直接通过 Bilibili 官方 API 完成。
+| `opencv-python-headless` | >=4.8.0 | 打开视频并按目标 fps 抽帧 |
+| `pillow` | >=10.0.0 | 图像读取 |
+| `ImageHash` | >=4.3.0 | 计算相邻帧 pHash，相似度去重 |
 
 ### 开发依赖（可选）
 
 ```bash
-pip install pytest hypothesis
+pip install pytest
 ```
 
 | 包 | 版本 | 用途 |
 |---|------|------|
-| `hypothesis` | >=6.0.0 | 属性测试 |
 | `pytest` | >=7.0.0 | 单元测试 |
+
+## 额外说明
+
+- Linux 环境推荐使用 `opencv-python-headless`，避免桌面图形依赖问题。
+- 如果你已有项目虚拟环境，直接在该环境中安装上述依赖即可。

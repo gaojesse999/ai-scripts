@@ -1,100 +1,96 @@
 ---
 name: bilibili-video-analyzer
-description: 自动分析B站视频内容，使用 Python 脚本下载视频、抽取原始帧、执行相邻去重，并生成结构化专题文档或实操教程。
-metadata:
-   short-description: Python版 B站视频 AI 分析工具
-source:
-   - name: Python
-      documentation: https://docs.python.org/3/
-   - name: OpenCV
-      repository: https://github.com/opencv/opencv
-      documentation: https://docs.opencv.org/
-      license: Apache-2.0
-   - name: ImageHash
-      repository: https://github.com/JohannesBuchner/imagehash
-      documentation: https://pypi.org/project/ImageHash/
-      license: BSD-2-Clause
-   - name: Bilibili API
-      documentation: https://github.com/SocialSisterYi/bilibili-API-collect
+description: >-
+  B站/bilibili视频转专题文档、实操教程或结构化知识整理（Python 版）。
+  Use when: 用户提供bilibili/B站视频链接，要求转文档、生成教程、课程笔记或步骤化学习材料。
+  Voice triggers: "分析B站视频", "bilibili转文档", "视频转教程"。
 ---
 
-# Bilibili Video Analyzer
+# Bilibili Video Analyzer (Python)
 
-## Description
+## 核心特点
 
-B站视频内容分析工具。提供视频URL后，自动下载视频、拆解成帧图片，然后使用AI分析内容，最终生成**高质量的专题文档或实操教程**。
-
-**核心特点**:
-- 不是简单的时间线记录，而是**重新组织整理**成一篇完整的文档
+- 不是时间线流水账，而是**重新组织整理**成完整文档
 - 实操类视频 → 生成**可直接使用的操作教程**
 - 知识类视频 → 生成**结构化的专题文档**
-- 使用 Python 直接调用 Bilibili 公共接口下载视频，不依赖 `.NET` 或 `ffmpeg`
-- 保留 `images_raw/` 原始帧，并将去重后的关键帧输出到 `images/`
-- 报告中插入关键截图，使用 `![描述](./images/frame_xxxx.jpg)` 格式
-
-## Source & Documentation
-
-| 工具 | 用途 | 文档 |
-|------|------|------|
-| **Python** | 执行准备脚本 | [官网](https://www.python.org/) / [文档](https://docs.python.org/3/) |
-| **OpenCV** | 视频读取与抽帧 | [官网](https://opencv.org/) / [文档](https://docs.opencv.org/) |
-| **Pillow + ImageHash** | 感知哈希去重 | [Pillow](https://pillow.readthedocs.io/) / [ImageHash](https://pypi.org/project/ImageHash/) |
-| **Bilibili API** | 视频下载 | [API文档](https://github.com/SocialSisterYi/bilibili-API-collect) |
+- 文档中插入关键截图，格式: `![frame_xxxx: 描述](./images/frame_xxxx.jpg)`
 
 ## Installation
 
-### 1. 安装 Python
+### 1. 安装 Python 3.8+
 
-建议使用 Python 3.10 或更高版本。
+脚本使用纯 Python 实现，需要安装 Python 3.8 或更新版本。
+
+下载地址: https://www.python.org/downloads/
 
 验证安装:
 ```bash
 python --version
+# 或
+python3 --version
 ```
 
 ### 2. 安装 Python 依赖
 
-推荐在虚拟环境中安装：
+仅依赖 `requests`（用于访问 Bilibili API 与下载视频文件）：
 
 ```bash
-python -m venv .venv
+pip install requests
+```
+
+如果你使用工作区内置虚拟环境（如本仓库的 `.venv`），请先激活：
+
+```bash
+# Linux / macOS
 source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install opencv-python-headless pillow ImageHash
+pip install requests
 ```
 
-Windows PowerShell:
+### 3. 安装 FFmpeg
 
+**Windows:**
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install opencv-python-headless pillow ImageHash
+# Chocolatey
+choco install ffmpeg
+
+# 或 Scoop
+scoop install ffmpeg
+
+# 或手动下载: https://ffmpeg.org/download.html
 ```
 
-说明：
+**macOS:**
+```bash
+brew install ffmpeg
+```
 
-- `opencv-python-headless` 负责读取视频并按目标 `fps` 抽帧
-- `pillow` 与 `ImageHash` 用于计算相邻帧 `pHash`
-- 本 skill 不要求安装 `.NET` 或 `ffmpeg`
+**Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt install ffmpeg
 
-## Trigger
+# CentOS/RHEL
+sudo yum install ffmpeg
+```
 
-- `/bilibili-video-analyzer` 命令
-- 用户请求分析B站视频
-- 用户提供B站视频链接并要求分析
+验证安装:
+```bash
+ffmpeg -version
+```
 
 ## Provided Script
 
-本 skill 提供了 `scripts/prepare.py` 脚本，用于下载视频、提取原始帧并输出去重后的关键帧。
+本 skill 提供了 `scripts/prepare.py` 脚本用于下载视频和提取帧图片。
 
-**脚本位置**: `scripts/prepare.py`
+**脚本位置**: `scripts/prepare.py`（相对当前 skill 根目录）
 
-这里的 `scripts/prepare.py` 表示相对于当前 skill 根目录的通用脚本路径；如果你在其他目录执行命令，请替换成该脚本的实际相对路径或绝对路径。
-
-**运行方式**: 使用 Python 直接执行
+**运行方式**: 使用 Python 3 直接执行
 
 ### 使用方法
+
+下面命令默认在**当前 skill 根目录**执行，也就是 `SKILL.md` 所在目录。
+
+如果你是在其他目录里运行命令，请把 `scripts/prepare.py` 替换成这个 skill 中脚本文件的实际相对路径或绝对路径。
 
 ```bash
 # 基本用法
@@ -107,43 +103,56 @@ python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./out
 python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./output --fps 0.5
 ```
 
+> 与 .NET 版本不同，Python 版本无需 `--` 分隔符；所有参数都直接传给脚本本身。
+
 ### 参数说明
 
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
-| `url` | B站视频URL（必需） | - |
+| `url` | B站视频URL（必需），支持合集分P（如 `?p=4`） | - |
 | `-o, --output` | 输出目录 | 当前目录 |
-| `--fps` | 每秒提取帧数 | 1.0 |
-| `--similarity` | 相似度阈值（0-1），超过此值的相邻帧会被去重 | 0.80 |
+| `--fps` | 每秒提取帧数 | 自动（<10分钟:1.0, 10-30分钟:0.5, >30分钟:0.2） |
+| `--similarity` | 相似度阈值（0-1），超过此值的帧会被去重 | 0.65 |
 | `--no-dedup` | 禁用相似帧去重 | false |
+| `--video-only` | 只下载视频，不提取帧 | false |
+| `--frames-only` | 只提取帧（需已有video.mp4；此模式下请显式传 `--fps`） | false |
 
 ### 相似帧去重
 
-脚本会自动对**相邻帧**进行相似度检测，去除相似度超过阈值（默认80%）的重复帧：
+脚本会自动对帧进行相似度检测，去除相似度超过阈值（默认65%）的重复帧：
 
-- 使用 `ImageHash` 的 `pHash` 计算感知相似度
-- **只比较相邻帧**，不会跨帧比较
-- 原始抽帧保留在 `images_raw/` 中
-- 去重后将保留帧复制到 `images/`，并自动重新编号（`frame_0001.jpg`, `frame_0002.jpg`, ...）
-- `frames.json` 会记录最终帧对应的 `source_file`、时间戳和相邻相似度
-- 可通过 `--similarity 0.85` 调整阈值
-- 可通过 `--no-dedup` 禁用去重
+- 原始帧提取到 `images_raw/` 目录（保留全部原始帧）
+- 去重后的帧复制到 `images/` 目录（重新编号：frame_0001.jpg, frame_0002.jpg, ...）
+- 同时生成 `dedup_manifest.json`，记录 raw → output 的帧号映射关系
+- 使用 ffmpeg 的 SSIM/PSNR 算法计算相似度
+- **与最后保留帧比较**：每帧都与最近一个被保留的帧比较，确保连续相似帧只保留第一帧
+- 可通过 `--similarity` 调整阈值
+- 可通过 `--no-dedup` 禁用去重（仍会从 `images_raw/` 复制全部帧到 `images/`）
+
+**阈值选择建议**：
+
+| 视频类型 | 推荐阈值 | 说明 |
+|---------|---------|------|
+| **代码/编程教程** | `--similarity 0.65`（默认） | 光标闪烁、字幕变化等微小差异较多，需要较低阈值有效去重 |
+| **PPT/演讲** | `--similarity 0.70` | 翻页间长时间不变，默认阈值即可；如需更激进可用 0.60 |
+| **动态演示** | `--similarity 0.80` | 页面切换频繁，较高阈值避免误删有差异的帧 |
+| **字幕密集型视频** | `--similarity 0.60` | 画面相同仅字幕不同，需要更低阈值 |
+| **快速浏览/混剪** | `--similarity 0.85` | 内容变化快，高阈值只去除几乎完全相同的帧 |
 
 ### 输出结构
 
 ```
 <输出目录>/
-├── video.mp4           # 下载的视频文件
-├── images_raw/         # 按 fps 抽取的全部原始帧
+├── video.mp4              # 下载的视频文件
+├── dedup_manifest.json    # 去重映射清单（raw帧号 → output帧号）
+├── images_raw/            # 原始提取的全部帧图片
 │   ├── frame_0001.jpg
 │   ├── frame_0002.jpg
 │   └── ...
-├── images/             # 去重后的关键帧
-│   ├── frame_0001.jpg
-│   ├── frame_0002.jpg
-│   └── ...
-├── metadata.json       # 视频元数据与帧统计
-└── frames.json         # 保留帧索引与 source_file 映射
+└── images/                # 去重后的帧图片（文档生成从此目录读取）
+    ├── frame_0001.jpg
+    ├── frame_0002.jpg
+    └── ...
 ```
 
 ## Workflow (Prompt)
@@ -158,14 +167,29 @@ python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./out
 python scripts/prepare.py "<视频URL>" -o <输出目录>
 ```
 
+脚本会自动：
+1. 下载视频到 `video.mp4`
+2. 根据视频时长自动选择 fps（合集视频使用所选分P的时长，而非总时长）
+3. 提取全部帧到 `images_raw/` 目录
+4. 去重后复制到 `images/` 目录，并生成 `dedup_manifest.json`
+
 **注意事项**:
-- 短视频（<10分钟）: 使用默认 `--fps 1`
-- 中等视频（10-30分钟）: 使用 `--fps 0.5`
-- 长视频（>30分钟）: 使用 `--fps 0.2`
+- fps 默认自动选择，也可通过 `--fps` 手动指定覆盖
+- 合集/分P视频：URL 中包含 `?p=N` 时自动下载对应分P
+- `prepare.py` 会自动使用 HTTP/1.1、断点续传、重试和 `backup_url` 兜底，以提高 B 站 CDN 中断时的成功率
+- 如果使用 `--frames-only`，请显式传入 `--fps`，因为此模式不会重新获取视频元信息来自动判定帧率
 
 ### Step 2: 分析帧图片
 
-使用 **Task 工具**分批并行分析 `images/` 目录中的图片。
+优先使用当前 agent 直接分析 `images/` 目录中的图片；如果环境提供 **Task 工具**，可以只把它当作当前 agent 的分批整理手段，而不是委托新的代理。
+
+如果当前模型/环境不支持图片 vision，先使用 OCR 为图片建立文字索引，再基于 OCR 结果整理文档。推荐优先使用工作区里已有的 OCR 能力，例如已配置 Python 环境中的 `rapidocr-onnxruntime`。
+
+**执行限制**:
+- **禁止使用 subagent / 子代理 / runSubagent / 委托代理工具**。
+- 即使需要分批处理，也必须由当前 agent 直接完成图片分析，不要把任何批次再次分发给其他 agent。
+- 这里的分批仅用于控制分析顺序、工作量和结果整理方式，不代表可以启动新的代理。
+- 如果没有 Task 工具，就按同样的分批策略由当前 agent 顺序完成，不要因为工具缺失而中断流程。
 
 **分批策略**（根据总图片数动态计算）:
 
@@ -395,61 +419,83 @@ Task 3: 分析 frame_0059.jpg ~ frame_0085.jpg（27张）
 
 ## API Reference
 
+| 依赖 | 用途 | 文档 | License |
+|------|------|------|------|
+| **FFmpeg** | 视频下载、拆帧、相似度计算 | [ffmpeg.org](https://ffmpeg.org/documentation.html) / [GitHub](https://github.com/FFmpeg/FFmpeg) | LGPL/GPL |
+| **requests** | HTTP 请求与文件下载 | [requests](https://requests.readthedocs.io/) | Apache-2.0 |
+| **Bilibili API** | 视频信息与播放地址 | [API文档](https://github.com/SocialSisterYi/bilibili-API-collect) | - |
+
 ### Bilibili API
 
 脚本使用 Bilibili 官方 API 下载视频：
 
 ```
-# 获取视频信息
+# 获取视频信息（包含 duration、pages 等）
 GET https://api.bilibili.com/x/web-interface/view?bvid=BV1xx411c7mD
+# 返回: data.duration（秒）, data.pages[].cid（分P的cid）
 
-# 获取播放地址
+# 获取播放地址（cid 根据分P选择）
 GET https://api.bilibili.com/x/player/playurl?bvid=BV1xx411c7mD&cid={cid}&qn=80&fnval=1
 ```
 
 API 文档: https://github.com/SocialSisterYi/bilibili-API-collect
 
-### Python 准备脚本说明
+### FFmpeg 拆帧命令
 
 ```bash
-# 每秒 1 帧
-python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./output --fps 1
+# 每秒1帧（提取到 images_raw/）
+ffmpeg -i video.mp4 -vf "fps=1" -q:v 2 images_raw/frame_%04d.jpg
 
-# 每秒 0.5 帧
-python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./output --fps 0.5
+# 每秒0.5帧（每2秒1帧）
+ffmpeg -i video.mp4 -vf "fps=0.5" -q:v 2 images_raw/frame_%04d.jpg
 
-# 调整相似度阈值
-python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./output --similarity 0.85
+# 指定时间范围
+ffmpeg -i video.mp4 -ss 00:01:00 -to 00:05:00 -vf "fps=1" -q:v 2 images_raw/frame_%04d.jpg
 
-# 保留全部原始帧，不执行去重
-python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./output --no-dedup
+# 提取关键帧（场景变化）
+ffmpeg -i video.mp4 -vf "select='gt(scene,0.3)'" -vsync vfr -q:v 2 images_raw/frame_%04d.jpg
 ```
 
-去重逻辑：脚本会先把全部抽帧写入 `images_raw/`，再按相邻帧 `pHash` 相似度筛出保留帧并复制到 `images/`。
+更多选项: https://ffmpeg.org/ffmpeg.html
 
 ## Examples
 
 ### 示例1: 分析编程教程
 
 ```bash
-# 1. 下载并拆帧
+# 1. 下载并拆帧（fps 自动选择）
 python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./react-tutorial
 
-# 2. 分析图片（使用 Task 工具）
+# 输出结构:
+#   react-tutorial/video.mp4           ← 视频
+#   react-tutorial/images_raw/         ← 原始帧
+#   react-tutorial/images/             ← 去重后的帧（用于分析）
+#   react-tutorial/dedup_manifest.json ← 映射清单
+
+# 2. 分析图片（优先当前 agent；如无 vision 则先 OCR；禁止使用 subagent）
 # 3. 生成 react-tutorial/视频分析.md
 ```
 
 ### 示例2: 分析长视频
 
 ```bash
-# 降低帧率，减少图片数量
+# 手动指定低帧率（覆盖自动选择）
 python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./long-video --fps 0.2
 ```
 
-### 示例3: 禁用去重
+### 示例3: 分析合集视频的第4集
 
 ```bash
-python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./output --no-dedup
+python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD?p=4" -o ./episode-4
+```
+
+### 示例4: 只下载视频
+
+```bash
+python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./output --video-only
+
+# 如果视频已下载完成，再只做拆帧，请显式指定 --fps
+python scripts/prepare.py dummy-url -o ./output --frames-only --fps 0.5
 ```
 
 ## Quality Checklist
@@ -477,7 +523,7 @@ python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./out
 
 ## Tags
 
-`bilibili`, `video-analysis`, `ai`, `frame-extraction`, `markdown`, `tutorial`, `python`, `opencv`, `imagehash`
+`bilibili`, `video-analysis`, `ai`, `frame-extraction`, `markdown`, `tutorial`, `ffmpeg`, `python`
 
 ## Compatibility
 
