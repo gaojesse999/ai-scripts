@@ -24,7 +24,7 @@ USER_AGENT = (
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fallback Bilibili prepare pipeline")
-    parser.add_argument("url", help="Bilibili video URL or BV id")
+    parser.add_argument("url", help="Bilibili single-page video URL, explicit ?p= page URL, or BV id")
     parser.add_argument("-o", "--output", default=".", help="Output directory")
     parser.add_argument("--fps", type=float, default=1.0, help="Target extracted frames per second")
     parser.add_argument(
@@ -71,8 +71,17 @@ def fetch_json(url: str, referer: str) -> dict:
 
 def select_page(info: dict, page_number: int | None) -> dict:
     pages = info.get("pages") or []
-    if page_number and 1 <= page_number <= len(pages):
+    if page_number is not None:
+        if not pages:
+            raise ValueError("This video does not expose page metadata")
+        if not (1 <= page_number <= len(pages)):
+            raise ValueError(f"Requested page {page_number} is out of range; available pages: 1-{len(pages)}")
         return pages[page_number - 1]
+
+    if len(pages) > 1:
+        raise ValueError(
+            "Multi-page video requires an explicit '?p=' URL. Resolve the target first (for example via resolve_scope.py) before calling prepare.py."
+        )
 
     cid = info.get("cid")
     for page in pages:

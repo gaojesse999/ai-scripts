@@ -199,6 +199,107 @@ def fetch_series_videos(mid: str, series_id: str) -> dict:
     }
 
 
+def find_series_for_bvid(mid: str, bvid: str) -> dict | None:
+    """Check if a video belongs to any series of the given user.
+
+    Fetches the user's series list via seasons_series_list API, then checks each
+    series for the target bvid using the series/archives API.
+    Returns series info dict if found, None otherwise.
+    """
+    referer = f"https://space.bilibili.com/{mid}"
+
+    # Fetch user's seasons & series list
+    series_list_url = (
+        f"https://api.bilibili.com/x/polymer/web-space/seasons_series_list"
+        f"?mid={mid}&page_num=1&page_size=20"
+    )
+    try:
+        list_data = fetch_json(series_list_url, referer)
+    except Exception:
+        return None
+
+    if list_data.get("code") != 0:
+        return None
+
+    items_lists = (list_data.get("data") or {}).get("items_lists") or {}
+    series_items = items_lists.get("series_list") or []
+    if not series_items:
+        return None
+
+    # Check each series for the target bvid
+    for item in series_items:
+        meta = item.get("meta", {})
+        series_id = str(meta.get("series_id", ""))
+        if not series_id:
+            continue
+
+        # First do a quick check in the archives already returned in the list response
+        inline_archives = item.get("archives") or []
+        found_inline = any(arch.get("bvid") == bvid for arch in inline_archives)
+        if found_inline:
+            # Fetch full archive list for this series
+            return _fetch_full_series(mid, series_id, meta.get("name", "未知系列"))
+
+        # If not found inline but series has more videos, check the full list
+        total_in_series = meta.get("total", 0)
+        if total_in_series > len(inline_archives):
+            series_referer = f"https://space.bilibili.com/{mid}/channel/seriesdetail?sid={series_id}"
+            archives_url = (
+                f"https://api.bilibili.com/x/series/archives"
+                f"?mid={mid}&series_id={series_id}&pn=1&ps=100"
+            )
+            try:
+                arch_data = fetch_json(archives_url, series_referer)
+            except Exception:
+                continue
+
+            if arch_data.get("code") != 0:
+                continue
+
+            archives = (arch_data.get("data") or {}).get("archives") or []
+            if any(arch.get("bvid") == bvid for arch in archives):
+                return _build_series_result(meta.get("name", "未知系列"), archives)
+
+    return None
+
+
+def _fetch_full_series(mid: str, series_id: str, series_title: str) -> dict:
+    """Fetch full video list for a series and return as collection result."""
+    series_referer = f"https://space.bilibili.com/{mid}/channel/seriesdetail?sid={series_id}"
+    archives_url = (
+        f"https://api.bilibili.com/x/series/archives"
+        f"?mid={mid}&series_id={series_id}&pn=1&ps=100"
+    )
+    try:
+        arch_data = fetch_json(archives_url, series_referer)
+        if arch_data.get("code") == 0:
+            archives = (arch_data.get("data") or {}).get("archives") or []
+            return _build_series_result(series_title, archives)
+    except Exception:
+        pass
+    return {"type": "collection", "source": "series_page", "collection_title": series_title, "total": 0, "videos": []}
+
+
+def _build_series_result(series_title: str, archives: list) -> dict:
+    """Build a series collection result from archive list."""
+    videos = []
+    for a in archives:
+        a_bvid = a.get("bvid", "")
+        videos.append({
+            "bvid": a_bvid,
+            "title": a.get("title", ""),
+            "url": f"https://www.bilibili.com/video/{a_bvid}",
+            "duration": a.get("duration", 0),
+        })
+    return {
+        "type": "collection",
+        "source": "series_page",
+        "collection_title": series_title,
+        "total": len(videos),
+        "videos": videos,
+    }
+
+
 def detect_collection_from_bvid(bvid: str) -> dict:
     """Check if a BV video belongs to a UGC collection or series via the view API."""
     referer = f"https://www.bilibili.com/video/{bvid}"
@@ -236,18 +337,17 @@ def detect_collection_from_bvid(bvid: str) -> dict:
             "videos": videos,
         }
 
-    # Check for series membership (via season_id in the view response)
-    # Note: This checks if the video has an associated series via the `season` field
-    series_result = None
-    season_info = info.get("season")  # PGC/series season info (different from ugc_season)
-    # For UGC series, we check if there's a series_id hint in the URL or page data
-    # The view API doesn't directly expose series membership for UGC series,
-    # so series detection from BV URL is limited to ugc_season.
+    # Check for series membership by searching the user's series list
+    series_result = find_series_for_bvid(owner_mid, bvid) if owner_mid else None
 
     # Determine what to return
     if ugc_result:
-        # If UGC season detected, always return UGC (takes priority per requirements)
         ugc_result["also_in_series"] = series_result is not None
+        if series_result:
+            ugc_result["series_info"] = {
+                "collection_title": series_result["collection_title"],
+                "total": series_result["total"],
+            }
         return ugc_result
 
     if series_result:
