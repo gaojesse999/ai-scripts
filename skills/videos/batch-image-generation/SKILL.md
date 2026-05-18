@@ -17,11 +17,11 @@ DEFAULT_IMAGE_QUALITY = 4k
 DEFAULT_GROUP_COUNT = 1
 ```
 
-Use `DEFAULT_IMAGE_MODEL` as the default image generation model whenever the image tool or API exposes a model option. If the available tool has no model selector, proceed with the available image generation tool and record that assumption in `image-outputs/summary.md`.
+Use `DEFAULT_IMAGE_MODEL` as the default image generation model whenever the image tool or API exposes a model option. If the available tool has no model selector, proceed with the available image generation tool and record that assumption in `image-outputs-<RUN_TS>/summary.md`.
 
 Resolve image quality for each run as: user-specified quality or resolution first, otherwise `DEFAULT_IMAGE_QUALITY`. To change the default quality later, edit only `DEFAULT_IMAGE_QUALITY` in this section.
 
-Resolve **group count** `N` for each run as: the number explicitly requested by the user (e.g. "生成4组", "出三组", "generate 4 sets/groups/variations per image"), otherwise `DEFAULT_GROUP_COUNT` (= 1). `N` must be a positive integer; if the user gives an ambiguous or non-numeric request like "多生几组", default to `N = 4` and record the assumption in `image-outputs/summary.md`.
+Resolve **group count** `N` for each run as: the number explicitly requested by the user (e.g. "生成4组", "出三组", "generate 4 sets/groups/variations per image"), otherwise `DEFAULT_GROUP_COUNT` (= 1). `N` must be a positive integer; if the user gives an ambiguous or non-numeric request like "多生几组", default to `N = 4` and record the assumption in `image-outputs-<RUN_TS>/summary.md`.
 
 ## Input File
 
@@ -74,7 +74,7 @@ The prompt file may contain an optional **style prefix block** that defines a un
 1. Locate the first line that contains `风格前缀` (case-insensitive on any accompanying English like `STYLE PREFIX`), regardless of surrounding markdown emphasis (`**…**`), parentheses, or colons. This line is the **style prefix heading**.
 2. The style prefix content **starts on the next non-empty line** after the heading and continues until the first section heading (a line matching `<chapter-id> <image-object-name>` where `<chapter-id>` is `x.x` or `x.x.x`), or until end of file.
 3. Preserve the style prefix text verbatim except for trimming leading/trailing blank lines. Bullet markers like `*` or `-` and bilingual labels such as `风格 (Style)` are part of the style and should be kept.
-4. If no `风格前缀` heading exists, treat the run as having an empty style prefix and proceed normally; record this in `image-outputs/summary.md`.
+4. If no `风格前缀` heading exists, treat the run as having an empty style prefix and proceed normally; record this in `image-outputs-<RUN_TS>/summary.md`.
 5. The style prefix is **global** for the run. Do not treat it as a section, do not generate an image for it, and do not chain it as a variant.
 
 For a concrete style prefix example, see [references/example.md](references/example.md).
@@ -117,7 +117,7 @@ When optimizing:
 7. Use the optimized prompt (with style prefix applied) for image generation.
 8. Keep both the original selected prompt and the optimized prompt in the per-image record. If no optimization was needed except adding the quality instruction and style prefix, record that clearly.
 
-When calling the image generation tool, also set its native quality or resolution parameter to the resolved image quality if such a parameter exists. If the tool has no native quality/resolution selector, the quality instruction in the optimized prompt is the fallback; record this in `image-outputs/summary.md`.
+When calling the image generation tool, also set its native quality or resolution parameter to the resolved image quality if such a parameter exists. If the tool has no native quality/resolution selector, the quality instruction in the optimized prompt is the fallback; record this in `image-outputs-<RUN_TS>/summary.md`.
 
 ## Variant Chaining
 
@@ -148,10 +148,18 @@ For a concrete variant chaining example, see [references/example.md](references/
 
 ## Output Layout
 
+At the start of each run, compute a **run timestamp** `RUN_TS` in local time using the format `YYYYMMDDHHMMSS` (e.g. `20260518163102`). Use this same `RUN_TS` for every image and every artifact written by the run, so all files for one invocation land under the same root and parallel runs cannot overwrite each other.
+
+The run's output root is:
+
+```text
+<project-root>/image-outputs-<RUN_TS>/
+```
+
 Save generated images under:
 
 ```text
-<project-root>/image-outputs/<chapter-id>-<image-object-name>/
+<project-root>/image-outputs-<RUN_TS>/<chapter-id>-<image-object-name>/
 ```
 
 Use descriptive filenames for each generated image. When `N = 1`, use the flat naming:
@@ -178,11 +186,11 @@ Group indices must be consistent across the base and all variants in the same se
 
 Sanitize directory and file names by replacing path separators, control characters, and characters invalid on common filesystems with hyphens. Keep chapter ids in the directory name.
 
-If the image generation tool returns files outside `image-outputs`, move or copy them into the expected output directory after generation.
+If the image generation tool returns files outside the run's `image-outputs-<RUN_TS>/` root, move or copy them into the expected output directory after generation.
 
 ## Output language
 
-Write all **skill-authored** human-readable text in **Chinese** by default. This includes but is not limited to `image-outputs/summary.md`, any other markdown or log text the skill writes under `image-outputs/`, and brief chat updates about batch progress or completion.
+Write all **skill-authored** human-readable text in **Chinese** by default. This includes but is not limited to `image-outputs-<RUN_TS>/summary.md`, any other markdown or log text the skill writes under `image-outputs-<RUN_TS>/`, and brief chat updates about batch progress or completion.
 
 If the user **explicitly** requests **English** (or clearly states that summaries and related outputs should be in English), use **English** for all such prose for that run.
 
@@ -202,8 +210,10 @@ Do not translate **verbatim** excerpts from the prompt file when quoting them fo
 After all image generation finishes, write:
 
 ```text
-<project-root>/image-outputs/summary.md
+<project-root>/image-outputs-<RUN_TS>/summary.md
 ```
+
+Include `RUN_TS` and the run's output root path at the top of the summary for traceability.
 
 The summary must include at least (headings and narrative in **Chinese** by default, or **English** if the user requested English output for this run):
 
