@@ -121,17 +121,28 @@ When calling the image generation tool, also set its native quality or resolutio
 
 ## Variant Chaining
 
-Generate images section by section. Finish all images in one section before starting the next section.
+Generation is organized into **waves** that span **all sections at once**, not section-by-section. A wave runs as one parallel batch, and the next wave only starts after the previous wave finishes (so per-group reference images are ready). This applies for both `N = 1` and `N > 1`; the only difference is how many group copies each item produces.
 
-For each section, with resolved group count `N`:
+Definitions:
 
-1. **Base step (parallel across groups).** For the first full prompt in the section, generate `N` images **in parallel** — one per group, indexed `g = 1..N`. All `N` calls use the same optimized prompt (style prefix included) but are independent generations, so the model produces `N` distinct candidates.
-2. **Per-group reference tracking.** Maintain a separate "current reference image" pointer for **each group** `g`. After the base step, group `g`'s pointer points to the base image generated for group `g`.
-3. **Variant step (parallel across groups, sequential within a group).** For each subsequent variant whose selected prompt label contains `-变体`, generate `N` images **in parallel**, where the image for group `g` uses **group `g`'s current reference image** plus the variant prompt text. Group `g`'s variant must depend only on group `g`'s previous image — never mix references across groups.
-4. After generating any variant, update group `g`'s current reference image to the just-generated variant image for that group, so later incremental variants in the same section continue the same per-group chain.
-5. If a `-变体` prompt appears before any reference image exists in the section, generate all `N` group images without a reference and record this assumption in the summary.
-6. Within a section, do not start the next variant step until the current step has produced all `N` group images (or recorded their failures), because variant `k+1` depends on variant `k` per group.
-7. When `N = 1`, this reduces to the original single-chain behavior.
+- For each section, list its prompts in document order. The first full prompt is the section's **base** (wave index `w = 0`). Each subsequent `-变体` prompt is the section's variant at wave index `w = 1, 2, 3, ...`.
+- For a run with resolved group count `N`, every prompt expands into `N` independent generations indexed by group `g = 1..N`. When `N = 1`, each prompt is just one generation.
+- Maintain a per-section, per-group reference pointer `ref[section][g]`.
+
+Wave execution:
+
+1. **Wave 0 — all bases in parallel.** Across **every section** in the prompt file, generate all base images in one parallel batch. For section `s` and group `g`, this produces `base[s][g]`. After the wave, set `ref[s][g] = base[s][g]` for every `(s, g)`.
+2. **Wave w (w ≥ 1) — all w-th variants in parallel.** Across every section that has a variant at wave index `w`, generate the variant for each group `g` in parallel. Each generation for `(s, g, w)` uses `ref[s][g]` as its reference image plus the variant prompt text. After the wave, update `ref[s][g]` to the just-generated variant image for that `(s, g)`.
+3. Continue until no section has a variant at the next wave index.
+4. Sections with fewer variants simply contribute nothing to later waves; they do not block other sections.
+5. Per-group isolation is strict: group `g`'s wave-`w` variant in section `s` must depend only on `ref[s][g]` (its own section, its own group). Never mix references across groups or across sections.
+6. If a section's `-变体` prompt appears before any base exists in that section (malformed input), generate its wave-`w` images without a reference and record this assumption in the summary.
+7. If `ref[s][g]` is missing because an earlier wave failed for that `(s, g)` (see Automation Rules), skip the rest of that `(s, g)` chain; other `(s, g)` chains continue normally in the same wave.
+
+Worked example (two sections, `N = 2`, section 1 has one variant, section 2 has none):
+
+- Wave 0 (parallel, 4 generations): `base[1][1]`, `base[1][2]`, `base[2][1]`, `base[2][2]` — i.e. `1.11`, `1.12`, `2.11`, `2.12`.
+- Wave 1 (parallel, 2 generations): `var1[1][1]` from `base[1][1]`, `var1[1][2]` from `base[1][2]` — i.e. `1.21` depends on `1.11`, `1.22` depends on `1.12`. Section 2 has no wave-1 variant and contributes nothing.
 
 For a concrete variant chaining example, see [references/example.md](references/example.md).
 
@@ -180,10 +191,10 @@ Do not translate **verbatim** excerpts from the prompt file when quoting them fo
 ## Automation Rules
 
 - Do not ask the user to confirm each image.
-- Do not pause between sections unless a tool error requires recovery.
+- Do not pause between waves unless a tool error requires recovery. Waves themselves are the only synchronization point: wave `w + 1` starts only after wave `w` completes (or its failures are recorded), because variants depend on the previous wave's per-group reference images.
 - If a single image generation fails, retry once with the same prompt and reference image.
 - If it still fails, skip that image, record the failure in `summary.md`, and continue with the next image.
-- When `N > 1`, a failure in one group does not block other groups at the same step. If group `g`'s base or variant fails after retry, skip the rest of group `g`'s chain in that section (later variants in group `g` have no valid reference) and continue with the other groups. Record the broken chain in `summary.md`.
+- A failure in one `(section, group)` chain does not block any other `(section, group)` chain at the same or later waves. If `(s, g)` fails at some wave after retry, skip the rest of that chain (later variants for `(s, g)` have no valid reference) while every other `(s', g')` continues normally. Record the broken chain in `summary.md`.
 - Keep a per-image record while working: section, variant/base name, **group index `g` and total `N`**, prompt language, original selected prompt, optimized prompt, full or variant prompt type, resolved image quality, how quality was applied (native tool setting, prompt instruction, or both), whether the style prefix was applied (and any style-vs-scene conflict resolution), reference image path if any, output path, status, and assumptions.
 
 ## Summary
