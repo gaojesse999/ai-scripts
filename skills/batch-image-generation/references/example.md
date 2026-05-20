@@ -3,6 +3,21 @@
 This example shows the supported section, variant, prompt label, and incremental variant format.
 
 ```text
+**风格前缀 (STYLE PREFIX)**
+
+*   风格 (Style) ：8K IMAX。电影级写实CG —— 高精度3D渲染
+*   光照 (Lighting)：仅限自然光 —— 逆光/背光 (contre-jour)，摄像机位于阴影侧，画面中始终带有氛围感薄雾。主光源仅来自天空和窗户。无人工照明（注：原图拼写为lightning，结合语境应为lighting照明）。
+*   色彩 (Color)： 60:30:10 法则 —— 主色调 / 辅助色 / 点缀色。
+*   镜头 (Camera)：物理电影镜头。180度快门运动模糊。
+*   皮肤 (Skin)：毛孔级真实感 —— 面部绒毛，不对称的痣，毛细血管泛红，毛孔阴影与环境光照相匹配。
+*   表演 (Acting)：好莱坞级别 —— 做出反应前的微小停顿，精准的视线，带有眼神光的灵动双眸，呼吸引起的胸部起伏。
+*   物理 (Physics)： 遵循重力和惯性 —— 物体有真实的重量感，正确的接触阴影。不要悬浮的道具。
+*   构图 (Composition)：三分法 + 黄金比例。每个人从第一帧开始就处于运动状态。
+*   连贯性 (Continuity)：角色、道具、环境在每个切换镜头中保持完全一致。无身份/特征偏移 (No identity drift)。
+*   技术 (Technical)： 24fps 平滑运动。8K 细节。画面无抖动。
+*   音频 (Audio)： 仅有环境音效 (SFX)。无音乐。无字幕。
+
+
 1.6 苗铁山 MIAO TIESHAN — 秃鹰帮大当家
  
 状态：待生成
