@@ -1,11 +1,14 @@
 ---
 name: video-analyzer
 description: >-
-  本地视频文件（单文件或目录批量）转结构化专题文档、实操教程或知识整理
-  Applicable when: 用户提供本地视频文件路径或包含视频的目录路径，要求生成 Markdown 形式的视频内容分析、教程或专题文档
-  Example prompts: "分析这个视频", "分析本地视频", "video-analyzer", "本地mp4分析",
-    "分析视频文件", "把视频转成文档", "video to markdown",
-    "分析这个目录里的所有视频", "批量分析本地视频", "本地视频转教程"
+  **本地**视频文件 / 本地视频目录（mp4/mkv/mov/webm/m4v 等）转结构化专题文档、实操教程或知识整理。
+  不处理任何在线 URL。
+  Applicable when: 用户在请求中**直接给出本地文件系统路径**（绝对路径或相对路径）指向一个视频文件，或指向一个包含视频的本地目录，要求生成 Markdown 形式的视频内容分析、教程或专题文档
+  Not applicable when: 用户提供的是任何在线视频链接（bilibili、YouTube、抖音、b23.tv 短链等），或仅描述视频内容而未提供本地路径
+  Example prompts: "分析本地视频 /path/to/xxx.mp4", "分析本机这个视频文件",
+    "分析下载好的视频", "本地视频转 Markdown", "本地mp4转文档",
+    "把这个本地视频文件转成笔记", "video-analyzer", "local video analysis",
+    "分析本地视频目录", "批量分析本地视频目录", "分析这个文件夹里的所有本地视频"
 ---
 
 # Video Analyzer
