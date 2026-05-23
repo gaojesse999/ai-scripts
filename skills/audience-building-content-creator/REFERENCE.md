@@ -24,9 +24,9 @@ Avoid:
 - Generic advice anyone could have written.
 - Trend-chasing without a durable point of view.
 - Content that only expresses the creator's mood and gives the audience nothing.
-- Empty networking, templated outreach, or "想跟你 virtual coffee 一下" energy in posts.
+- Empty networking or templated outreach voice in posts.
 
-## 2. The Six Elements (核心框架)
+## 2. The Six Elements (Core Framework)
 
 Every output must contain all six, adapted to format. Missing any one is a failure mode.
 
@@ -36,17 +36,17 @@ The first line / first 1–3 seconds / first image must stop the right person. H
 
 **Strong hook patterns:**
 
-- **A painful truth:** 「你不是缺内容灵感，你是缺一个别人愿意关注你的理由。」
-- **A contrarian stance:** 「新账号最不该先追热点。」
-- **A specific audience callout:** 「如果你是想做独立产品的工程师，这一条比 90% 的'增长建议'都重要。」
-- **A concrete promise:** 「用一个框架，把零散经验变成能积累受众的内容。」
-- **A familiar failure:** 「每天发内容却没人关注，通常不是因为你不够努力。」
-- **Concrete claim with stakes:** 「我做了 3 年内容，前 2 年只有 80 个粉丝。我后来发现我搞错了一件事。」
-- **Reframe:** 「你以为更新频率决定增长，其实分发能力才决定。」
+- **A painful truth:** "You're not short on content ideas — you're short on a reason for anyone to pay attention to you."
+- **A contrarian stance:** "A new account is the last thing that should chase trending topics."
+- **A specific audience callout:** "If you're an engineer who wants to build indie products, this matters more than 90% of the 'growth advice' you've read."
+- **A concrete promise:** "One framework to turn scattered experience into content that actually compounds an audience."
+- **A familiar failure:** "Posting every day and getting nothing back is usually not about effort."
+- **Concrete claim with stakes:** "I made content for 3 years. The first 2 years I had 80 followers. Then I realized I'd gotten one thing wrong."
+- **Reframe:** "You think posting frequency drives growth. Actually distribution does."
 
 **Avoid:**
 
-- Broad motivational openings ("今天想跟大家聊聊…").
+- Broad motivational openings ("Today I want to share some thoughts on…").
 - Clever but unclear wording.
 - Hooks that attract the wrong audience.
 - Exaggerated promises the content cannot support.
@@ -59,7 +59,7 @@ Name a problem the audience instantly recognizes as their own. The sharper the a
 **Good problem statements:**
 
 - Are stated in the audience's own words.
-- Make the reader/viewer think "this is literally me".
+- Make the reader / viewer think "this is literally me".
 - Have stakes (time wasted, money lost, status risk, missed opportunity).
 
 **Common audience-building problems to draw on:**
@@ -72,13 +72,13 @@ Name a problem the audience instantly recognizes as their own. The sharper the a
 
 **Bad problem statements:**
 
-- Abstract ("内容创作很难").
-- Universal ("每个人都想成长").
-- Creator-side framing ("我想分享一下我的经验").
+- Abstract ("content creation is hard").
+- Universal ("everyone wants to grow").
+- Creator-side framing ("I want to share my experience").
 
 ### 2.3 Clear Solution
 
-Give an executable path, **filtered through the user's real experience**. Generic-correct-but-useless advice ("多输出、多坚持") fails this element.
+Give an executable path, **filtered through the user's real experience**. Correct-but-useless advice ("post more, stay consistent") fails this element.
 
 **Strong solutions:**
 
@@ -90,7 +90,7 @@ Give an executable path, **filtered through the user's real experience**. Generi
 
 **Weak solutions:**
 
-- 「坚持输出」「提供价值」「打造人设」「多互动」
+- "Stay consistent" / "provide value" / "build a personal brand" / "engage more"
 - Any advice that sounds true but gives no next action.
 
 ### 2.4 Big Benefit
@@ -99,11 +99,11 @@ Make the payoff explicit. If the audience has to guess, they won't share or save
 
 Benefits can be:
 
-- **Practical:** 「你会更快知道哪类内容值得持续做。」
-- **Emotional:** 「你不需要每天怀疑自己是不是不适合做内容。」
-- **Social:** 「陌生人会更容易把你归类为某个问题的可靠解决者。」
-- **Identity:** 「你会从发散表达，变成一个有清晰立场的创作者。」
-- **Outcome-implied:** 「我用这个结构改了 10 条帖子，平均互动翻了 3 倍。」
+- **Practical:** "You'll know faster which kind of content is worth doubling down on."
+- **Emotional:** "You'll stop questioning every day whether you're cut out for this."
+- **Social:** "Strangers will start filing you as the reliable answer to a specific problem."
+- **Identity:** "You move from scattered self-expression to a creator with a clear position."
+- **Outcome-implied:** "I rewrote 10 posts with this structure. Average engagement tripled."
 
 ### 2.5 Confidence or Polarization
 
@@ -111,12 +111,12 @@ Take a clear position. **Polarization here does not mean trolling or rage-bait.*
 
 **Useful stance patterns:**
 
-- 「真正的问题不是 X，而是 Y。」
-- 「很多人以为要先做 A，其实更该先做 B。」
-- 「这件事不适合所有人，但适合 [specific audience]。」
-- 「我不建议新手这样做，因为…」
+- "The real problem isn't X, it's Y."
+- "Most people think you should do A first. You should actually do B first."
+- "This isn't for everyone — it's for [specific audience]."
+- "I don't recommend this for beginners, because…"
 - A specific "do this, not that".
-- A named opponent idea ("不要再追热点了，你要追的是同一类问题").
+- A named opponent idea ("Stop chasing trends. Chase one consistent problem instead.").
 
 **Markers of fence-sitting (fail):**
 
@@ -136,7 +136,7 @@ Add the insight that makes the audience think "I never saw it that way."
 - A counterintuitive distinction.
 - A named framework.
 - A cross-domain analogy.
-- A new unit of analysis ("不要看单条内容表现，看一个月的复利曲线").
+- A new unit of analysis ("Stop looking at single-post performance. Look at the one-month compounding curve.").
 - A synthesis of another creator's idea with the user's own experience.
 
 ---
@@ -153,15 +153,15 @@ by showing [experience, insight, method, story, or point of view],
 so they have a reason to [read, save, share, comment, follow, or trust].
 ```
 
-**Topic narrowing examples (move from "too broad" to "specific enough to win"):**
+**Topic-narrowing examples (move from "too broad" to "specific enough to win"):**
 
 | Too broad | Specific enough |
 |---|---|
-| 个人成长 | 刚开始做自由职业、没有作品集的人，如何用 30 天建立第一批信任资产 |
-| AI 工具 | 内容创作者如何用 AI 把零散经验变成稳定发布的文章和脚本 |
-| 职场效率 | 工作 3–5 年的专业人士，如何把忙碌转成可见的专业影响力 |
-| 健身 | 久坐程序员如何在不去健身房的情况下，用 12 周改善腰背疼 |
-| 写作 | 第一次写公众号、没有读者的专业人士，如何让前 10 篇就被同行转发 |
+| Personal growth | People just starting freelance work with no portfolio, how to build their first 30 days of trust assets |
+| AI tools | Content creators, how to use AI to turn scattered experience into a stable publishing pipeline |
+| Workplace productivity | Professionals with 3–5 years of experience, how to turn busyness into visible professional influence |
+| Fitness | Sedentary engineers, how to fix lower-back pain in 12 weeks without going to a gym |
+| Writing | First-time newsletter writers with no readers, how to get peers sharing their first 10 posts |
 
 If you cannot fill the template in one sentence, ask **one targeted clarifying question** instead of producing generic content.
 
@@ -187,12 +187,12 @@ Sharing is an act of self-expression for the audience. Content must give them so
 
 A strong piece usually gives at least one of:
 
-- **Identity expression:** "这说出了我正在经历的事。"
-- **Utility:** "这能帮到我身边某类人。"
-- **Judgment:** "这个观点替我表达了一个判断。"
-- **Novelty:** "这个解释很新，我想保存或转发。"
-- **Discussion:** "这个立场值得评论或反驳。"
-- **Trust:** "这个人不像在套模板，他真的懂这个问题。"
+- **Identity expression:** "This says what I'm going through."
+- **Utility:** "This will help someone I know."
+- **Judgment:** "This view expresses something I already think."
+- **Novelty:** "This explanation is new — I want to save or send it."
+- **Discussion:** "This position is worth commenting on or pushing back against."
+- **Trust:** "This person isn't running a template. They actually understand this problem."
 
 If none apply, revise the hook, problem, benefit, or point of view.
 
@@ -205,26 +205,26 @@ Use as defaults. Adapt to platform conventions, the user's voice, and any length
 ### 5.1 Article Outline
 
 ```markdown
-## 定位
-- 目标读者：[specific audience]
-- 内容承诺：[what the reader gets]
-- 核心角度：[user's spine — experience / opinion / capability]
+## Positioning
+- Target reader: [specific audience]
+- Content promise: [what the reader gets]
+- Core angle: [user's spine — experience / opinion / capability]
 
-## 标题候选
+## Title candidates
 1.
 2.
 3.
 
-## 大纲
-1. Hook / 开场判断
-2. 具体问题（用读者的语言）
-3. 个人经验或专业观察（spine）
-4. 核心方法或观点（含 novel perspective）
-5. 例子 / 步骤 / 案例
-6. 对读者的收益（big benefit, restated）
-7. 结尾与行动建议（CTA / share trigger）
+## Outline
+1. Hook / opening judgment
+2. Specific problem (in the reader's language)
+3. Personal experience or professional observation (spine)
+4. Core method or point of view (with novel perspective)
+5. Example / steps / case
+6. Reader benefit (big benefit, restated)
+7. Closing + call to action (CTA / share trigger)
 
-## 受众积累逻辑
+## Audience-building logic
 [Why this helps the right people trust, remember, share, or follow]
 ```
 
@@ -241,19 +241,19 @@ Recommended flow:
 
 **Length defaults (adjust to user's platform):**
 
-- 公众号 / Substack / Medium: 1200–2500 字 for a single idea.
-- LinkedIn long post: 600–1200 字.
-- 知乎回答 / 长贴: depends on the question.
+- WeChat / Substack / Medium: 1200–2500 words for a single idea.
+- LinkedIn long post: 600–1200 words.
+- Zhihu answer / long post: depends on the question.
 
 ### 5.3 Short-Form Video Script (15–60s)
 
 ```markdown
-## 定位
-- 目标观众：[specific]
-- 视频承诺：[what they walk away with]
-- 观点：[the one-line stance]
+## Positioning
+- Target viewer: [specific]
+- Video promise: [what they walk away with]
+- Point of view: [the one-line stance]
 
-## 脚本
+## Script
 Hook (0–3s)
   Spoken: <stop-scroll line>
   On-screen text: <optional>
@@ -267,7 +267,7 @@ Benefit + Takeaway (45–60s)
   Spoken: <what they got, what to do next>
   On-screen text: <key phrase to save>
 
-## 可替换 Hook
+## Alternative hooks
 1.
 2.
 3.
@@ -278,17 +278,17 @@ Benefit + Takeaway (45–60s)
 
 **Do not** include filming, editing, equipment, lighting, transitions, music, or post-production notes.
 
-### 5.4 Long-Form Video Voiceover / 口播稿
+### 5.4 Long-Form Video Voiceover / Talking-Head Script
 
 Format rules:
 
 - Write in **spoken rhythm**: short sentences, natural breath points.
-- Mark structural beats: `【开场 Hook】`, `【问题】`, `【核心观点】`, `【解决方案 1/2/3】`, `【新视角】`, `【收尾 + 行动】`.
+- Mark structural beats: `[Opening Hook]`, `[Problem]`, `[Core Point]`, `[Solution 1/2/3]`, `[New Angle]`, `[Closing + Action]`.
 - Use line breaks generously — one idea per line where possible.
-- Mark emphases sparingly (e.g. `**重点**`) only where the user should stress on camera.
-- **Length estimation:** ~250–300 字/分钟 (中文) or ~150 words/min (English). Compute back from the user's target duration.
+- Mark emphases sparingly (e.g. `**stress this**`) only where the user should stress on camera.
+- **Length estimation:** ~150 words / minute (English) or ~250–300 characters / minute (Chinese). Compute back from the user's target duration.
 
-### 5.5 Social Media Image-Text Post (小红书, LinkedIn, 公众号短贴, X thread, Threads)
+### 5.5 Social Media Image-Text Post (Xiaohongshu, LinkedIn, WeChat short post, X thread, Threads)
 
 Structure:
 
@@ -298,26 +298,26 @@ Structure:
 4. **Takeaway** — one line that crystallizes the position.
 5. **Share trigger** — one line that gives a reason to save or send.
 
-For carousel / 图文 posts, add a page-by-page structure:
+For carousel / graphic posts, add a page-by-page structure:
 
 ```markdown
-封面: [hook + 受众识别词]
-第 1 页: [problem]
-第 2 页: [mistake / contrast]
-第 3 页: [solution beat 1]
-第 4 页: [solution beat 2]
-第 5 页: [example / case]
-结尾页 / CTA: [takeaway + 分享/收藏理由]
-配文: [发布时的正文文案]
+Cover: [hook + audience identifier]
+Slide 1: [problem]
+Slide 2: [mistake / contrast]
+Slide 3: [solution beat 1]
+Slide 4: [solution beat 2]
+Slide 5: [example / case]
+Closing slide / CTA: [takeaway + reason to save / share]
+Caption: [the body copy for the post]
 ```
 
 **Platform notes:**
 
-- **小红书:** punchy title, concrete scenarios, save-worthy structure, emojis sparingly only if user's voice supports it.
+- **Xiaohongshu / small-red-book:** punchy title, concrete scenarios, save-worthy structure, emojis sparingly only if the user's voice supports it.
 - **LinkedIn:** opinion-led opener, story or example, structured body, takeaway, single question to drive comments.
 - **X / Twitter thread:** tweet 1 = hook + promise; tweets 2..n-1 = one beat each; final tweet = takeaway + soft CTA. Each tweet must stand alone enough to be quoted.
-- **公众号 / newsletter:** deeper argument, trust-building story, frameworks, long-term relationship.
-- **Threads / 微博:** sharp single thought, quotable, lower formality.
+- **WeChat / newsletter:** deeper argument, trust-building story, frameworks, long-term relationship.
+- **Threads / Weibo:** sharp single thought, quotable, lower formality.
 
 ### 5.6 Content Topic List
 
@@ -362,11 +362,11 @@ When the user provides existing content to improve:
 - **Trend-chasing without a spine** — riding a hot topic with no personal angle.
 - **"Everyone agrees" platitudes** — no position, no memory, no shares.
 - **Generic explainers** — anyone could have written it; nothing of the user in it.
-- **Template-style outreach voice** — "想跟你 virtual coffee 一下" energy in posts.
+- **Template-style outreach voice** — "let's grab a virtual coffee" energy in posts.
 - **Comment-section spam logic** — repeating the original post, or replying just to be seen.
 - **Audience set to "everyone"** — guaranteed to land with no one.
 - **Hook that attracts the wrong audience** — high views, zero conversion to followers.
-- **Solution = correct-but-useless** ("坚持输出" / "提供价值").
+- **Solution = correct-but-useless** ("stay consistent" / "provide value").
 - **For video creation requests: drifting into filming / editing / equipment advice.** This skill stays on the content side only.
 
 ---
@@ -409,147 +409,148 @@ Use this only when planning, not in every single output.
 
 ## 9. Worked Examples
 
-### 9.1 小红书短帖
+### 9.1 Short Social Post (Xiaohongshu / LinkedIn-style)
 
-**User request:** 「我是一个做了 4 年后端的工程师，想转独立开发者，帮我写一条小红书。」
+**User request:** "I'm a backend engineer with 4 years of experience, trying to transition into indie development. Help me write a short post about it."
 
 **Required Reframe:**
-- For: 3–5 年经验、想做独立产品的后端工程师
-- Problem: 以为卡点是技术，疯狂补前端/AI/设计
-- Benefit: 少走前 6 个月的弯路
-- Spine: 用户自己从打工到独立开发的真实卡点
-- Novel angle: 「你卡的不是技术，是选题和分发」
-- Share trigger: 同类工程师转发表达"这就是我"
+- For: Backend engineers with 3–5 years of experience who want to build indie products
+- Problem: They assume the blocker is technical and burn months on more tech skills
+- Benefit: Skip the first 6 months of wasted effort
+- Spine: The user's own transition from employed engineer to indie dev
+- Novel angle: "What's blocking you isn't tech — it's topic choice and distribution."
+- Share trigger: Same-profile engineers forwarding it to say "this is me"
 
 **Output:**
 
 ```text
-后端工程师转独立开发，前 6 个月我做错的一件事
+The one thing I got wrong in my first 6 months going indie as a backend engineer.
 
-我做了 4 年后端，去年决定转独立开发。
-前 6 个月，我以为技术不够，疯狂补前端、补 AI、补设计。
-后来我发现：卡住我的根本不是技术。
+I did backend for 4 years. Last year I decided to go indie.
+For the first 6 months I assumed I wasn't technical enough.
+I grinded on frontend, on AI, on design.
 
-是选题，和没人知道我在做什么。
+Then I realized: what was blocking me wasn't technical.
 
-3 件我后来才想明白的事：
-1. 你不缺工具，你缺一个值得做半年的具体问题。
-2. 第一批用户不会从应用商店来，他们会从你公开写过的东西来。
-3. 工程师做独立产品，最大的杠杆不是再学一门技术，是开始在公开场合写你解决的问题。
+It was topic choice — and nobody knowing what I was building.
 
-如果你也是工程师在想转独立开发——
-先选一个你真的懂、真的烦过的问题，
-再开始公开地写它。
+3 things I only figured out later:
+1. You're not short on tools. You're short on a specific problem worth working on for six months.
+2. Your first users won't come from an app store. They'll come from things you wrote in public.
+3. The biggest leverage for an engineer going indie isn't learning one more stack. It's starting to publicly write about the problem you solve.
 
-技术不是你最缺的那块拼图。
+If you're an engineer thinking about going indie:
+pick a problem you genuinely understand and have personally been frustrated by,
+then start writing about it in public.
+
+Tech isn't the missing piece.
 ```
 
 **Six Elements check:**
-- Hook: 具体身份 + 反直觉判断 ✓
-- Big Problem: 工程师转独立卡在哪里 ✓
-- Clear Solution: 三条可执行 ✓
-- Big Benefit: 少走前 6 个月的弯路 ✓
-- Position: 明确"技术不是你最缺的那块" ✓
-- Novel Perspective: 卡点是选题和分发，不是技术 ✓
+- Hook: Specific identity + counterintuitive judgment ✓
+- Big Problem: Where engineers get stuck going indie ✓
+- Clear Solution: Three concrete moves ✓
+- Big Benefit: Skip 6 months of wasted effort ✓
+- Position: "Tech isn't the missing piece" ✓
+- Novel Perspective: Blocker is topic choice and distribution, not tech ✓
 
-**Compressed test:** 停（具体身份钩）· 在意（同类痛点）· 信（4 年经历）· 记（"技术不是你最缺的那块"）· 分享（"这就是我"）✓
+**Compressed test:** stop (specific-identity hook) · care (same pain) · trust (4-year background) · remember ("tech isn't the missing piece") · share ("this is me") ✓
 
 ---
 
-### 9.2 文章大纲（公众号）
+### 9.2 Article Outline (Newsletter / WeChat-style)
 
-**User request:** 「帮我写一篇公众号文章大纲，主题是'内容创作者如何用 AI 把零散经验变成稳定输出'」
+**User request:** "Help me outline an article on 'how content creators can use AI to turn scattered experience into stable output'."
 
 **Required Reframe:**
-- For: 有专业经验但发布频率不稳定的内容创作者
-- Problem: 想法很多但写不出来，每次写都从零开始
-- Benefit: 用 AI 把零散经验沉淀成可复用的内容资产
-- Spine: 创作者自己的真实工作流
-- Novel angle: 「AI 的杠杆不在写，而在'结构化你已经懂的东西'」
+- For: Content creators with real professional experience but inconsistent publishing
+- Problem: Lots of ideas, but every post starts from zero
+- Benefit: Use AI to convert scattered experience into reusable content assets
+- Spine: The creator's actual working process
+- Novel angle: "AI's leverage isn't in writing — it's in structuring what you already know."
 
 **Output:**
 
 ```markdown
-## 定位
-- 目标读者：有专业经验但发布频率不稳定的内容创作者（公众号、newsletter、知识博主）
-- 内容承诺：一个能让你每周稳定输出 1–2 篇高质量内容的 AI 协作流程
-- 核心角度：AI 不是替你写，而是替你把"已经懂的东西"结构化
+## Positioning
+- Target reader: Content creators with professional experience but inconsistent publishing (newsletter, WeChat, knowledge creators)
+- Content promise: An AI-collaboration workflow that lets you ship 1–2 strong pieces per week reliably
+- Core angle: AI doesn't write for you — it structures what you already know
 
-## 标题候选
-1. 内容创作者用 AI，最大的误区是让它替你写
-2. 我用 AI 写了 30 篇文章，最有用的不是它生成的字
-3. AI 不会让你写得更快，它让你写得更稳
+## Title candidates
+1. Creators using AI: the biggest mistake is letting it do the writing
+2. I wrote 30 articles with AI. The most useful part wasn't the words it generated.
+3. AI won't make you write faster. It makes you write more consistently.
 
-## 大纲
-1. Hook：很多人用 AI 是从"写一篇关于 X 的文章"开始的，所以越用越没灵魂
-2. 问题：创作者真正的卡点不是"不会写"，是"想法没结构、经验没整理"
-3. Spine：我自己用 AI 一年的工作流变化
-4. 核心观点：AI 的杠杆 = 把你已经懂的东西，问出来、结构化、变成系列
-5. 方法（3 步）：
-   - 用 AI 做"采访式"提问，把你脑中的隐性知识倒出来
-   - 用 AI 做结构化（论点 / 证据 / 案例 / 反例）
-   - 用 AI 做"系列化"——把一篇拆成 3–5 个角度
-6. 例子：我把一次客户复盘，用这套流程拆成了 4 篇文章
-7. 收益：你不再为"今天发什么"焦虑，而是为"这个系列怎么深入"投入
-8. 结尾 + CTA：评论留下你最想结构化的一个专业经验，我会挑 3 个用这个流程示范
+## Outline
+1. Hook: Most creators start by asking AI to "write an article about X" — which is why the more they use it, the more soulless their output gets
+2. Problem: The real blocker isn't "I can't write". It's "my ideas have no structure and my experience is never organized"
+3. Spine: My own one-year evolution of working with AI
+4. Core point: AI's leverage = take what you already understand → surface it → structure it → turn it into a series
+5. Method (3 steps):
+   - Use AI as an "interviewer" to extract your tacit knowledge
+   - Use AI to structure it (claim / evidence / case / counterexample)
+   - Use AI to serialize it — split one piece into 3–5 angles
+6. Example: I took one client postmortem and turned it into 4 articles with this workflow
+7. Benefit: You stop worrying about "what do I post today" and start asking "how do I go deeper on this series"
+8. Closing + CTA: Drop a professional experience you want to structure in the comments — I'll pick 3 and walk through this workflow on them
 
-## 受众积累逻辑
-专业人士看到这篇会想"我也有一堆没整理的经验"，
-分享时表达的是身份（"我是认真做内容的人，不是套模板的人"），
-而不是工具技巧。
+## Audience-building logic
+Professionals reading this will think "I have a pile of unprocessed experience too".
+What they share expresses identity ("I'm a serious creator, not a template chaser"),
+not a tool tip.
 ```
 
 ---
 
-### 9.3 60 秒口播稿
+### 9.3 60-Second Voiceover Script
 
-**User request:** 「我做内容策略咨询的，帮我写一条 60 秒的口播，讲'为什么大多数公司的内容账号做不起来'」
+**User request:** "I do content strategy consulting. Write me a 60-second voiceover on 'why most company content accounts fail to grow'."
 
 **Required Reframe:**
-- For: 负责公司内容账号但增长卡住的市场/品牌负责人
-- Problem: 发了一年内容没增长，老板开始质疑
-- Benefit: 知道真正要换的是定位，不是更新频率
-- Spine: 咨询师见过的真实公司案例
-- Novel angle: 「公司账号做不起来，是因为它在替'公司'说话，不是替'某一类人'说话」
+- For: Marketing / brand leads who own a company content account that's stuck
+- Problem: A year of posting, no growth, leadership starting to question them
+- Benefit: Understand the real lever is positioning, not posting frequency
+- Spine: Real client patterns the consultant has seen
+- Novel angle: "Company accounts fail because they speak as 'the company', not as someone speaking to one specific kind of person."
 
-**Output (~250 字, ~60 秒):**
+**Output (~150 words, ~60 seconds):**
 
 ```text
-【开场 Hook】（0–5s）
-大多数公司的内容账号做不起来，
-不是因为发得少。
+[Opening Hook] (0–5s)
+Most company content accounts don't fail because they post too little.
 
-【问题】（5–15s）
-我做内容策略咨询 5 年，
-见过太多公司每天发 3 条，做了一年还在 2000 粉丝。
-他们都在问同一个问题：是不是要换平台？
+[Problem] (5–15s)
+I've done content strategy consulting for 5 years.
+I've seen companies post 3 times a day, for a full year, still stuck at 2,000 followers.
+Every one of them asks the same question: should we switch platforms?
 
-【核心观点】（15–30s）
-都不是。
-真正的问题是——
-你的账号在替"公司"说话，
-不是替"某一类具体的人"说话。
+[Core Point] (15–30s)
+No.
+The real problem is —
+your account is speaking as "the company".
+Not as someone speaking to one specific kind of person.
 
-【新视角 + 解决方案】（30–50s）
-个人能涨粉，是因为一个人天然就有具体身份。
-公司想涨粉，得先**主动选择**一个具体的人。
-不是"我们服务所有中小企业"，
-是"我们替那个'第一次招 AI 工程师、不知道怎么面试'的 CTO 说话"。
-你的内容只要让那一类人觉得"这是替我做的"，
-他会自己开始转发、自己开始关注、自己开始信任你。
+[New Angle + Solution] (30–50s)
+Individuals grow because a person already has a specific identity.
+A company has to **deliberately choose one**.
+Not "we serve all small and medium businesses".
+Try "we speak to the CTO who's hiring their first AI engineer and has no idea how to interview them".
+If that one type of person feels "this is made for me",
+they will share it, follow you, and start trusting you on their own.
 
-【收尾】（50–60s）
-所以公司账号做不起来，
-**换的不是频率，是替谁说话**。
+[Closing] (50–60s)
+So company accounts don't fail because of frequency.
+**They fail because they never chose who they were speaking to.**
 ```
 
 **Six Elements check:**
-- Hook: 反直觉 + 行业判断 ✓
-- Big Problem: 一年 2000 粉，老板开始质疑 ✓
-- Clear Solution: 选一个具体身份的人去服务 ✓
-- Big Benefit: 不再换平台试错 ✓
-- Position: 「换的不是频率，是替谁说话」✓
-- Novel Perspective: 公司账号要"主动选择身份" ✓
+- Hook: Counterintuitive + industry judgment ✓
+- Big Problem: A year of posting, 2,000 followers, leadership pressure ✓
+- Clear Solution: Pick one specific persona to serve ✓
+- Big Benefit: Stop platform-hopping ✓
+- Position: "What you change is who you're speaking to, not how often" ✓
+- Novel Perspective: Company accounts must "deliberately choose an identity" ✓
 
 ---
 
