@@ -1,0 +1,1122 @@
+#!/bin/bash
+# MiniMax CLI - Enhanced OpenAI-compatible API client
+# Version: 1.0.0
+
+set -e
+
+VERSION="1.0.0"
+CONFIG_FILE="${HOME}/.minimax-cli.conf"
+
+# Default values
+DEFAULT_API_URL="https://mimimax.cn"
+DEFAULT_CHAT_MODEL="MiniMax-M2.7-highspeed"
+DEFAULT_TTS_MODEL="speech-2.8-turbo"
+DEFAULT_TTS_VOICE="Chinese (Mandarin)_Gentleman"
+DEFAULT_TTS_SPEED="1.0"
+DEFAULT_TTS_PITCH="1.0"
+DEFAULT_IMAGE_MODEL="image-01"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+usage() {
+    cat << EOF
+${CYAN}MiniMax CLI v${VERSION}${NC} - OpenAI-compatible API client
+
+${GREEN}Usage:${NC} minimax <command> [options]
+
+${GREEN}Commands:${NC}
+  ${YELLOW}chat${NC} <message>              AI 对话
+  ${YELLOW}tts${NC} <text> [-o file]       文字转语音
+  ${YELLOW}image${NC} <prompt> [-o file]    图片生成
+  ${YELLOW}vision${NC} <image> <prompt>     图片理解
+  ${YELLOW}music${NC} <prompt> [-o file]    音乐生成
+  ${YELLOW}search${NC} <query>              网络搜索
+  ${YELLOW}config${NC} [show|set|voice|model]  配置管理
+  ${YELLOW}models${NC}                      列出可用模型
+
+${GREEN}TTS Options:${NC}
+  -o, --output <file>        输出文件 (默认: tts_内容前10字.mp3)
+  -v, --voice <voice>        声音角色
+  --speed <0.5-2.0>          语速
+  --pitch <0.5-2.0>          音调
+  --no-stream                 同步模式 (默认: 流式，无缓存问题)
+
+${GREEN}文本格式 (语气词和停顿):${NC}
+  语气词: (laughs)(chuckle)(coughs)(sighs)(breath) 等
+  停顿: <#秒数#> 如 <#1.5#> 表示 1.5 秒停顿
+  示例: “你好(chuckles)<#1.0#>我们去散步吧”
+
+${GREEN}Image Options:${NC}
+  -o, --output <file>        输出文件 (默认: image.png)
+  -m, --model <model>        模型 (image-01/image-01-live)
+  --style <type>             画风 (漫画/元气/中世纪/水彩)
+  --style-weight <0-1>       画风权重 (默认: 0.8)
+  --ratio <ratio>            比例 (1:1/16:9/4:3/3:2/9:16)
+  -n, --count <1-9>         生成数量
+  --seed <num>              随机种子
+  --optimize                 启用 prompt 优化
+  --base64                   返回 base64 格式
+  --watermark                 添加水印
+
+${GREEN}Examples:${NC}
+  minimax image “一只猫”
+  minimax image “风景画” --style 漫画 --ratio 16:9 -o landscape.png
+  minimax image “插画” --style 水彩 -n 4
+  minimax image “写真” --base64 -o photo.jpg
+  minimax config set api.key <your-key>
+  minimax config voice list
+  minimax tts “你好世界”
+  minimax tts “你好(laughs)<#1.0#>我们去散步” -v “Chinese (Mandarin)_Gentleman”
+  minimax music “独立民谣” -s “忧郁,内省”
+  minimax music “城市夜景” -l “[verse]\n街灯微亮\n旧外套裹着忧郁” -o song.mp3
+
+EOF
+    exit 1
+}
+
+load_config() {
+    if [[ -f "$CONFIG_FILE" ]]; then
+        source "$CONFIG_FILE"
+    fi
+    # Set defaults if not configured
+    API_URL="${API_URL:-${DEFAULT_API_URL}}"
+    CHAT_MODEL="${CHAT_MODEL:-${DEFAULT_CHAT_MODEL}}"
+    TTS_MODEL="${TTS_MODEL:-${DEFAULT_TTS_MODEL}}"
+    TTS_VOICE="${TTS_VOICE:-${DEFAULT_TTS_VOICE}}"
+    TTS_SPEED="${TTS_SPEED:-${DEFAULT_TTS_SPEED}}"
+    TTS_PITCH="${TTS_PITCH:-${DEFAULT_TTS_PITCH}}"
+    IMAGE_MODEL="${IMAGE_MODEL:-${DEFAULT_IMAGE_MODEL}}"
+}
+
+save_config() {
+    cat > "$CONFIG_FILE" << EOF
+API_URL="${API_URL}"
+API_KEY="${API_KEY}"
+CHAT_MODEL="${CHAT_MODEL}"
+TTS_MODEL="${TTS_MODEL}"
+TTS_VOICE="${TTS_VOICE}"
+TTS_SPEED="${TTS_SPEED}"
+TTS_PITCH="${TTS_PITCH}"
+IMAGE_MODEL="${IMAGE_MODEL}"
+EOF
+    chmod 600 "$CONFIG_FILE"
+}
+
+check_config() {
+    if [[ -z "$API_KEY" ]]; then
+        echo -e "${RED}Error: Not configured. Run:${NC}"
+        echo "  minimax config set api.key <your-key>"
+        exit 1
+    fi
+}
+
+# ============ Config Commands ============
+
+cmd_config_show() {
+    load_config
+    echo -e "${CYAN}Current Configuration:${NC}"
+    echo ""
+    echo -e "${YELLOW}API:${NC}"
+    echo "  URL:    ${API_URL}"
+    echo "  Key:    ${API_KEY:0:8}..."
+    echo ""
+    echo -e "${YELLOW}Chat:${NC}"
+    echo "  Model:  ${CHAT_MODEL}"
+    echo ""
+    echo -e "${YELLOW}TTS:${NC}"
+    echo "  Model:  ${TTS_MODEL}"
+    echo "  Voice:  ${TTS_VOICE}"
+    echo "  Speed:  ${TTS_SPEED}"
+    echo "  Pitch:  ${TTS_PITCH}"
+    echo ""
+    echo -e "${YELLOW}Image:${NC}"
+    echo "  Model:  ${IMAGE_MODEL}"
+}
+
+cmd_config_set() {
+    local key="$1"
+    local value="$2"
+
+    if [[ -z "$key" ]] || [[ -z "$value" ]]; then
+        echo -e "${RED}Usage: minimax config set <key> <value>${NC}"
+        echo ""
+        echo -e "${YELLOW}Available keys:${NC}"
+        echo "  api.url, api.key"
+        echo "  chat.model"
+        echo "  tts.model, tts.voice, tts.speed, tts.pitch"
+        echo "  image.model"
+        exit 1
+    fi
+
+    load_config
+
+    case "$key" in
+        api.url)
+            API_URL="$value"
+            ;;
+        api.key)
+            API_KEY="$value"
+            ;;
+        chat.model)
+            CHAT_MODEL="$value"
+            ;;
+        tts.model)
+            TTS_MODEL="$value"
+            ;;
+        tts.voice)
+            TTS_VOICE="$value"
+            ;;
+        tts.speed)
+            TTS_SPEED="$value"
+            ;;
+        tts.pitch)
+            TTS_PITCH="$value"
+            ;;
+        image.model)
+            IMAGE_MODEL="$value"
+            ;;
+        *)
+            echo -e "${RED}Unknown config key: $key${NC}"
+            exit 1
+            ;;
+    esac
+
+    save_config
+    echo -e "${GREEN}Set $key = $value${NC}"
+}
+
+cmd_config_voice_list() {
+    echo -e "${CYAN}Available TTS Voices:${NC}"
+    echo ""
+    echo -e "${GREEN}推荐音色 (Chinese):${NC}"
+
+    # Try to read from voices.json file first
+    local voice_file=""
+    for dir in "${HOME}/.claude/skills/minimax" "/usr/local/share/minimax" "."; do
+        if [[ -f "$dir/voices.json" ]]; then
+            voice_file="$dir/voices.json"
+            break
+        fi
+    done
+
+    if [[ -n "$voice_file" ]] && command -v python3 &>/dev/null; then
+        python3 << PYEOF
+import json, sys
+try:
+    with open('$voice_file', 'r', encoding='utf-8') as f:
+        d = json.load(f)
+    voices = d.get('system_voice', [])
+    # Group by language
+    cn_voices = []
+    en_voices = []
+    other_voices = []
+    for v in voices:
+        vid = v.get('voice_id', '')
+        name = v.get('voice_name', '')
+        if any(x in vid for x in ['female', 'male', 'Chinese', 'Cantonese']):
+            cn_voices.append((vid, name))
+        elif any(x in vid for x in ['English']):
+            en_voices.append((vid, name))
+        else:
+            other_voices.append((vid, name))
+
+    print("  ${YELLOW}=== 中文音色 ===${NC}")
+    for vid, name in sorted(cn_voices, key=lambda x: x[0])[:20]:
+        print(f"  {vid:40s} - {name}")
+    if len(cn_voices) > 20:
+        print(f"  ... (共 {len(cn_voices)} 个中文音色)")
+
+    print()
+    print("  ${YELLOW}=== English Voices ===${NC}")
+    for vid, name in sorted(en_voices, key=lambda x: x[0])[:10]:
+        print(f"  {vid:40s} - {name}")
+    if len(en_voices) > 10:
+        print(f"  ... (共 {len(en_voices)} 个英文音色)")
+
+    print()
+    print("  ${YELLOW}=== Other Languages ===${NC}")
+    for vid, name in sorted(other_voices, key=lambda x: x[0])[:15]:
+        print(f"  {vid:40s} - {name}")
+    if len(other_voices) > 15:
+        print(f"  ... (共 {len(other_voices)} 个其他音色)")
+
+    print()
+    print(f"  ${GREEN}总计: {len(voices)} 个音色${NC}")
+    print()
+    print(f"  完整列表请查看: $voice_file")
+except Exception as e:
+    print(f"Error loading voices: {e}")
+PYEOF
+    else
+        echo "  female-tianmei              - 甜美女性音色"
+        echo "  female-yujie                - 御姐音色"
+        echo "  female-chengshu             - 成熟女性音色"
+        echo "  female-shaonv               - 少女音色"
+        echo "  male-qn-qingse              - 青涩青年音色"
+        echo "  male-qn-badao               - 霸道青年音色"
+        echo "  ..."
+        echo ""
+        echo "  完整列表请查看: voices.json"
+    fi
+
+    echo ""
+    echo -e "Current default: ${GREEN}${TTS_VOICE}${NC}"
+    echo ""
+    echo -e "To test a voice: ${YELLOW}minimax tts \"测试\" -v <voice-id>${NC}"
+}
+
+cmd_config_model_list() {
+    load_config
+    check_config
+
+    echo -e "${CYAN}Available Models:${NC}"
+    echo ""
+    curl -s "${API_URL}/v1/models" \
+        -H "Authorization: Bearer ${API_KEY}" \
+        | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+    for m in d.get('data',[]):
+        print(f\"  {m['id']}\")
+except:
+    print(sys.stdin.read())
+" 2>/dev/null || echo "Failed to fetch models"
+}
+
+# ============ Chat Command ============
+
+cmd_chat() {
+    load_config
+    check_config
+
+    local model="$CHAT_MODEL"
+    local message=""
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --model|-m)
+                model="$2"
+                shift 2
+                ;;
+            *)
+                message="$1"
+                shift
+                ;;
+        esac
+    done
+
+    [[ -z "$message" ]] && echo -e "${RED}Usage: minimax chat <message> [--model <model>]${NC}" && exit 1
+
+    echo -e "${YELLOW}Thinking...${NC}"
+
+    # Write message to temp file to avoid shell escaping issues
+    echo -n "$message" > /tmp/_minimax_msg.txt
+
+    python3 << PYEOF
+import json, urllib.request
+
+with open('/tmp/_minimax_msg.txt', 'r', encoding='utf-8') as f:
+    message = f.read()
+
+payload = {
+    "model": "$model",
+    "messages": [{"role": "user", "content": message}]
+}
+
+try:
+    req = urllib.request.Request(
+        "${API_URL}/v1/chat/completions",
+        data=json.dumps(payload).encode(),
+        headers={
+            "Authorization": "Bearer ${API_KEY}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        d = json.loads(resp.read().decode())
+        if 'choices' in d:
+            content = d['choices'][0]['message']['content']
+            print(content)
+        elif 'error' in d:
+            print(f"Error: {d['error']}")
+        else:
+            print(json.dumps(d, indent=2))
+except Exception as e:
+    print(f"Error: {e}")
+PYEOF
+}
+
+# ============ TTS Command ============
+
+cmd_tts() {
+    load_config
+    check_config
+
+    local text=""
+    local output="speech.mp3"
+    local voice="$TTS_VOICE"
+    local speed="$TTS_SPEED"
+    local pitch="$TTS_PITCH"
+    local model="$TTS_MODEL"
+    local stream=true  # Default to streaming mode
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -o|--output)
+                output="$2"
+                shift 2
+                ;;
+            -v|--voice)
+                voice="$2"
+                shift 2
+                ;;
+            --speed)
+                speed="$2"
+                shift 2
+                ;;
+            --pitch)
+                pitch="$2"
+                shift 2
+                ;;
+            -m|--model)
+                model="$2"
+                shift 2
+                ;;
+            --no-stream)
+                stream=false
+                shift
+                ;;
+            *)
+                text="$1"
+                shift
+                ;;
+        esac
+    done
+
+    [[ -z "$text" ]] && echo -e "${RED}Usage: minimax tts <text> [options]${NC}" && exit 1
+
+    # Generate default filename using first 10 characters of text
+    if [[ "$output" == "speech.mp3" ]]; then
+        # Use Python to handle UTF-8 properly
+        output=$(python3 -c "print('tts_' + '$text'[:10] + '.mp3')")
+    fi
+
+    echo -e "${YELLOW}Generating speech (voice: $voice)...${NC}"
+    echo -e "${YELLOW}Output: $output${NC}"
+
+    # Check last TTS call to avoid API cache (cache lasts ~90s)
+    # Only warn for non-streaming mode (streaming doesn't have cache issues)
+    if [[ "$stream" == "false" ]]; then
+        local cache_file="${HOME}/.minimax_last_tts"
+        local last_call_time=0
+        local last_voice=""
+        if [[ -f "$cache_file" ]]; then
+            last_call_time=$(head -1 "$cache_file")
+            last_voice=$(tail -1 "$cache_file")
+        fi
+        local current_time=$(date +%s)
+        local time_diff=$((current_time - last_call_time))
+
+        if [[ "$last_voice" == "$voice" ]] && [[ $time_diff -lt 90 ]]; then
+            local wait_time=$((90 - time_diff))
+            echo -e "${YELLOW}⚠️  Warning: Same voice called within 90s. API may return cached audio.${NC}"
+            echo -e "${YELLOW}   Wait ${wait_time}s or use a different voice${NC}"
+        fi
+
+        # Record this call
+        date +%s > "$cache_file"
+        echo "$voice" >> "$cache_file"
+    fi
+
+    if [[ "$stream" == "true" ]]; then
+        # Use streaming API
+        cmd_tts_stream "$text" "$output" "$voice" "$speed" "$pitch" "$model"
+    else
+        # Use non-streaming API
+        cmd_tts_sync "$text" "$output" "$voice" "$speed" "$pitch" "$model"
+    fi
+}
+
+cmd_tts_sync() {
+    local text="$1"
+    local output="$2"
+    local voice="$3"
+    local speed="$4"
+    local pitch="$5"
+    local model="$6"
+
+    echo -e "${YELLOW}Generating (non-streaming)...${NC}"
+
+    python3 << PYEOF
+import json, urllib.request
+
+text = """$text"""
+
+payload = {
+    "model": "$model",
+    "input": text,
+    "voice": "$voice",
+    "speed": float("$speed"),
+    "pitch": float("$pitch")
+}
+
+try:
+    req = urllib.request.Request(
+        "${API_URL}/v1/audio/speech",
+        data=json.dumps(payload).encode(),
+        headers={
+            "Authorization": "Bearer ${API_KEY}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    print("Waiting for audio...", flush=True)
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        d = json.loads(resp.read().decode())
+
+        if d.get('base_resp', {}).get('status_msg') and d['base_resp']['status_msg'] != 'success':
+            print(f"Error: {d['base_resp']['status_msg']}")
+            exit(1)
+
+        audio = d.get('data', {}).get('audio', '')
+        if audio:
+            audio_bytes = bytes.fromhex(audio)
+            if len(audio_bytes) < 1000:
+                print(f"Warning: Audio too small ({len(audio_bytes)} bytes), may be incomplete")
+            try:
+                with open('$output', 'wb') as f:
+                    f.write(audio_bytes)
+            except:
+                import base64
+                with open('$output', 'wb') as f:
+                    f.write(base64.b64decode(audio))
+            print(f"Audio saved ({len(audio_bytes)} bytes)")
+        else:
+            print("No audio returned")
+            exit(1)
+except Exception as e:
+    print(f"Error: {e}")
+    exit(1)
+PYEOF
+
+    local file_size=$(stat -c%s "$output" 2>/dev/null || stat -f%z "$output" 2>/dev/null || echo "0")
+    if [[ -f "$output" ]] && [[ "$file_size" -gt 1000 ]]; then
+        echo -e "${GREEN}Saved to $output ($(du -h "$output" | cut -f1))${NC}"
+    else
+        echo -e "${RED}Failed to save audio (size: $file_size bytes)${NC}"
+    fi
+}
+
+cmd_tts_stream() {
+    local text="$1"
+    local output="$2"
+    local voice="$3"
+    local speed="$4"
+    local pitch="$5"
+    local model="$6"
+
+    echo -e "${GREEN}Streaming mode - audio will arrive in chunks${NC}"
+
+    python3 - "$text" "$output" "$voice" "$speed" "$pitch" "$model" "${API_URL}" "${API_KEY}" << 'PYEOF'
+# -*- coding: utf-8 -*-
+import json, urllib.request, sys
+
+text = sys.argv[1]
+output = sys.argv[2]
+voice = sys.argv[3]
+speed = float(sys.argv[4])
+pitch = float(sys.argv[5])
+model = sys.argv[6]
+api_url = sys.argv[7]
+api_key = sys.argv[8]
+
+payload = {
+    "model": model,
+    "text": text,
+    "stream": True,
+    "voice_setting": {
+        "voice_id": voice,
+        "speed": speed,
+        "vol": 1,
+        "pitch": pitch
+    },
+    "audio_setting": {
+        "sample_rate": 32000,
+        "bitrate": 128000,
+        "format": "mp3",
+        "channel": 1
+    }
+}
+
+chunk_count = 0
+last_audio = ""
+last_audio_len = 0
+
+try:
+    req = urllib.request.Request(
+        f"{api_url}/v1/t2a_v2",
+        data=json.dumps(payload).encode(),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    print("Streaming audio...", flush=True)
+
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        buffer = ""
+        for chunk in resp:
+            buffer += chunk.decode("utf-8", errors="ignore")
+
+            # Process all complete events in buffer
+            while "data:" in buffer:
+                # Find start of event
+                start = buffer.find("data:")
+                buffer = buffer[start + 5:].lstrip()
+
+                # Find the end of JSON (matching brace)
+                depth = 0
+                end = -1
+                for i, ch in enumerate(buffer):
+                    if ch == '{':
+                        depth += 1
+                    elif ch == '}':
+                        depth -= 1
+                        if depth == 0:
+                            end = i + 1
+                            break
+
+                if end == -1:
+                    # No complete JSON yet
+                    break
+
+                json_str = buffer[:end]
+                buffer = buffer[end:]
+
+                try:
+                    d = json.loads(json_str)
+                    audio = d.get("data", {}).get("audio", "")
+                    if audio:
+                        chunk_count += 1
+                        chunk_len = len(audio) // 2  # hex to bytes
+                        # API returns cumulative data, so we only use the last chunk
+                        if chunk_len > last_audio_len:
+                            last_audio = audio
+                            last_audio_len = chunk_len
+                        print(f"Chunk {chunk_count}: {chunk_len} bytes (total so far)", flush=True)
+                except Exception as e:
+                    pass
+
+    # Write final audio to file
+    if last_audio:
+        with open(output, "wb") as f:
+            f.write(bytes.fromhex(last_audio))
+        print(f"Done! Final audio: {last_audio_len} bytes", flush=True)
+        print(f"Saved to: {output}", flush=True)
+    else:
+        print("No audio received", flush=True)
+        sys.exit(1)
+
+except Exception as e:
+    print(f"Error: {e}")
+    sys.exit(1)
+PYEOF
+}
+
+# ============ Image Command ============
+
+cmd_image() {
+    load_config
+    check_config
+
+    local prompt=""
+    local output="image.png"
+    local model="$IMAGE_MODEL"
+    local style_type=""
+    local style_weight="0.8"
+    local aspect_ratio=""
+    local width=""
+    local height=""
+    local format="url"
+    local n="1"
+    local seed=""
+    local prompt_optimizer="false"
+    local watermark="false"
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -o|--output)
+                output="$2"
+                shift 2
+                ;;
+            -m|--model)
+                model="$2"
+                shift 2
+                ;;
+            --style)
+                style_type="$2"
+                shift 2
+                ;;
+            --style-weight)
+                style_weight="$2"
+                shift 2
+                ;;
+            --ratio|--aspect)
+                aspect_ratio="$2"
+                shift 2
+                ;;
+            --width)
+                width="$2"
+                shift 2
+                ;;
+            --height)
+                height="$2"
+                shift 2
+                ;;
+            --base64)
+                format="base64"
+                shift
+                ;;
+            -n|--count)
+                n="$2"
+                shift 2
+                ;;
+            --seed)
+                seed="$2"
+                shift 2
+                ;;
+            --optimize)
+                prompt_optimizer="true"
+                shift
+                ;;
+            --watermark)
+                watermark="true"
+                shift
+                ;;
+            *)
+                prompt="$1"
+                shift
+                ;;
+        esac
+    done
+
+    [[ -z "$prompt" ]] && echo -e "${RED}Usage: minimax image <prompt> [options]${NC}" && exit 1
+
+    echo -e "${YELLOW}Generating image (model: $model)...${NC}"
+
+    python3 << PYEOF
+import json, urllib.request, sys
+
+payload = {
+    "model": "$model",
+    "prompt": """$prompt""",
+    "n": $n,
+    "response_format": """$format"""
+}
+
+# Add style for image-01-live
+if """$model""" == "image-01-live" and """$style_type""":
+    payload["style"] = {
+        "style_type": """$style_type""",
+        "style_weight": float("""$style_weight""")
+    }
+
+# Add aspect_ratio if provided
+if """$aspect_ratio""":
+    payload["aspect_ratio"] = """$aspect_ratio"""
+
+# Add width/height if provided
+if """$width""" and """$height""":
+    payload["width"] = int("""$width""")
+    payload["height"] = int("""$height""")
+
+# Add optional params
+if """$seed""":
+    payload["seed"] = int("""$seed""")
+
+if """$prompt_optimizer""" == "true":
+    payload["prompt_optimizer"] = True
+
+if """$watermark""" == "true":
+    payload["aigc_watermark"] = True
+
+try:
+    req = urllib.request.Request(
+        f"{API_URL}/v1/images/generations",
+        data=json.dumps(payload).encode(),
+        headers={
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        d = json.loads(resp.read().decode())
+
+    if d.get('base_resp', {}).get('status_code') != 0:
+        print(f"Error: {d['base_resp'].get('status_msg', 'unknown')}")
+        sys.exit(1)
+
+    data = d.get('data', {})
+    if isinstance(data, list):
+        items = data
+    else:
+        items = data.get('images', [])
+
+    if not items:
+        print("No image returned")
+        sys.exit(1)
+
+    if format == "url":
+        url = items[0].get('url') or items[0].get('image_url', '')
+        if url:
+            print(f"Downloading from: {url[:60]}...")
+            urllib.request.urlretrieve(url, output)
+            print("ok")
+        else:
+            print("No URL in response")
+            sys.exit(1)
+    else:
+        # base64 format
+        img_data = items[0].get('b64_json') or items[0].get('base64_image', '')
+        if img_data:
+            import base64
+            with open(output, 'wb') as f:
+                f.write(base64.b64decode(img_data))
+            print("ok")
+        else:
+            print("No base64 data in response")
+            sys.exit(1)
+
+except Exception as e:
+    print(f"Error: {e}")
+    sys.exit(1)
+PYEOF
+
+    if [[ -f "$output" ]] && [[ -s "$output" ]]; then
+        echo -e "${GREEN}Saved to $output ($(du -h "$output" | cut -f1))${NC}"
+    else
+        echo -e "${RED}Failed to save image${NC}"
+    fi
+}
+
+# ============ Vision Command ============
+
+cmd_vision() {
+    load_config
+    check_config
+
+    local image_path="$1"
+    local prompt="${2:-Describe this image.}"
+
+    [[ ! -f "$image_path" ]] && echo -e "${RED}Error: File not found: $image_path${NC}" && exit 1
+
+    echo -e "${YELLOW}Analyzing image...${NC}"
+
+    python3 << PYEOF
+import sys, json, urllib.request, base64
+
+image_path = "$image_path"
+prompt = """$prompt"""
+
+with open(image_path, 'rb') as f:
+    img_b64 = base64.b64encode(f.read()).decode()
+
+payload = {
+    "model": "image-01",
+    "messages": [{
+        "role": "user",
+        "content": [
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"}},
+            {"type": "text", "text": prompt}
+        ]
+    }]
+}
+
+try:
+    req = urllib.request.Request(
+        "${API_URL}/v1/coding_plan/vlm",
+        data=json.dumps(payload).encode(),
+        headers={
+            "Authorization": "Bearer ${API_KEY}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        d = json.loads(resp.read().decode())
+        if 'content' in d:
+            print(d['content'])
+        elif 'choices' in d:
+            print(d['choices'][0]['message']['content'])
+        elif 'error' in d:
+            print(f"Error: {d['error']}")
+        else:
+            print(json.dumps(d, indent=2))
+except Exception as e:
+    print(f"Error: {e}")
+PYEOF
+}
+
+# ============ Music Command ============
+
+cmd_music() {
+    load_config
+    check_config
+
+    local prompt=""
+    local output="music.mp3"
+    local lyrics=""
+    local instrumental=false
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -o|--output)
+                output="$2"
+                shift 2
+                ;;
+            -l|--lyrics)
+                lyrics="$2"
+                shift 2
+                ;;
+            -i|--instrumental)
+                instrumental=true
+                shift
+                ;;
+            *)
+                prompt="$1"
+                shift
+                ;;
+        esac
+    done
+
+    [[ -z "$prompt" ]] && echo -e "${RED}Usage: minimax music <prompt> [-o output.mp3] [-l lyrics] [-i]${NC}" && exit 1
+
+    echo -e "${YELLOW}Generating music (this may take a while)...${NC}"
+
+    python3 << PYEOF
+import json, urllib.request
+
+if "$instrumental" == "true":
+    payload = {
+        "model": "music-2.6",
+        "prompt": """$prompt""",
+        "mode": "instrumental",
+        "output_format": "hex",
+        "audio_setting": {
+            "sample_rate": 44100,
+            "bitrate": 256000,
+            "format": "mp3"
+        }
+    }
+elif """$lyrics""":
+    payload = {
+        "model": "music-2.6",
+        "prompt": """$prompt""",
+        "lyrics": """$lyrics""",
+        "output_format": "hex",
+        "audio_setting": {
+            "sample_rate": 44100,
+            "bitrate": 256000,
+            "format": "mp3"
+        }
+    }
+else:
+    payload = {
+        "model": "music-2.6",
+        "prompt": """$prompt""",
+        "output_format": "hex",
+        "lyrics_optimizer": True,
+        "audio_setting": {
+            "sample_rate": 44100,
+            "bitrate": 256000,
+            "format": "mp3"
+        }
+    }
+
+try:
+    req = urllib.request.Request(
+        "${API_URL}/v1/music_generation",
+        data=json.dumps(payload).encode(),
+        headers={
+            "Authorization": "Bearer ${API_KEY}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        d = json.loads(resp.read().decode())
+
+        if d.get('base_resp', {}).get('status_code') != 0:
+            print(f"Error: {d['base_resp'].get('status_msg', 'unknown')}")
+            exit(1)
+
+        audio = d.get('data', {}).get('audio', '')
+        if audio:
+            try:
+                with open('$output', 'wb') as f:
+                    f.write(bytes.fromhex(audio))
+            except:
+                import base64
+                with open('$output', 'wb') as f:
+                    f.write(base64.b64decode(audio))
+            print("ok")
+        else:
+            print("No audio returned")
+            exit(1)
+except Exception as e:
+    print(f"Error: {e}")
+    exit(1)
+PYEOF
+
+    if [[ -f "$output" ]] && [[ -s "$output" ]]; then
+        echo -e "${GREEN}Saved to $output ($(du -h "$output" | cut -f1))${NC}"
+    else
+        echo -e "${RED}Failed to save music${NC}"
+    fi
+}
+
+# ============ Search Command ============
+
+cmd_search() {
+    load_config
+    check_config
+
+    local query="$1"
+    [[ -z "$query" ]] && echo -e "${RED}Usage: minimax search <query>${NC}" && exit 1
+
+    echo -e "${YELLOW}Searching...${NC}"
+
+    python3 << PYEOF
+import json, urllib.request
+
+payload = {"q": """$query"""}
+
+try:
+    req = urllib.request.Request(
+        "${API_URL}/v1/coding_plan/search",
+        data=json.dumps(payload).encode(),
+        headers={
+            "Authorization": "Bearer ${API_KEY}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        d = json.loads(resp.read().decode())
+
+        if 'organic' in d:
+            for item in d.get('organic', []):
+                title = item.get('title', '')
+                snippet = item.get('snippet', '')[:200]
+                print(f"【{title}】\n{snippet}\n")
+        elif 'error' in d:
+            print(f"Error: {d['error']}")
+        else:
+            print(json.dumps(d, indent=2, ensure_ascii=False))
+except Exception as e:
+    print(f"Error: {e}")
+PYEOF
+}
+
+# ============ Models Command ============
+
+cmd_models() {
+    load_config
+    check_config
+
+    echo -e "${CYAN}Available Models:${NC}"
+    curl -s "${API_URL}/v1/models" \
+        -H "Authorization: Bearer ${API_KEY}" \
+        | python3 -c "
+import json,sys
+try:
+    d=json.load(sys.stdin)
+    for m in d.get('data',[]):
+        print(f\"  {m['id']}\")
+except:
+    print(sys.stdin.read())
+" 2>/dev/null || echo "Failed to fetch models"
+}
+
+# ============ Main ============
+
+COMMAND="${1:-}"
+shift 2>/dev/null || true
+
+case "$COMMAND" in
+    config)
+        subcmd="${1:-}"
+        shift
+        case "$subcmd" in
+            show)
+                cmd_config_show
+                ;;
+            set)
+                cmd_config_set "$@"
+                ;;
+            voice)
+                if [[ "${1:-}" == "list" ]]; then
+                    cmd_config_voice_list
+                fi
+                ;;
+            model)
+                if [[ "${1:-}" == "list" ]]; then
+                    cmd_config_model_list
+                fi
+                ;;
+            *)
+                echo -e "${RED}Usage: minimax config [show|set|voice list|model list]${NC}"
+                exit 1
+                ;;
+        esac
+        ;;
+    chat)
+        cmd_chat "$@"
+        ;;
+    tts)
+        cmd_tts "$@"
+        ;;
+    image)
+        cmd_image "$@"
+        ;;
+    vision)
+        cmd_vision "$@"
+        ;;
+    music)
+        cmd_music "$@"
+        ;;
+    search)
+        cmd_search "$@"
+        ;;
+    models)
+        cmd_models
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        if [[ -z "$COMMAND" ]]; then
+            usage
+        else
+            echo -e "${RED}Unknown command: $COMMAND${NC}"
+            usage
+        fi
+        ;;
+esac
