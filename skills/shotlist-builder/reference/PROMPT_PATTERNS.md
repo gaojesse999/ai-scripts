@@ -4,31 +4,37 @@ Every Chinese Seedance 2.0 prompt follows the same structural order. Hit every s
 
 ## Structural order
 
-1. **Handle declarations** (`@image1`, `@image2`, ...)
+1. **Named asset reference declarations** (`[韩立]=韩立`, `[Jane]=Jane`, ...)
 2. **Universal warnings** (`⚠️空间布局`, `⚠️对白规则`, `⚠️本视频严格只有N个镜头`)
 3. **Per-shot blocks** (`【镜头1】` `【镜头2】` ...) OR a single-shot block
 4. **Style block** (`风格：...`)
 5. **Background activity** (`环境活动：...`)
 6. **Closing footer** (`15秒。21:9。`)
 
-## Section 1 — Handle declarations
+## Section 1 — Named asset reference declarations
 
-Every prompt opens by declaring its handles. Handles renumber per-prompt (not per-scene, per-prompt — sometimes scenes contain prompts with different asset subsets). Format:
+Every prompt opens by declaring its named asset references. Do not use numbered image aliases. The first line is a Chinese-comma-separated map from bracket alias to the exact asset name:
 
 ```
-@image1 (Roko) — 混血亚裔白，深色中长湿发贴额碎刘海，发梢滴水，淡小胡，鼻梁红创可贴微潮，左颊痣，黑紧身T恤肩部和上背湿透颜色加深贴身，军绿腰带，黑工装裤大腿和裤脚湿痕，黑靴湿润，红手套微潮，腰间战术包，右腰挂红色小泰迪熊挂件，左前臂纹身，面部薄水雾。
-@image2 (Apartment) — 三视图参考：上图=客厅全景向走廊方向...
-@image3 (PolaroidPhoto) — 一张拍立得横版照片11cm×8.5cm——自拍合照...
+资产引用：[Roko]=Roko，[Old Apartment]=Old Apartment，[PolaroidPhoto]=PolaroidPhoto。
+[Roko] — 混血亚裔白，深色中长湿发贴额碎刘海，发梢滴水，淡小胡，鼻梁红创可贴微潮，左颊痣，黑紧身T恤肩部和上背湿透颜色加深贴身，军绿腰带，黑工装裤大腿和裤脚湿痕，黑靴湿润，红手套微潮，腰间战术包，右腰挂红色小泰迪熊挂件，左前臂纹身，面部薄水雾。
+[Old Apartment] — 三视图参考：上图=客厅全景向走廊方向...
+[PolaroidPhoto] — 一张拍立得横版照片11cm×8.5cm——自拍合照...
 ```
 
 Rules:
-- Character handles always describe height, build, hair, distinctive face marks, full wardrobe head-to-toe, props on the body
-- For wet/dry/blood/dust state changes between scenes, **explicitly note the state** in the handle (`湿发贴额`, `溅血渍`, `面部薄水雾`)
-- Location handles describe the reference image layout in detail (multi-view → say which view is which: `上图=`, `下图=`, `中图=`)
-- Prop handles include exact dimensions when relevant (`11cm×8.5cm`), text on props verbatim, color/material specs
-- For static-pose-reference handles (used for body posing only, not full image generation), use `@imageN` style with explicit warnings:
+- Character references always describe height, build, hair, distinctive face marks, full wardrobe head-to-toe, props on the body
+- For wet/dry/blood/dust state changes between scenes, **explicitly note the state** in the asset reference (`湿发贴额`, `溅血渍`, `面部薄水雾`)
+- Location references describe the reference image layout in detail (multi-view → say which view is which: `上图=`, `下图=`, `中图=`)
+- Prop references include exact dimensions when relevant (`11cm×8.5cm`), text on props verbatim, color/material specs
+- Before writing the reference line, run an **asset-reference audit**: required assets = the exact union of all visible characters, location/background references, key props, screens/documents/inserts, and pose references used anywhere in this prompt.
+- The reference line must contain every required asset and no extra assets. Do not include offscreen-only speakers, props not visible in the prompt, previous-scene locations, style references, or "just in case" assets.
+- If a multi-shot prompt uses an asset in only one internal `【镜头N】` block, include it. If an asset is never visible or visually referenced in any internal block, remove it.
+- If the exact asset set becomes too large or ambiguous, split the prompt rather than padding the reference list.
+- For static-pose references (used for body posing only, not full image generation), use bracket aliases with explicit warnings:
   ```
-  @image7 — ❌NOT A VIDEO FRAME❌ 此图仅用于提取@imageN的身体姿势角度数据。⚠️@image7是静态姿势参考——禁止将@image7渲染/复制/再现为视频的任何一帧。
+  [Roko Pose A]=Roko pose reference A。
+  [Roko Pose A] — ❌NOT A VIDEO FRAME❌ 此图仅用于提取[Roko]的身体姿势角度数据。⚠️[Roko Pose A]是静态姿势参考——禁止将[Roko Pose A]渲染/复制/再现为视频的任何一帧。
   ```
 
 ## Section 2 — Universal warnings (top of prompt)
@@ -55,7 +61,7 @@ When a prompt contains multiple internal cuts, each one is a `【镜头N】` blo
 ⚠️0.3-0.5秒后⚠️立刻硬切（hard cut）到镜头2——无过渡、无淡出、无停留。
 
 【镜头2】（紧接镜头1硬切而来）
-机位：⚠️85mm长焦，⚠️F1.4极浅景深，⚠️@image1侧面紧凑特写。
+机位：⚠️85mm长焦，⚠️F1.4极浅景深，⚠️[Roko]侧面紧凑特写。
 摄影机运动：[handheld / dolly / static + camera-emotion sync clause from CAMERA_EMOTION.md].
 背景：[detail].
 动作：[step-by-step].
@@ -81,9 +87,9 @@ For any prompt with 2+ characters in frame, declare the spatial relationship exp
 
 ```
 ⚠️空间布局（MAIN VIEW=从天桥入口看向巨型屏幕）：
-位置A：@image4站在中央通道最前方靠近屏幕，面朝三人。
-位置B：@image1和@image2在通道中间并肩站立，距@image4约3米，面朝@image4方向。
-@image3站在@image1和@image2正后方1.5米处——不在他们旁边，严格在他们背后，被他们的身体部分遮挡——也面朝@image4方向。
+位置A：[Gandelfina]站在中央通道最前方靠近屏幕，面朝三人。
+位置B：[Roko]和[Lulu]在通道中间并肩站立，距[Gandelfina]约3米，面朝[Gandelfina]方向。
+[Rein]站在[Roko]和[Lulu]正后方1.5米处——不在他们旁边，严格在他们背后，被他们的身体部分遮挡——也面朝[Gandelfina]方向。
 ```
 
 Use precise distances in meters. Use cardinal directions or "north/south/east/west" relative to the main view axis. Note who occludes whom, who faces which direction, and any heights/eyelines the model might get wrong.
@@ -109,7 +115,7 @@ Forbidden moves are explicit:
 This is the cinematographer's main creative output. Direct emotion as physical micro-events. See [MICRO_BEATS.md](MICRO_BEATS.md) for the full catalog by emotion.
 
 Tactics:
-- Eyeline shifts ("目光从@image4方向微微移开向下")
+- Eyeline shifts ("目光从[Gandelfina]方向微微移开向下")
 - Breath ("胸腔深深起伏——一次漫长的吸气，然后缓慢呼出")
 - Throat/jaw micro-tells ("一次喉结上下吞咽", "颧骨处咬肌慢慢收缩")
 - Suppressed emotion as physical resistance ("他在试图忍住——每一块面部肌肉都在对抗涌上来的情绪")
@@ -148,7 +154,7 @@ If a character in bokeh speaks — sound is allowed, but the silhouette must mat
 For any scene with extras or environmental movement, callout what's happening in the background. Forbid empty backgrounds:
 
 ```
-环境活动（匹配@image6）：⚠️背景必须充满大量活动的工作人员——禁止空旷背景。多名白衬衫分析员在工作站旁快速打字、站起交接文件、弯腰核对屏幕数据、两人并排讨论。多名白大褂科研人员透过显微镜观察古代文物。银色铰接机械臂全程持续运动。多人在通道和工作台之间来回走动。
+环境活动（匹配[Underground Base Main Hall]）：⚠️背景必须充满大量活动的工作人员——禁止空旷背景。多名白衬衫分析员在工作站旁快速打字、站起交接文件、弯腰核对屏幕数据、两人并排讨论。多名白大褂科研人员透过显微镜观察古代文物。银色铰接机械臂全程持续运动。多人在通道和工作台之间来回走动。
 ```
 
 For empty/quiet scenes (apartments, exteriors at night), still callout the *absence* — what isn't moving, what kind of silence:
@@ -198,7 +204,7 @@ What to mark with `⚠️`:
 
 ### Common failure modes to counter
 
-- **Handle contamination** — model uses one character's wardrobe on another. Counter: re-state each character's exact wardrobe in the handle.
+- **Asset-reference contamination** — model uses one character's wardrobe on another or blends assets. Counter: re-state each character's exact wardrobe in the named asset reference.
 - **Identity drift across cuts** — counter: `连续性：角色、道具、环境每个镜头完全一致。禁身份漂移。`
 - **Pose-reference contamination** — counter: explicit `❌NOT A VIDEO FRAME❌` rules
 - **Light spill on skin** — counter: `禁止蓝色色溢打在人物皮肤和服装上`

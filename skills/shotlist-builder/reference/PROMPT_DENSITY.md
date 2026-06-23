@@ -22,7 +22,7 @@ Group shot rows into one prompt when ALL of these are true:
 
 Split into separate prompts when ANY of these fire:
 1. **Hard cut between locations** (apartment → flashback)
-2. **Major character entrance/exit** changes the handle list
+2. **Major character entrance/exit** changes the exact named asset-reference list
 3. **Aspect/lens change** that needs its own setup (wide establish → tight insert)
 4. **Performance arc** that needs its own 15-second envelope (a reaction shot that builds across 7 emotional beats deserves its own prompt — don't bundle it with action)
 5. **Insert / cutaway** to a prop or screen (these get their own ECU prompt)

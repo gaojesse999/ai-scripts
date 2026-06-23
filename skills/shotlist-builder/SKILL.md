@@ -112,7 +112,7 @@ End the turn with: *"Asset sheet saved to `plans/Assets_<scope>.md`. The STYLE P
 When the user uploads images, before generating any prompt:
 
 1. **Confirm scope** — which scenes to build (e.g., "scenes 21 and 23", "all scenes", "scene range 13–17")
-2. **Map filenames to assets** — flag any missing or extra files. Never auto-assign silently if a filename is ambiguous; ask.
+2. **Map filenames to assets** — flag any missing or extra files. Never auto-assign silently if a filename is ambiguous; ask. Build a named asset map for prompt references using bracket aliases, e.g. `[韩立]=韩立，[Jane]=Jane，[Old Apartment]=Old Apartment`; never use numbered image aliases.
 3. **Confirm style override** if one was uploaded; otherwise confirm default style
 4. **For any scene with 2+ characters in frame OR a key prop on a specific surface** — produce a top-down SVG schema (see [reference/SPATIAL_BLOCKING.md](reference/SPATIAL_BLOCKING.md)) using `visualize:show_widget`. Show character positions, eyelines, prop placement, distances in meters, camera position per shot. Then ask: *"Positions correct? Any edits?"* and iterate until approved.
 
@@ -124,14 +124,16 @@ For each scene in scope:
 1. Break action into shot rows (script-beat granularity — one row per discrete action/camera/focal-length change)
 2. Group consecutive shot rows into 15-second prompts using the [density rules](reference/PROMPT_DENSITY.md)
 3. Write each Chinese Seedance 2.0 prompt following the [prompt patterns](reference/PROMPT_PATTERNS.md) — including the universal blocks from [STYLE_BLOCK.md](reference/STYLE_BLOCK.md), camera-emotion sync from [CAMERA_EMOTION.md](reference/CAMERA_EMOTION.md), and performance micro-beats from [MICRO_BEATS.md](reference/MICRO_BEATS.md)
-4. For multi-shot prompts, structure each internal cut as a `【镜头N】` block with its own 机位 / 背景 / 动作 / 微表演细节 sub-blocks
-5. Assemble into the [HTML template](templates/HTML_TEMPLATE.md)
-6. Save to `/mnt/user-data/outputs/Shotlist_<scope>_EN.html`
-7. Use `present_files` to deliver
+4. Before finalizing each prompt, run an **asset-reference audit**: derive the exact required visual assets from the shot row(s) (visible characters, location/background reference, key props, screens/documents/inserts, pose references if any), then make sure the prompt's bracket reference line contains every required asset and no extra assets.
+5. For multi-shot prompts, structure each internal cut as a `【镜头N】` block with its own 机位 / 背景 / 动作 / 微表演细节 sub-blocks
+6. Assemble into the [HTML template](templates/HTML_TEMPLATE.md)
+7. Save to `/mnt/user-data/outputs/Shotlist_<scope>_EN.html`
+8. Use `present_files` to deliver
 
 ## Hard rules
 
-- **Handles renumber per prompt.** `@image1` in scene 21 = Roko; `@image1` in scene 14 may = a different character. Each prompt block declares its own handles.
+- **Named asset references only.** Use bracket aliases in every prompt's asset-reference line, e.g. `[韩立]=韩立，[Jane]=Jane，[Old Apartment]=Old Apartment`. Do not use numbered image aliases or per-prompt alias renumbering.
+- **Exact asset set per prompt.** Each prompt declares only the visual assets needed for that prompt. Required assets must not be missing; unused assets must not be included. For multi-shot prompts, declare the union of assets visible or visually referenced in any internal `【镜头N】` block.
 - **Output language:** all UI labels, scene headers, action cells, scene-text cells, asset lists → English. Chinese only inside the `提示词` blocks. Dialogue lines inside Chinese prompts are quoted in English (`"line"`).
 - **Default duration:** 15 seconds per prompt, 21:9. State this at the end of every prompt: `15秒。21:9。`
 - **Director assignment:** skip entirely unless user requests it. No `dir-badge`, no palette switching — default to `pal-red` color scheme.
@@ -141,7 +143,7 @@ For each scene in scope:
 - **No generic emotion.** Every emotional direction must decompose into muscles, breath, eyes, skin. See [MICRO_BEATS.md](reference/MICRO_BEATS.md).
 - **Top-down schema before prompting** for any 2+ character scene. See phase 3.
 - **Metadata inference:** project title, "Prepared for [name]", scene scope — infer from script + user context (memory, prior turns). If genuinely unclear, ask one short clarifying question; otherwise proceed.
-- **Never auto-assign images to handles silently.** If a filename is ambiguous, ask before assembling prompts.
+- **Never auto-assign images to asset names silently.** If a filename is ambiguous, ask before assembling prompts.
 - **Iteration = HTML edits, not chat dumps.** When the user requests changes after delivery, edit the HTML file directly and re-present it. Do not paste new prompt text in chat.
 
 ## Cinematography mandate
@@ -153,7 +155,7 @@ For every prompt, you must:
 - Direct the performance with numbered emotional beats (① ② ③ ④ ⑤) — micro-beats, breath, eye-line shifts, weight shifts, suppressed emotion
 - Specify lighting source by source (windows, practicals, screens) and forbid film fill light explicitly
 - Specify what's in the background and what the extras are doing — never empty backgrounds in populated locations
-- Add `⚠️` warnings for failure modes the prompt is most likely to mess up; use `⚠️⚠️⚠️` for critical-critical (handle contamination, identity drift, light spill, prop misplacement, focus drift on inserts)
+- Add `⚠️` warnings for failure modes the prompt is most likely to mess up; use `⚠️⚠️⚠️` for critical-critical (asset-reference contamination, identity drift, light spill, prop misplacement, focus drift on inserts)
 
 See [reference/PROMPT_PATTERNS.md](reference/PROMPT_PATTERNS.md) for the full pattern library.
 
@@ -181,7 +183,7 @@ See [reference/PROMPT_PATTERNS.md](reference/PROMPT_PATTERNS.md) for the full pa
 - `templates/ASSET_SHEET_TEMPLATE.md` — Markdown skeleton for the Phase 2B asset image-prompt sheet
 - `reference/STYLE_BLOCK.md` — the default Chinese style block for **Seedance video** (Lubezki × Deakins, contre-jour, 60:30:10, practicals-only) with scene-type variants
 - `reference/ASSET_PROMPT_PREFIX.md` — the canonical STYLE PREFIX for **single-image asset generation** (Nano Banana / Soul / 即梦 / Midjourney / Flux); composition rule for paste-ready single-asset prompts
-- `reference/PROMPT_PATTERNS.md` — the full prompt structure: handles, spatial blocking, multi-shot 【镜头N】 syntax, dialogue rules, failure-mode warnings
+- `reference/PROMPT_PATTERNS.md` — the full prompt structure: named asset references, spatial blocking, multi-shot 【镜头N】 syntax, dialogue rules, failure-mode warnings
 - `reference/CAMERA_EMOTION.md` — camera movement-to-emotion mapping, lens selection, shot duration rules, phased emotional arcs
 - `reference/MICRO_BEATS.md` — the performance micro-beat catalog by emotion (anger, anxiety, sadness, control, heaviness, etc.)
 - `reference/SPATIAL_BLOCKING.md` — top-down schema rules: when to draw, what goes on it, how to translate it into the prompt

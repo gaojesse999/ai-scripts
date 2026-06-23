@@ -47,10 +47,10 @@ Every prompt for that scene includes a `⚠️空间布局` block that mirrors t
 Example:
 ```
 ⚠️空间布局（MAIN VIEW=从天桥入口看向巨型屏幕）：
-位置A：@image4站在中央通道最前方靠近屏幕，面朝三人。
-位置B：@image1和@image2在通道中间并肩站立，距@image4约3米，面朝@image4方向。
-位置C：@image3站在@image1和@image2正后方1.5米处——不在他们旁边，严格在他们背后，被他们的身体部分遮挡——也面朝@image4方向。
-⚠️@image1左肩与@image2右肩间距约40厘米。@image3的头顶高度严格低于@image1和@image2的肩部连线（站位较远造成的视觉缩小）。
+位置A：[Gandelfina]站在中央通道最前方靠近屏幕，面朝三人。
+位置B：[Roko]和[Lulu]在通道中间并肩站立，距[Gandelfina]约3米，面朝[Gandelfina]方向。
+位置C：[Rein]站在[Roko]和[Lulu]正后方1.5米处——不在他们旁边，严格在他们背后，被他们的身体部分遮挡——也面朝[Gandelfina]方向。
+⚠️[Roko]左肩与[Lulu]右肩间距约40厘米。[Rein]的头顶高度严格低于[Roko]和[Lulu]的肩部连线（站位较远造成的视觉缩小）。
 ```
 
 Always include in the prompt:
