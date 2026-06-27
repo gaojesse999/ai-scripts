@@ -4,37 +4,44 @@ Every Chinese Seedance 2.0 prompt follows the same structural order. Hit every s
 
 ## Structural order
 
-1. **Named asset reference declarations** (`[韩立]=韩立`, `[Jane]=Jane`, ...)
+1. **Named asset reference declarations** — visual assets (`@韩立=韩立`, `@Jane=Jane`, ...) **and** sound assets (`@银月=银月`, `@开罐头声=开罐头声`, ...)
 2. **Universal warnings** (`⚠️空间布局`, `⚠️对白规则`, `⚠️本视频严格只有N个镜头`)
 3. **Per-shot blocks** (`【镜头1】` `【镜头2】` ...) OR a single-shot block
 4. **Style block** (`风格：...`)
-5. **Background activity** (`环境活动：...`)
+5. **Background activity & sound design** (`环境活动：...`, `声音设计：...`)
 6. **Closing footer** (`15秒。21:9。`)
 
 ## Section 1 — Named asset reference declarations
 
-Every prompt opens by declaring its named asset references. Do not use numbered image aliases. The first line is a Chinese-comma-separated map from bracket alias to the exact asset name:
+Every prompt opens by declaring its named asset references — both **visual assets** (characters / locations / props / inserts / pose refs) and **sound assets** (voice timbre / SFX / ambient bed). Do not use numbered image aliases. The first line is a Chinese-comma-separated map from `@`-prefixed alias to the exact asset name, followed (when the prompt has audio assets) by a `声音资产` line in the same `@`-prefixed format:
 
 ```
-资产引用：[Roko]=Roko，[Old Apartment]=Old Apartment，[PolaroidPhoto]=PolaroidPhoto。
-[Roko] — 混血亚裔白，深色中长湿发贴额碎刘海，发梢滴水，淡小胡，鼻梁红创可贴微潮，左颊痣，黑紧身T恤肩部和上背湿透颜色加深贴身，军绿腰带，黑工装裤大腿和裤脚湿痕，黑靴湿润，红手套微潮，腰间战术包，右腰挂红色小泰迪熊挂件，左前臂纹身，面部薄水雾。
-[Old Apartment] — 三视图参考：上图=客厅全景向走廊方向...
-[PolaroidPhoto] — 一张拍立得横版照片11cm×8.5cm——自拍合照...
+资产引用：@Roko=Roko，@Old Apartment=Old Apartment，@PolaroidPhoto=PolaroidPhoto。
+@Roko — 混血亚裔白，深色中长湿发贴额碎刘海，发梢滴水，淡小胡，鼻梁红创可贴微潮，左颊痣，黑紧身T恤肩部和上背湿透颜色加深贴身，军绿腰带，黑工装裤大腿和裤脚湿痕，黑靴湿润，红手套微潮，腰间战术包，右腰挂红色小泰迪熊挂件，左前臂纹身，面部薄水雾。
+@Old Apartment — 三视图参考：上图=客厅全景向走廊方向...
+@PolaroidPhoto — 一张拍立得横版照片11cm×8.5cm——自拍合照...
+声音资产：@Roko声线=Roko声线，@城市夜环境声=城市夜环境声，@拍立得快门声=拍立得快门声。
+@Roko声线 — 男声，低沉略沙哑，疲惫感，中速节奏，气声较多。
+@城市夜环境声 — 远处城市低频嗡鸣+偶尔车流呼啸，持续低音床，无音乐。
+@拍立得快门声 — 机械咔嚓声紧接卷出照片的滚轮摩擦声，干、近、清脆。
 ```
+
+⚠️**Alias convention:** the `@`-prefix is used **only inside this declaration block** — both the visual `资产引用` lines and the `声音资产` lines (the `@name=name` map lines and the per-asset `@name — ...` description lines). **Everywhere else in the prompt** (机位 / 空间布局 / 动作 / 微表演 / 环境活动 / 对白 / warnings, etc.) reference the asset with **bracket form `[name]`**, e.g. `[Roko]`, `[Old Apartment]`, `[城市夜环境声]`.
 
 Rules:
 - Character references always describe height, build, hair, distinctive face marks, full wardrobe head-to-toe, props on the body
 - For wet/dry/blood/dust state changes between scenes, **explicitly note the state** in the asset reference (`湿发贴额`, `溅血渍`, `面部薄水雾`)
 - Location references describe the reference image layout in detail (multi-view → say which view is which: `上图=`, `下图=`, `中图=`)
 - Prop references include exact dimensions when relevant (`11cm×8.5cm`), text on props verbatim, color/material specs
-- Before writing the reference line, run an **asset-reference audit**: required assets = the exact union of all visible characters, location/background references, key props, screens/documents/inserts, and pose references used anywhere in this prompt.
-- The reference line must contain every required asset and no extra assets. Do not include offscreen-only speakers, props not visible in the prompt, previous-scene locations, style references, or "just in case" assets.
+- **Sound assets** go on a separate `声音资产：` line in the same `@name=name` format. Use them for character voice timbre (`@Roko声线`), key diegetic SFX (`@开罐头声`, `@拍立得快门声`), and the ambient bed (`@城市夜环境声`). Describe each with character/texture/distance/pace; respect the style block — `禁音乐`, so never declare a music asset. Omit the `声音资产` line entirely for a silent prompt.
+- Before writing the reference lines, run an **asset-reference audit**: required assets = the exact union of all visible characters, location/background references, key props, screens/documents/inserts, pose references, **and audible sound assets (voice / SFX / ambient)** used anywhere in this prompt.
+- The reference lines must contain every required asset and no extra assets. Do not include offscreen-only speakers (unless their voice is heard), props not visible in the prompt, previous-scene locations, style references, inaudible sounds, or "just in case" assets.
 - If a multi-shot prompt uses an asset in only one internal `【镜头N】` block, include it. If an asset is never visible or visually referenced in any internal block, remove it.
 - If the exact asset set becomes too large or ambiguous, split the prompt rather than padding the reference list.
-- For static-pose references (used for body posing only, not full image generation), use bracket aliases with explicit warnings:
+- For static-pose references (used for body posing only, not full image generation), use `@`-prefixed aliases with explicit warnings:
   ```
-  [Roko Pose A]=Roko pose reference A。
-  [Roko Pose A] — ❌NOT A VIDEO FRAME❌ 此图仅用于提取[Roko]的身体姿势角度数据。⚠️[Roko Pose A]是静态姿势参考——禁止将[Roko Pose A]渲染/复制/再现为视频的任何一帧。
+  @Roko Pose A=Roko pose reference A。
+  @Roko Pose A — ❌NOT A VIDEO FRAME❌ 此图仅用于提取@Roko的身体姿势角度数据。⚠️@Roko Pose A是静态姿势参考——禁止将@Roko Pose A渲染/复制/再现为视频的任何一帧。
   ```
 
 ## Section 2 — Universal warnings (top of prompt)
@@ -149,7 +156,7 @@ Every line must explicitly state **whom it's directed at**:
 ### Lines from bokeh
 If a character in bokeh speaks — sound is allowed, but the silhouette must match: head angled toward the speech direction, breath before words readable even through blur.
 
-## Section 8 — Background activity
+## Section 8 — Background activity & sound design
 
 For any scene with extras or environmental movement, callout what's happening in the background. Forbid empty backgrounds:
 
@@ -161,6 +168,12 @@ For empty/quiet scenes (apartments, exteriors at night), still callout the *abse
 
 ```
 完全寂静——禁背景音乐、禁画外人声。仅环境SFX：远处城市低频嗡鸣、暖气管道轻响、湿靴踩在拼花地板上的回响。
+```
+
+When the prompt declares sound assets in Section 1, **reference them here in bracket form** (`@` only in the declaration) and place each cue on its beat:
+
+```
+声音设计：[城市夜环境声]全程作为低音床。第N镜头[Roko]开口——[Roko声线]"line"。拍立得弹出瞬间触发[拍立得快门声]。⚠️禁音乐、禁字幕——仅画面内SFX与人声。
 ```
 
 ## Section 9 — Lighting overrides per shot

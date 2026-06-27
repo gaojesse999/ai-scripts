@@ -112,7 +112,7 @@ End the turn with: *"Asset sheet saved to `plans/Assets_<scope>.md`. The STYLE P
 When the user uploads images, before generating any prompt:
 
 1. **Confirm scope** — which scenes to build (e.g., "scenes 21 and 23", "all scenes", "scene range 13–17")
-2. **Map filenames to assets** — flag any missing or extra files. Never auto-assign silently if a filename is ambiguous; ask. Build a named asset map for prompt references using bracket aliases, e.g. `[韩立]=韩立，[Jane]=Jane，[Old Apartment]=Old Apartment`; never use numbered image aliases.
+2. **Map filenames to assets** — flag any missing or extra files. Never auto-assign silently if a filename is ambiguous; ask. Build a named asset map for prompt references using `@`-prefixed aliases, e.g. `@韩立=韩立，@Jane=Jane，@Old Apartment=Old Apartment`; never use numbered image aliases.
 3. **Confirm style override** if one was uploaded; otherwise confirm default style
 4. **For any scene with 2+ characters in frame OR a key prop on a specific surface** — produce a top-down SVG schema (see [reference/SPATIAL_BLOCKING.md](reference/SPATIAL_BLOCKING.md)) using `visualize:show_widget`. Show character positions, eyelines, prop placement, distances in meters, camera position per shot. Then ask: *"Positions correct? Any edits?"* and iterate until approved.
 
@@ -124,7 +124,7 @@ For each scene in scope:
 1. Break action into shot rows (script-beat granularity — one row per discrete action/camera/focal-length change)
 2. Group consecutive shot rows into 15-second prompts using the [density rules](reference/PROMPT_DENSITY.md)
 3. Write each Chinese Seedance 2.0 prompt following the [prompt patterns](reference/PROMPT_PATTERNS.md) — including the universal blocks from [STYLE_BLOCK.md](reference/STYLE_BLOCK.md), camera-emotion sync from [CAMERA_EMOTION.md](reference/CAMERA_EMOTION.md), and performance micro-beats from [MICRO_BEATS.md](reference/MICRO_BEATS.md)
-4. Before finalizing each prompt, run an **asset-reference audit**: derive the exact required visual assets from the shot row(s) (visible characters, location/background reference, key props, screens/documents/inserts, pose references if any), then make sure the prompt's bracket reference line contains every required asset and no extra assets.
+4. Before finalizing each prompt, run an **asset-reference audit**: derive the exact required assets from the shot row(s) — visual (visible characters, location/background reference, key props, screens/documents/inserts, pose references if any) **and sound (character voice timbre, key diegetic SFX, ambient bed)** — then make sure the prompt's `@`-prefixed `资产引用` and `声音资产` lines contain every required asset and no extra assets.
 5. For multi-shot prompts, structure each internal cut as a `【镜头N】` block with its own 机位 / 背景 / 动作 / 微表演细节 sub-blocks
 6. Assemble into the [HTML template](templates/HTML_TEMPLATE.md)
 7. Save to `/mnt/user-data/outputs/Shotlist_<scope>_EN.html`
@@ -132,8 +132,8 @@ For each scene in scope:
 
 ## Hard rules
 
-- **Named asset references only.** Use bracket aliases in every prompt's asset-reference line, e.g. `[韩立]=韩立，[Jane]=Jane，[Old Apartment]=Old Apartment`. Do not use numbered image aliases or per-prompt alias renumbering.
-- **Exact asset set per prompt.** Each prompt declares only the visual assets needed for that prompt. Required assets must not be missing; unused assets must not be included. For multi-shot prompts, declare the union of assets visible or visually referenced in any internal `【镜头N】` block.
+- **Named asset references only.** In the declaration block at the top of every prompt, use `@`-prefixed aliases — visual assets on the `资产引用` line (`@韩立=韩立，@Jane=Jane，@Old Apartment=Old Apartment`) and sound assets on a `声音资产` line in the same format (`@韩立声线=韩立声线，@开罐头声=开罐头声`). **Everywhere else in the prompt body** (机位 / 空间布局 / 动作 / 微表演 / 环境活动 / 对白 / warnings), reference the asset with bracket form `[韩立]`, `[Jane]`, `[Old Apartment]`, `[开罐头声]`. Do not use numbered image aliases or per-prompt alias renumbering.
+- **Exact asset set per prompt.** Each prompt declares only the visual and sound assets needed for that prompt. Required assets must not be missing; unused assets must not be included. For multi-shot prompts, declare the union of assets visible, visually referenced, or audible in any internal `【镜头N】` block.
 - **Output language:** all UI labels, scene headers, action cells, scene-text cells, asset lists → English. Chinese only inside the `提示词` blocks. Dialogue lines inside Chinese prompts are quoted in English (`"line"`).
 - **Default duration:** 15 seconds per prompt, 21:9. State this at the end of every prompt: `15秒。21:9。`
 - **Director assignment:** skip entirely unless user requests it. No `dir-badge`, no palette switching — default to `pal-red` color scheme.
