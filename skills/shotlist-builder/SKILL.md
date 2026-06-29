@@ -154,6 +154,7 @@ For every prompt, you must:
 - Block the actors with concrete spatial relationships from the approved top-down schema ("Roko 2m from Gandelfina, Rein 1.5m behind Roko, partially occluded")
 - Direct the performance with numbered emotional beats (① ② ③ ④ ⑤) — micro-beats, breath, eye-line shifts, weight shifts, suppressed emotion
 - Specify lighting source by source (windows, practicals, screens) and forbid film fill light explicitly
+- For any character close-up / medium close-up, append the close-up skin clause (see STYLE_BLOCK.md): keep pores + fine texture, but the **overall face stays smooth and clean** — `禁麻子、禁痘坑、禁坑洼、禁凹凸不平、禁过度纹理`
 - Specify what's in the background and what the extras are doing — never empty backgrounds in populated locations
 - Add `⚠️` warnings for failure modes the prompt is most likely to mess up; use `⚠️⚠️⚠️` for critical-critical (asset-reference contamination, identity drift, light spill, prop misplacement, focus drift on inserts)
 

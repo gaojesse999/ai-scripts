@@ -77,6 +77,7 @@ The full prompt envelope is 15 seconds. Divide internally for multi-shot prompts
 ⚠️⚠️⚠️摄影机⚠️严格手持，全程明显的呼吸式漂移和微动——⚠️真实摄影师贴身跟拍的呼吸感、心跳感。⚠️摄影机⚠️主动跟随[Character]的脸部运动——头部任何细微的转动、抬起、下沉、目光移动，摄影机都微微跟随调整构图。
 摄影机位置：[east/west/south/north of character].
 背景：⚠️完全虚化为模糊色块和柔光斑——所有细节都强烈散焦。
+⚠️皮肤：仅保留细腻真实的毛孔与绒毛质感和自然光影过渡，面部整体必须光滑干净、底子均匀健康。禁麻子、禁痘坑、禁坑洼、禁凹凸不平、禁粗糙糙皮、禁过度纹理/过度锐化导致的"橘子皮"或CG粗糙感。（见 STYLE_BLOCK.md 的 close-up skin clause）
 动作：[step-by-step micro-beats].
 ⚠️⚠️⚠️微表演细节（actor performance micro-beats）：
 - ...

@@ -235,6 +235,7 @@ What to mark with `⚠️`:
 - **Identity drift across cuts** — counter: `连续性：角色、道具、环境每个镜头完全一致。禁身份漂移。`
 - **Pose-reference contamination** — counter: explicit `❌NOT A VIDEO FRAME❌` rules
 - **Light spill on skin** — counter: `禁止蓝色色溢打在人物皮肤和服装上`
+- **Over-textured / cratered skin in close-ups** — Seedance often overdoes pores into pockmarks/orange-peel/CG roughness on CU/ECU. Counter: append the close-up skin clause (see STYLE_BLOCK.md) — keep pores + fine texture but `面部整体光滑干净`, `禁麻子、禁痘坑、禁坑洼、禁凹凸不平、禁过度纹理/过度锐化`.
 - **Wide-angle distortion** — counter: `禁光学畸变——禁桶形畸变、禁枕形畸变、禁鱼眼效果、禁广角变形`
 - **Floating props** — counter: `禁漂浮道具`
 - **God rays / volumetric beams** — counter: `禁止可见光束（god rays）`
