@@ -127,7 +127,7 @@ Reference image-prompt prefix: [`reference/ASSET_PROMPT_PREFIX.md`](../reference
 1. **STYLE PREFIX is verbatim from `reference/ASSET_PROMPT_PREFIX.md`** — only the project-aesthetic clause inside the **风格 (Style)** bullet may be customized per project. Lock that line at the start of the project; reuse across scope.
 2. **Visual descriptions only.** No "Want / Need / Hamartia" — that is the screenwriting tool's job. If the script tells you a character is "afraid of fire," do not write that here. Write only what the camera will see.
 3. **Mark `[已存在: path]`** for any asset that already has a reference image in the project. Do not regenerate. Pass the path in chat to the user as a reminder.
-4. **Suggested filenames** must be `lowercase_with_underscores.png`. In Phase 3 they are mapped to named `@`-prefixed aliases for video prompts, e.g. `@韩立=韩立，@Jane=Jane`. Never convert them into numbered image aliases.
+4. **Suggested filenames** must be `lowercase_with_underscores.png`. In Phase 3 they are mapped to named bracket aliases for video prompts, e.g. `[韩立]=韩立，[Jane]=Jane`. Never convert them into numbered image aliases.
 5. **Group asset entries** under sub-headings only when there are 5+ items in a category (e.g., props split into 武器 / 载具 / 个人物品). Otherwise flat list.
 6. **Style References** — only include if there's an obvious reuse value (multi-class wardrobe sheet, recurring vehicle three-view, recurring HUD detail). If nothing rises to that bar, omit the section entirely.
 7. **Length budget:** the asset sheet is a working doc, not a novel. Each visual description ≈ 1–4 sentences. Cut purple prose. The user will read this 20+ times during a project.

@@ -4,7 +4,7 @@ Every Chinese Seedance 2.0 prompt follows the same structural order. Hit every s
 
 ## Structural order
 
-1. **Named asset reference declarations** — `图片资产：` map (`@韩立=韩立`, ...) + `声音资产：` map (`@韩立声音=韩立声音`, ...), then `图片资产描述：` and `声音资产描述：` sections (`[韩立] — ...`)
+1. **Named asset reference declarations** — `图片资产：` map (`[韩立]=韩立`, ...) + `声音资产：` map (`[韩立声音]=韩立声音`, ...), then `图片资产描述：` and `声音资产描述：` sections (`[韩立] — ...`)
 2. **Universal warnings** (`⚠️空间布局`, `⚠️对白规则`, `⚠️本视频严格只有N个镜头`)
 3. **Per-shot blocks** (`【镜头1】` `【镜头2】` ...) OR a single-shot block
 4. **Style block** (`风格：...`)
@@ -16,8 +16,8 @@ Every Chinese Seedance 2.0 prompt follows the same structural order. Hit every s
 Every prompt opens by declaring its named asset references — both **visual/image assets** (characters / locations / props / inserts / pose refs) and **character-voice sound assets** (the voice of each character / speaking role heard in the prompt). Do not use numbered image aliases.
 
 The declaration block has **two mapping lines** followed by **two description sections**:
-1. `图片资产：` — a Chinese-comma-separated `@name=name` map of every image asset.
-2. `声音资产：` — a `@角色名声音=角色名声音` map of every character voice heard (omit this line entirely if no character/speaking role is audible).
+1. `图片资产：` — a Chinese-comma-separated `[name]=name` map of every image asset.
+2. `声音资产：` — a `[角色名声音]=角色名声音` map of every character voice heard (omit this line entirely if no character/speaking role is audible).
 3. `图片资产描述：` — one `[name] — description` line per image asset.
 4. `声音资产描述：` — one `[name声音] — description` line per voice asset.
 
@@ -26,8 +26,8 @@ The declaration block has **two mapping lines** followed by **two description se
 ⚠️**Sound assets live only in the asset list.** The voice alias appears only on the `声音资产` map line and its `声音资产描述` line — never reference a voice anywhere in the prompt body. The model maps each character's dialogue to their declared voice automatically; dialogue lines in the body follow the normal 对白 rules without any voice alias.
 
 ```
-图片资产：@Roko=Roko，@Old Apartment=Old Apartment，@PolaroidPhoto=PolaroidPhoto。
-声音资产：@Roko声音=Roko声音。
+图片资产：[Roko]=Roko，[Old Apartment]=Old Apartment，[PolaroidPhoto]=PolaroidPhoto。
+声音资产：[Roko声音]=Roko声音。
 
 图片资产描述：
 [Roko] — 混血亚裔白，深色中长湿发贴额碎刘海，发梢滴水，淡小胡，鼻梁红创可贴微潮，左颊痣，黑紧身T恤肩部和上背湿透颜色加深贴身，军绿腰带，黑工装裤大腿和裤脚湿痕，黑靴湿润，红手套微潮，腰间战术包，右腰挂红色小泰迪熊挂件，左前臂纹身，面部薄水雾。
@@ -38,8 +38,8 @@ The declaration block has **two mapping lines** followed by **two description se
 ```
 
 ⚠️**Alias convention:**
-- **`@name` form** appears **only on the two mapping lines** (`图片资产：` and `声音资产：`).
-- **`[name]` form** appears in the description sections (`图片资产描述：` / `声音资产描述：`) **and** — for image assets only — **everywhere in the prompt body** (机位 / 空间布局 / 动作 / 微表演 / 环境活动 / 对白 / warnings), e.g. `[Roko]`, `[Old Apartment]`.
+- **All asset references use bracket form `[name]`** — on the two mapping lines (`图片资产：[name]=name`, `声音资产：[name声音]=name声音`), in the description sections, and in the prompt body. There is no `@` prefix.
+- **Image assets** are bracket-referenced **everywhere in the prompt body** (机位 / 空间布局 / 动作 / 微表演 / 环境活动 / 对白 / warnings), e.g. `[Roko]`, `[Old Apartment]`.
 - **Voice assets** appear only in the `声音资产` map line and `声音资产描述` section — never in the prompt body.
 - **Ambient / SFX** — have no alias at all; they are plain inline text.
 
@@ -48,12 +48,12 @@ Rules:
 - For wet/dry/blood/dust state changes between scenes, **explicitly note the state** in the asset reference (`湿发贴额`, `溅血渍`, `面部薄水雾`)
 - Location references describe the reference image layout in detail (multi-view → say which view is which: `上图=`, `下图=`, `中图=`)
 - Prop references include exact dimensions when relevant (`11cm×8.5cm`), text on props verbatim, color/material specs
-- **Sound assets are character voices only, and live only in the asset list.** Map them on the `声音资产：` line in the `@角色名声音=角色名声音` format (`@Roko声音=Roko声音`, `@银月声音=银月声音`), and describe them in `声音资产描述：` as `[角色名声音] — ...` (gender/pitch/texture/pace). The voice alias appears **only in the asset list (map line + description)** — never reference it in the prompt body. **Do NOT declare ambient beds, environmental sound, or prop/diegetic SFX as assets** — those are written as plain inline text in 声音设计 / 环境活动 (e.g. `远处城市低频嗡鸣`, `拍立得快门咔嚓声`). Respect the style block — `禁音乐`, so never declare a music asset. Omit the `声音资产` line entirely when no character/speaking role is audible.
+- **Sound assets are character voices only, and live only in the asset list.** Map them on the `声音资产：` line in the `[角色名声音]=角色名声音` format (`[Roko声音]=Roko声音`, `[银月声音]=银月声音`), and describe them in `声音资产描述：` as `[角色名声音] — ...` (gender/pitch/texture/pace). The voice alias appears **only in the asset list (map line + description)** — never reference it in the prompt body. **Do NOT declare ambient beds, environmental sound, or prop/diegetic SFX as assets** — those are written as plain inline text in 声音设计 / 环境活动 (e.g. `远处城市低频嗡鸣`, `拍立得快门咔嚓声`). Respect the style block — `禁音乐`, so never declare a music asset. Omit the `声音资产` line entirely when no character/speaking role is audible.
 - Before writing the reference lines, run an **asset-reference audit**: required assets = the exact union of all visible characters, location/background references, key props, screens/documents/inserts, pose references, **and the voice of every character/speaking role heard** in this prompt.
 - The reference lines must contain every required asset and no extra assets. Do not include offscreen-only speakers (unless their voice is heard), props not visible in the prompt, previous-scene locations, style references, ambient/SFX (not assets), or "just in case" assets.
 - If a multi-shot prompt uses an asset in only one internal `【镜头N】` block, include it. If an asset is never visible or visually referenced in any internal block, remove it.
 - If the exact asset set becomes too large or ambiguous, split the prompt rather than padding the reference list.
-- For static-pose references (used for body posing only, not full image generation), map them on the `图片资产：` line (`@Roko Pose A=Roko pose reference A`) and describe them in `图片资产描述：` with explicit warnings:
+- For static-pose references (used for body posing only, not full image generation), map them on the `图片资产：` line (`[Roko Pose A]=Roko pose reference A`) and describe them in `图片资产描述：` with explicit warnings:
   ```
   [Roko Pose A] — ❌NOT A VIDEO FRAME❌ 此图仅用于提取[Roko]的身体姿势角度数据。⚠️[Roko Pose A]是静态姿势参考——禁止将[Roko Pose A]渲染/复制/再现为视频的任何一帧。
   ```
