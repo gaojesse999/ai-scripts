@@ -1,0 +1,53 @@
+# Generic → Generic Multiply-Accumulate → 16x16 Multiply or MAC and
+
+*Auto-generated from CEVA-XC4500 Vec-C Intrinsics documentation*
+
+---
+
+Main table → Generic → Generic Multiply-Accumulate → 16x16 Multiply or MAC and
+Pack Into Two Words
+
+16x16 Multiply or MAC and Pack Into Two Words
+
+16x16 Multiply or MAC and Pack Into Two Words
+Performs configurable multiply-accumulate between two sources using CISA. The
+multiplicands, products signs and accumulation operations are user configuredaccording to the
+configuration register set. Each source is 16-bit wide. The addition results are 20-bit wide and
+packed into 40-bit destination.
+Available Switches
+         Number of atomic operations. An atomic operation is defined as two multiply/multiply-
+Oop
+         accumulate/subtract operations.
+
+Configuration register. The instruction operands and signs are configured according to
+cfgX one of the vector registers. The X is replaced with i0,i1...i10,i11...o2,o3. The default value
+     is cfgi4 which selects the vi4 vector register.
+Intrinsic Names
+vgenmacp_v32_v32_v40
+Instruction details in the instruction set specification
+Intrinsic     vgenmacp_v32_v32_v40[_p]
+name
+Spec syntax   vgenmacp {Oop [,cfgX]} vx, vy, voz[0], ?vprX
+
+Return type   vec40_t
+
+              1    OOP             uint8     1..8             Number of atomic operations
+              2    IN_CFGX         vec_t                      Configuration register
+              3    IN1_V32         vec_t                      Input vector operand
+Operands
+              4    IN2_V32         vec_t                      Input vector operand
+              5    IN3_V40         vec40_t                    Output vector operand
+              6    IN_VPR          vprex_t                    Vector predicate operand
+              vec_t vIn;
+              vec_t vIn2;
+              vec40_t vRes;
+C example     vec_t vcfgIn;
+              vprex_t vecPred;
+              ...
+              vRes = vgenmacp_v32_v32_v40_p (8, vcfgIn, vIn, vIn2, vRes, vecPred);
+
+Comments      1.   IN_VPR last operand is relevant only for vgenmacp_v32_v32_v40_p version.
+
+
+Main table → Generic → Generic Multiply-Accumulate → 16x16 Multiply or MAC and
+Pack Into Two Words
