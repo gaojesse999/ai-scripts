@@ -24,24 +24,30 @@ Reference image-prompt prefix: [`reference/ASSET_PROMPT_PREFIX.md`](../reference
 
 **风格前缀 (STYLE PREFIX)**
 *   风格 (Style)：8K IMAX。电影级写实CG —— 高精度3D渲染，写实皮肤与布料材质，写实配色，画面干净优雅，<项目美学一句话>。
-*   光照 (Lighting)：仅限自然光 —— 逆光/背光 (contre-jour)，摄像机位于阴影侧，画面中始终带有氛围感薄雾。主光源仅来自天空和窗户。无人工照明。
+*   质感 (Fidelity)：⚠️极高角色质感 —— 人物 / 动物 / 怪物 / 生物一律同一标准。真人（真实生物）级实拍质感，非动画/非插画/非二次元/非塑料CG感，呈现高预算电影的真实剧照效果。Arri Alexa 65 大画幅电影摄影机成像风格：真实镜头光学、自然镜头畸变、真实焦外虚化。8K 超高清微观细节，所有材质遵循物理基础渲染 (PBR) 与真实世界物理规律。（动画 / 风格化项目请换用 `ASSET_PROMPT_PREFIX.md` 的动画档质感行 —— 保留画风，但仍需最高保真度。）
+*   光照 (Lighting)：仅限自然光 —— 逆光/背光 (contre-jour)，摄像机位于阴影侧，画面中始终带有氛围感薄雾。主光源仅来自天空和窗户。无人工照明。HDR 高动态范围，完整保留高光与阴影细节，呈现电影胶片般的层次感。
 *   色彩 (Color)：60:30:10 法则 —— 主色调 / 辅助色 / 点缀色。
-*   镜头 (Camera)：物理电影镜头。180度快门运动模糊。
-*   皮肤 (Skin)：毛孔级真实感 —— 面部绒毛，不对称的痣，毛细血管泛红，毛孔阴影与环境光照相匹配；但面部整体保持光滑干净、底子均匀健康，仅细腻毛孔质感，⚠️禁麻子、禁痘坑、禁坑洼、禁凹凸不平、禁粗糙糙皮、禁过度纹理/过度锐化。
+*   镜头 (Camera)：物理电影镜头。180度快门运动模糊。浅景深，真实焦外虚化，背景带空气透视与电影级虚化。
+*   皮肤/表皮 (Skin)：毛孔级真实感 + 物理准确的次表面散射 (SSS)。人物 —— 面部绒毛，不对称的小痣，毛细血管轻微泛红，自然油脂高光反射，毛孔阴影与环境光照相匹配，⚠️禁麻子、禁痘坑、禁坑洼、禁凹凸不平、禁粗糙糙皮、禁过度纹理/过度锐化。动物/怪物/生物 —— 皮肤 / 鳞片 / 甲壳 / 兽皮 / 黏膜 / 角质等表皮同样物理准确：真实厚度、湿润度、皱褶、疤痕、SSS 透光与角质高光，符合该物种的生理结构。（动画档追加「面部整体保持光滑干净、底子均匀健康，仅细腻毛孔质感」，写实档不加，见 `ASSET_PROMPT_PREFIX.md` 质感分级。）
+*   毛发/羽/鬃 (Hair & Fur)：纤维级真实度，适用于头发、体毛、兽毛、鬃毛、羽毛、须。单根纤维清晰可见，真实毛鳞片/羽枝结构、自然粗细变化、随机方向分布与真实密度；纤维间存在自然间隙与透光，具真实反射/折射/吸收与高光变化；根部、尖端与不同区域层次分明，具自然蓬松度、柔韧性与重量感；受风力/重力/运动产生真实物理摆动。⚠️禁塑料感、禁 CG 假毛/假羽感、禁过度光滑、禁统一梳理排列。
+*   材质 (Materials)：所有织物、装甲、外壳与表面遵循 PBR —— 真实纤维/材料纹理、自然褶皱、重力下垂、材质差异；真实粗糙度、反射率与光泽变化。
 *   表演 (Acting)：好莱坞级别 —— 做出反应前的微小停顿，精准的视线，带有眼神光的灵动双眸，呼吸引起的胸部起伏。
 *   物理 (Physics)：遵循重力和惯性 —— 物体有真实的重量感，正确的接触阴影。不要悬浮的道具。
-*   构图 (Composition)：三分法 + 黄金比例。每个人从第一帧开始就处于运动状态。
+*   构图 (Composition)：三分法 + 黄金比例。人物比例真实准确、姿态自然，避免僵硬摆拍。每个人从第一帧开始就处于运动状态。
 *   连贯性 (Continuity)：角色、道具、环境在每个切换镜头中保持完全一致。无身份/特征偏移 (No identity drift)。
-*   技术 (Technical)：24fps 平滑运动。8K 细节。画面无抖动。
+*   技术 (Technical)：24fps 平滑运动。8K 细节，真实微观细节。画面无抖动。
 *   音频 (Audio)：仅有环境音效 (SFX)。无音乐。无字幕。
 
 > 把上面这段 STYLE PREFIX 与下面任意一条**资产描述**拼接，再在末尾加 `输出：单张图，<比例>，<背景>。`，就得到一条可直接粘贴到图像工具的提示词。
+> 质感是硬指标：写实项目要与真人无法区分；动画/风格化项目保留画风但要顶级动画长片的最高保真度。二者都不接受廉价/扁平/塑料感。见 `ASSET_PROMPT_PREFIX.md` 的「质感分级」。
 
 ---
 
 ## Characters 人物
 
-> 已有参考图请勿重做，标注 `[已存在: <path>]`。建议输出比例：单人立绘 `1:1` / 三视图 `16:9`，皆用中性无缝背景。
+> 已有参考图请勿重做，标注 `[已存在: <path>]`。建议输出比例：单人立绘 `1:1` / 三视图 `16:9`。
+> ⚠️ **纯色背景**：人物/生物立绘与三视图一律用单一纯色背景，无任何其他背景内容（无场景/道具/图案/纹理/环境）。输出行写 `纯色背景，无其他背景内容`。
+> ⚠️ **面部不遮挡**：面部须完整清晰、无遮挡（手/头发/道具/面罩/阴影/裁切都不得挡脸），除非角色设定本身要求（如始终戴面具的反派、设计上遮住一只眼的发型）。
 
 - **<NAME 姓名> <ROMANIZATION (optional)>** `[已存在: <path>]` *(if applicable)*
   <一段视觉描述：体型、发型、肤色、服装、特征、配饰、磨损/伤痕。只写镜头能看到的；戏剧动机不写。>
@@ -124,7 +130,7 @@ Reference image-prompt prefix: [`reference/ASSET_PROMPT_PREFIX.md`](../reference
 
 ## Filling rules
 
-1. **STYLE PREFIX is verbatim from `reference/ASSET_PROMPT_PREFIX.md`** — only the project-aesthetic clause inside the **风格 (Style)** bullet may be customized per project. Lock that line at the start of the project; reuse across scope.
+1. **STYLE PREFIX is verbatim from `reference/ASSET_PROMPT_PREFIX.md`** — only two things vary per project: (a) the project-aesthetic clause inside the **风格 (Style)** bullet, and (b) the **质感 (Fidelity)** bullet, which is swapped between the realistic tier (default) and the animation/stylized tier per the「质感分级」section. Lock both at the start of the project; reuse across scope. The **皮肤 / 毛发 / 材质** bullets are never dropped.
 2. **Visual descriptions only.** No "Want / Need / Hamartia" — that is the screenwriting tool's job. If the script tells you a character is "afraid of fire," do not write that here. Write only what the camera will see.
 3. **Mark `[已存在: path]`** for any asset that already has a reference image in the project. Do not regenerate. Pass the path in chat to the user as a reminder.
 4. **Suggested filenames** must be `lowercase_with_underscores.png`. In Phase 3 they are mapped to named bracket aliases for video prompts, e.g. `[韩立]=韩立，[Jane]=Jane`. Never convert them into numbered image aliases.
