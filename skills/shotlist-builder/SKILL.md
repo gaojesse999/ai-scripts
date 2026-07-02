@@ -18,7 +18,7 @@ This skill produces **production / visual assets**:
 - image filenames + character visual descriptions (costume, props worn)
 - location visual descriptions (palette, lighting, materials)
 - prop image refs
-- **asset image-generation prompt sheet** (universal STYLE PREFIX + per-asset descriptions, paste-ready for Nano Banana / Soul / 即梦 / Midjourney / Flux)
+- **asset image-generation prompt sheet** (subject-scoped STYLE PREFIXes — 人物 / 场景 / 道具, each 写实 or 动画 tier — + per-asset descriptions, paste-ready for Nano Banana / Soul / 即梦 / Midjourney / Flux)
 - style block / prompt prefix (Seedance video pipeline)
 - top-down spatial blocking schema
 - HTML shotlist + Seedance prompts
@@ -92,18 +92,22 @@ Format:
 
 Save a single Markdown file to the project's `plans/` folder (or equivalent), named `Assets_<scope>.md` (e.g., `Assets_Scene1.md`, `Assets_Sc21-23.md`). Structure follows [`templates/ASSET_SHEET_TEMPLATE.md`](templates/ASSET_SHEET_TEMPLATE.md):
 
-1. **Header** — Scope, source script path + line range, purpose.
-2. **STYLE PREFIX block** — paste-ready, per [`reference/ASSET_PROMPT_PREFIX.md`](reference/ASSET_PROMPT_PREFIX.md). The project-aesthetic clause inside the **风格 (Style)** bullet is locked once at the start of the project and reused across all scopes. If you don't yet know the aesthetic, ask one binary question (see ASSET_PROMPT_PREFIX.md) before writing the sheet.
-3. **Characters / Locations / Props** — per-asset visual descriptions (longer than 2A — 1–4 sentences each), suggested filename, `[已存在: path]` markers for assets that already have reference images.
+1. **Header** — Scope, source script path + line range, purpose, **locked tier (写实 / 动画)**, **locked project-aesthetic line**.
+2. **Subject-scoped STYLE PREFIX blocks** — per [`reference/ASSET_PROMPT_PREFIX.md`](reference/ASSET_PROMPT_PREFIX.md), there is **no single universal prefix**. Each section gets its own short, camera-first prefix at the correct tier: 人物 (§2A 写实 / §2B 动画), 场景 (§3A / §3B), 道具 (§4A / §4B). The project-aesthetic clause and the tier are locked once at the start of the project and reused across all scopes. If you don't yet know the aesthetic/tier, ask one binary question (see ASSET_PROMPT_PREFIX.md) before writing the sheet.
+   - **Photo-real discipline:** realistic-tier prefixes say the asset *is a photograph* (`真实照片 / 剧照 / 实拍 / 抓拍`) and explicitly negate `CG / 3D渲染 / 插画`. Never write `CG / 3D渲染 / 数字重建 / 8K / 超高清 / 微观细节 / 4K / 高清` or video directives (`运动模糊 / 24fps / 180度快门 / 呼吸起伏`) into an image prompt — those produce the AI-render look and smear still references.
+   - **Framing is the #1 realism variable for characters.** Default the realistic character **main reference** to a **chest-up / head-and-shoulders, ¾-angle, candid-eyeline** shot (`4:5` / `2:3`) so the face is large enough to carry real skin (waist-up/half-body is still too far — young faces get smoothed). **Never make a full-body frontal "neutral standing, facing camera" turnaround the character's only/primary asset** — a tiny face forces the model into a generic AI beauty-face. Full-body / three-view goes to Style References as a *costume-lock* only.
+   - **Beat the model's "beauty-default face" (biggest face-level AI tell for young characters).** GPT-image / DALL·E-class models bias young faces toward the flawless "influencer" look (smooth, perfectly symmetric, enlarged eyes, full makeup); `毛孔/禁磨皮` alone won't override it. Use **positive de-glam wording**: `真实素人 / 纪实抓拍 / 普通真实长相 / 非网红脸 / 非完美对称 / 素颜或极淡妆` plus concrete flaws (淡黑眼圈、唇纹、鼻翼与脸颊侧光下可见毛孔与绒毛、肤色不均、眼睛大小自然). See §0 rules of ASSET_PROMPT_PREFIX.md.
+   - **Negatives are tool-dependent, and never name a renderable look.** Tools with a negative field (Midjourney / SD / 即梦) → put the per-section negative line in the negative box. **GPT-image / DALL·E / text-to-image tools have no negative field → do NOT paste the negative line at all** (it's read as positive: whatever you name, it draws). ⚠️**Skin / face / appearance nouns (塑料皮肤, 蜡像, 磨皮, 干皮, 砂纸皮肤, 过度皮肤纹理, 网红脸, 精致全妆…) must NEVER go in the negative line** — if leaked to positive they summon exactly that artifact (this caused a real "dry skin" regression here). Control skin/face **only via positive wording in the body**; keep negatives to structural (多余手指, 肢体畸形) + pipeline (CG, 插画) items. Never inline `禁…禁…` chains.
+3. **Characters / Locations / Props** — per-asset visual descriptions (longer than 2A — 1–4 sentences each), suggested filename, output line, `[已存在: path]` markers. Scenes/props carry **no** skin/hair/eye clauses.
 4. **Style References (optional)** — multi-figure sheets, three-views, HUD detail crops. Only when reuse value is obvious.
 5. **Naming convention** — concrete filename list.
 6. **Next-step prompt** — what scope to build, custom style override yes/no.
 
-The composition rule is: **STYLE PREFIX + asset description + output line** = a paste-ready prompt for any single asset. The user copies the block + the bullet they want and pastes into Nano Banana / Soul / 即梦 / Midjourney / Flux. The asset sheet itself contains a one-line reminder of this rule directly under the STYLE PREFIX block.
+The composition rule is: **subject-scoped prefix (correct tier) + asset description + output line** = a paste-ready prompt for any single asset; the matching **negative line** goes into the tool's negative field. The user copies the section prefix + the bullet they want into Nano Banana / Soul / 即梦 / Midjourney / Flux. The asset sheet contains a one-line reminder of this directly under the header.
 
 #### End of phase 2
 
-End the turn with: *"Asset sheet saved to `plans/Assets_<scope>.md`. The STYLE PREFIX at the top is the universal — paste it together with any single asset description (and end with `输出：单张图，<比例>，<背景>。`) into Nano Banana / Soul / your tool of choice. Name files per the convention so I can map them. Then tell me which scenes to build prompts for."*
+End the turn with: *"Asset sheet saved to `plans/Assets_<scope>.md`. Each section (人物 / 场景 / 道具) has its own short prefix at the locked tier — paste the section prefix together with any single asset description (and end with `输出：单张图，<比例>，<背景>。`) into Nano Banana / Soul / your tool of choice, and drop the section's negative line into the tool's negative field. Name files per the convention so I can map them. Then tell me which scenes to build prompts for."*
 
 **Stop. Do not continue to phase 3 in the same turn.** Wait for the user's next message with images.
 
@@ -138,7 +142,7 @@ For each scene in scope:
 - **Default duration:** 15 seconds per prompt, 21:9. State this at the end of every prompt: `15秒。21:9。`
 - **Director assignment:** skip entirely unless user requests it. No `dir-badge`, no palette switching — default to `pal-red` color scheme.
 - **Style block:** use the [default style block](reference/STYLE_BLOCK.md) verbatim (with the appropriate scene-type variant) unless user uploads a custom one in phase 1.
-- **Lighting is ALWAYS practicals-only.** No film fill light, no reflectors, no softboxes, no LED strips, no neon. Camera shoots from the shadow side. This is non-negotiable. See [STYLE_BLOCK.md](reference/STYLE_BLOCK.md).
+- **Lighting is ALWAYS practicals-only.** No film fill light, no reflectors, no softboxes, no LED strips, no artificial neon lighting setups. Real in-world signage/neon may appear only as a visible practical or distant accent reflection; it must not become key light, fill light, or colored spill on skin. Camera shoots from the shadow side. This is non-negotiable. See [STYLE_BLOCK.md](reference/STYLE_BLOCK.md).
 - **Camera tracks emotion.** Nervous handheld for anger/tension; smooth handheld breathing for calm; static + slow push for shock/revelation. See [CAMERA_EMOTION.md](reference/CAMERA_EMOTION.md).
 - **No generic emotion.** Every emotional direction must decompose into muscles, breath, eyes, skin. See [MICRO_BEATS.md](reference/MICRO_BEATS.md).
 - **Top-down schema before prompting** for any 2+ character scene. See phase 3.
@@ -154,7 +158,7 @@ For every prompt, you must:
 - Block the actors with concrete spatial relationships from the approved top-down schema ("Roko 2m from Gandelfina, Rein 1.5m behind Roko, partially occluded")
 - Direct the performance with numbered emotional beats (① ② ③ ④ ⑤) — micro-beats, breath, eye-line shifts, weight shifts, suppressed emotion
 - Specify lighting source by source (windows, practicals, screens) and forbid film fill light explicitly
-- For any character close-up / medium close-up, append the close-up skin clause (see STYLE_BLOCK.md): keep pores + fine texture, but the **overall face stays smooth and clean** — `禁麻子、禁痘坑、禁坑洼、禁凹凸不平、禁过度纹理`
+- For any character close-up / medium close-up, append the close-up skin clause (see STYLE_BLOCK.md): keep **real-actor photographic skin** — pores, oil, freckles, real blemishes/scars, asymmetry — and only ban the CG/plastic/over-processed look: `禁磨皮、禁过度美颜、禁塑料皮肤、禁蜡像感、禁过度锐化导致的CG/橘子皮感`
 - Specify what's in the background and what the extras are doing — never empty backgrounds in populated locations
 - Add `⚠️` warnings for failure modes the prompt is most likely to mess up; use `⚠️⚠️⚠️` for critical-critical (asset-reference contamination, identity drift, light spill, prop misplacement, focus drift on inserts)
 
@@ -183,7 +187,7 @@ See [reference/PROMPT_PATTERNS.md](reference/PROMPT_PATTERNS.md) for the full pa
 - `templates/HTML_TEMPLATE.md` — exact HTML scaffold with placeholders for the Phase 4 shotlist
 - `templates/ASSET_SHEET_TEMPLATE.md` — Markdown skeleton for the Phase 2B asset image-prompt sheet
 - `reference/STYLE_BLOCK.md` — the default Chinese style block for **Seedance video** (Lubezki × Deakins, contre-jour, 60:30:10, practicals-only) with scene-type variants
-- `reference/ASSET_PROMPT_PREFIX.md` — the canonical STYLE PREFIX for **single-image asset generation** (Nano Banana / Soul / 即梦 / Midjourney / Flux); composition rule for paste-ready single-asset prompts
+- `reference/ASSET_PROMPT_PREFIX.md` — the **subject-scoped, tier-scoped** STYLE PREFIXes for **single-image asset generation** (人物 / 场景 / 道具 × 写实 / 动画); photography-first, camera-language, short; negative-line-per-subject; composition rule for paste-ready single-asset prompts
 - `reference/PROMPT_PATTERNS.md` — the full prompt structure: named asset references, spatial blocking, multi-shot 【镜头N】 syntax, dialogue rules, failure-mode warnings
 - `reference/CAMERA_EMOTION.md` — camera movement-to-emotion mapping, lens selection, shot duration rules, phased emotional arcs
 - `reference/MICRO_BEATS.md` — the performance micro-beat catalog by emotion (anger, anxiety, sadness, control, heaviness, etc.)

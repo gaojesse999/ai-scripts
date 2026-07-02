@@ -64,7 +64,7 @@ Always declare the shot count and dialogue rules at the top, before the shot blo
 
 ```
 ⚠️空间布局 / 人物位置：[reference top-down schema, see SPATIAL_BLOCKING.md]
-⚠️对白规则：一句台词=一个镜头——每个角色的台词严格只出现在该角色的特写镜头内。
+⚠️对白规则：默认一句台词=一个镜头——每个角色的台词原则上只出现在该角色的特写镜头内；若明确使用“bokeh中说话”例外，必须在该镜头写清说话者的虚焦轮廓、头部朝向、呼吸和声音方向。
 ⚠️本视频严格只有N个镜头——禁止添加额外镜头。
 ```
 
@@ -150,7 +150,7 @@ Every dialogue line gets a pre-line beat, mid-line emphasis cues, and a post-lin
 
 ### Base rule
 ```
-⚠️对白规则：一句台词=一个镜头——每个角色的台词严格只出现在该角色的特写镜头内。
+⚠️对白规则：默认一句台词=一个镜头——每个角色的台词原则上只出现在该角色的特写镜头内；若明确使用“bokeh中说话”例外，必须在该镜头写清说话者的虚焦轮廓、头部朝向、呼吸和声音方向。
 ```
 
 ### Interruption (one character cuts another off)
@@ -168,7 +168,9 @@ Every line must explicitly state **whom it's directed at**:
 ```
 
 ### Lines from bokeh
-If a character in bokeh speaks — sound is allowed, but the silhouette must match: head angled toward the speech direction, breath before words readable even through blur.
+This is an explicit exception to the base dialogue rule, not a replacement for it. Use it only when the scene needs the listener to stay in focus while another character speaks from bokeh or off-focus space.
+
+If a character in bokeh speaks, sound is allowed, but the shot must state all of the following: the speaker's silhouette matches the declared asset, the head is angled toward the listener or speech direction, the pre-line breath is readable even through blur, and the voice direction is spatially clear. Do not use this exception when the line needs lip-sync precision; cut to that character's close-up instead.
 
 ## Section 8 — Background activity & sound design
 
@@ -219,7 +221,7 @@ What to mark with `⚠️`:
 禁3D渲染。
 禁游戏引擎、禁游戏CG过场质感。
 禁正面光、禁侧面补光、禁反光板、禁柔光箱。
-禁LED灯带、禁霓虹。
+禁LED灯带、禁人造霓虹布光/赛博霓虹氛围；真实店招/招牌霓虹只可作为画面内practical或远处反射，禁止变成人物主光、补光或肤色溢光。
 禁屏幕蓝光溢出。
 禁可见光束（god rays）。
 禁光学畸变、禁桶形畸变、禁鱼眼。
@@ -235,7 +237,7 @@ What to mark with `⚠️`:
 - **Identity drift across cuts** — counter: `连续性：角色、道具、环境每个镜头完全一致。禁身份漂移。`
 - **Pose-reference contamination** — counter: explicit `❌NOT A VIDEO FRAME❌` rules
 - **Light spill on skin** — counter: `禁止蓝色色溢打在人物皮肤和服装上`
-- **Over-textured / cratered skin in close-ups** — Seedance often overdoes pores into pockmarks/orange-peel/CG roughness on CU/ECU. Counter: append the close-up skin clause (see STYLE_BLOCK.md) — keep pores + fine texture but `面部整体光滑干净`, `禁麻子、禁痘坑、禁坑洼、禁凹凸不平、禁过度纹理/过度锐化`.
+- **CG / orange-peel / plastic skin in close-ups** — Seedance often turns pores into a CG orange-peel or plastic/wax look on CU/ECU. Counter: append the close-up skin clause (see STYLE_BLOCK.md) — keep **real-actor photographic skin** (pores, oil, freckles, real blemishes/scars, asymmetry) but `禁磨皮、禁过度美颜、禁塑料皮肤、禁蜡像感、禁过度锐化导致的"橘子皮"或CG粗糙感、禁数字人/游戏角色/AI感`. Note: real skin imperfection is wanted; only the CG/plastic/over-processed look is banned.
 - **Wide-angle distortion** — counter: `禁光学畸变——禁桶形畸变、禁枕形畸变、禁鱼眼效果、禁广角变形`
 - **Floating props** — counter: `禁漂浮道具`
 - **God rays / volumetric beams** — counter: `禁止可见光束（god rays）`

@@ -8,7 +8,7 @@ These rules go into **every** prompt's style block, regardless of scene:
 
 ```
 灯光：⚠️严格仅使用场景内实际存在的光源（practicals）——屏幕、显示器、办公舱内部灯光、窗户、实用吊灯/台灯等。
-禁止一切电影补光——禁正面光、禁侧面补光、禁顶光、禁底光、禁反光板、禁柔光箱、禁LED灯带、禁霓虹、禁任何画面外光源。
+禁止一切电影补光——禁正面光、禁侧面补光、禁顶光、禁底光、禁反光板、禁柔光箱、禁LED灯带、禁人造霓虹布光/赛博霓虹氛围、禁任何画面外光源；真实存在的店招/招牌霓虹只可作为画面内practical或远处反射，不能变成主光、补光或人物皮肤/服装上的彩色溢光。
 摄影机始终在人物的阴影侧（shadow side）拍摄——面部自然受光但从较暗的一侧取景，practicals环境光照亮脸部轮廓和眼神光（catchlight）。
 全程大气薄雾haze增加空气质感——禁止可见光束（god rays）。
 ```
@@ -42,13 +42,13 @@ State the proportion explicitly in the prompt, e.g.:
 
 **Default forbidden:**
 ```
-禁3D渲染，禁游戏引擎，禁游戏CG过场质感，禁霓虹，禁过饱和色，禁HDR感。
+禁3D渲染，禁游戏引擎，禁游戏CG过场质感，禁人造霓虹布光/赛博霓虹氛围，禁过饱和色，禁HDR感。
 ```
 
 ## The full block (canonical)
 
 ```
-风格：8K IMAX。超写实——禁3D渲染，禁游戏引擎，禁游戏CG过场质感。摄影：Emmanuel Lubezki × Roger Deakins。灯光：⚠️严格仅使用场景内实际存在的光源（practicals）。禁止一切电影补光——禁正面光、禁侧面补光、禁顶光、禁底光、禁反光板、禁柔光箱、禁LED灯带、禁霓虹、禁任何画面外光源。摄影机始终在人物的阴影侧（shadow side）拍摄。全程大气薄雾haze——禁止可见光束（god rays）。色彩：60:30:10——主色/辅色/点缀色。镜头：物理电影镜头。180°快门运动模糊。皮肤：毛孔级写实——汗毛、不对称痣、毛细血管潮红、毛孔阴影匹配现场光源；但面部整体保持光滑干净、底子健康均匀，仅细腻毛孔质感，⚠️禁麻子、禁痘坑、禁坑洼、禁凹凸不平、禁粗糙糙皮、禁过度纹理/过度锐化。表演：好莱坞级——反应前微停顿、精准视线、湿润活眼带眼神光、可见呼吸和胸腔起伏。物理：重力惯性真实——质量有真实重量、正确接触阴影。禁漂浮道具。构图：三分法+黄金比例。每人从第一帧开始运动。连续性：角色、道具、环境每个镜头完全一致。禁身份漂移。技术：60fps流畅运动。8K细节。禁抖动（除手持呼吸感）。音频：仅环境SFX。禁音乐。禁字幕。
+风格：8K IMAX。超写实——禁3D渲染，禁游戏引擎，禁游戏CG过场质感。摄影：Emmanuel Lubezki × Roger Deakins。灯光：⚠️严格仅使用场景内实际存在的光源（practicals）。禁止一切电影补光——禁正面光、禁侧面补光、禁顶光、禁底光、禁反光板、禁柔光箱、禁LED灯带、禁人造霓虹布光/赛博霓虹氛围、禁任何画面外光源；真实存在的店招/招牌霓虹只可作为画面内practical或远处反射，不能变成主光、补光或人物皮肤/服装上的彩色溢光。摄影机始终在人物的阴影侧（shadow side）拍摄。全程大气薄雾haze——禁止可见光束（god rays）。色彩：60:30:10——主色/辅色/点缀色。镜头：物理电影镜头。180°快门运动模糊。皮肤：真人演员照片级肤质——毛孔级写实、汗毛、不对称痣、微小雀斑、真实痘印/色斑/疤痕、轻微坑洼与粗糙、毛细血管潮红、真实肤色不均与自然瑕疵、物理准确SSS的半透明生命感（非蜡像非塑料）、毛孔阴影匹配现场光源；保留真实摄影的自然不完美与年龄痕迹，⚠️禁磨皮、禁过度美颜、禁过度锐化、禁塑料皮肤、禁蜡像感、禁数字人/游戏角色/CG/AI感。表演：好莱坞级——反应前微停顿、精准视线、湿润活眼带眼神光、可见呼吸和胸腔起伏。物理：重力惯性真实——质量有真实重量、正确接触阴影。禁漂浮道具。构图：三分法+黄金比例。每人从第一帧开始运动。连续性：角色、道具、环境每个镜头完全一致。禁身份漂移。技术：60fps流畅运动。8K细节。禁抖动（除手持呼吸感）。音频：仅环境SFX。禁音乐。禁字幕。
 ```
 
 ## Scene-type lighting variants
@@ -72,7 +72,7 @@ Layer these specific clauses into the lighting section above based on the scene:
 
 ### Night exterior
 ```
-灯光：仅实际街灯、车头灯、店铺霓虹反射、路灯。无任何摄影补光。摄影机在人物阴影侧。全程城市haze。
+灯光：仅实际街灯、车头灯、路灯，以及真实店招/招牌霓虹的远处反射（只作为环境点缀，不作为人物主光、补光或肤色溢光）。无任何摄影补光。摄影机在人物阴影侧。全程城市haze。
 ```
 
 ### Warm interior (kitchen, bedroom with lamps on)
@@ -95,10 +95,10 @@ If user specifies a different aspect ratio (e.g., 9:16 for shorts, 4:3 for retro
 
 ## Skin clause (append for close-ups / medium close-ups)
 
-For any character close-up (CU / ECU) or medium close-up where the face fills a large part of the frame, append this clause so the face reads as real but clean — pores and texture present, but the overall face stays smooth (no pockmark-storm, no bumpy/cratered skin):
+For any character close-up (CU / ECU) or medium close-up where the face fills a large part of the frame, append this clause so the face reads as a **real actor's photographed skin** — full pore/oil/blemish texture, not a smoothed or beautified face:
 
 ```
-⚠️皮肤：仅保留细腻真实的毛孔与绒毛质感和自然光影过渡，面部整体必须光滑干净、底子均匀健康。禁麻子、禁痘坑、禁坑洼、禁凹凸不平、禁粗糙糙皮、禁过密斑点、禁过度纹理/过度锐化导致的"橘子皮"或CG粗糙感。
+⚠️皮肤：真人演员照片级肤质——可见真实毛孔、绒毛、油脂反光（T区）、微小雀斑、真实痘印/色斑/疤痕、轻微坑洼与粗糙、肤色不均与自然瑕疵、物理准确SSS的半透明生命感、自然光影过渡；保持真实左右脸不对称与年龄痕迹。⚠️禁磨皮、禁过度美颜、禁塑料皮肤、禁蜡像感、禁数字人/游戏角色感、禁过度锐化导致的"橘子皮"或CG粗糙感、禁AI生成感。
 ```
 
 ## Camera/composition rule (append for wide shots)
