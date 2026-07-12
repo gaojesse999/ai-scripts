@@ -433,6 +433,13 @@ cd /host/workdir/projects/official-account/we-mp-rss
 - 你需要一个**自己的微信公众平台账号**（能管理任意一个公众号；个人免费**订阅号**即可），扫码的微信要是它的**管理员/运营者**。
 - **不需要关注**刘润/洞见/粥左罗；授权后可搜索并抓取任意公众号。
 
+**授权动作本质（先看这个，避免混淆）**
+- 本节说的“扫码授权”本质是：用你的手机微信扫码后，完成一次对 `mp.weixin.qq.com` 的登录确认。
+- 二维码由脚本生成；真正“登录确认”的操作发生在手机上，不是在服务器终端里点网页。
+- 推荐开两个终端窗口：
+  - 窗口 A：用于服务运行（可选，`./run.sh noinit`）。
+  - 窗口 B：专门运行二维码脚本 `tools/wx_login.py`（见下面第 ② 步）。
+
 **① 设置代理（抓取必须联网）**
 ```bash
 cd /host/workdir/projects/official-account/we-mp-rss
@@ -444,12 +451,15 @@ export NO_PROXY=127.0.0.1,localhost
 **② 纯 API 方式扫码授权（不需要浏览器，本机可用）—— 已固化为脚本 `tools/wx_login.py`**
 > 网页那个「扫码授权」按钮走浏览器（`driver/wx.py`），在无浏览器机器上会卡在“正在获取二维码”，**别用**。
 > 用下面这个纯 API 脚本（`driver.wx_api`）；它已处理好「等后台把 token 写完 + 兜底手动持久化」，避免拿不到 token。
+
+在**新终端窗口（窗口 B）**执行：
 ```bash
 cd /host/workdir/projects/official-account/we-mp-rss
 export HTTPS_PROXY=http://10.158.101.1:8080 HTTP_PROXY=http://10.158.101.1:8080 NO_PROXY=127.0.0.1,localhost
 .venv/bin/python tools/wx_login.py          # 生成二维码 -> static/wx_qrcode.png，等你扫码
 # 可选：.venv/bin/python tools/wx_login.py --timeout 300
 ```
+扫码后手机上确认，即完成对 `mp.weixin.qq.com` 的登录授权。
 脚本流程：申请二维码 → 阻塞等你扫码确认 → 等后台抓全 token/cookie 并持久化（Redis + `data/wx.lic`）→
 打印 `🎉 授权成功，token 已持久化：…`。**若服务在后台运行，不用重启即可生效。**
 
@@ -627,6 +637,9 @@ cat data/wx.lic        # 不再是 {}，而是包含 token/cookie 的内容即�
   cd /host/workdir/projects/official-account/we-mp-rss
   python3 tools/export_articles.py --all
   ```
+  - 默认仅导出“有正文内容”的文章。
+  - 默认文件名前缀示例：`all_articles_20260712_153000`（会带执行时的日期时间戳）。
+  - Markdown 默认会清理正文尾部的微信预览/扫码噪音：优先按“预览时标签不可点”截断；若没有该字段，再按“微信扫一扫可打开此内容”截断；两者都没有则保持原文不变。
 
 1.2 多篇文章导出（示例：两篇文章，CSV + JSON + Markdown）：
   ```bash
@@ -645,6 +658,25 @@ cat data/wx.lic        # 不再是 {}，而是包含 token/cookie 的内容即�
   python3 tools/export_articles.py --all --encoding utf-8-sig
   ```
 
+1.4 包含无正文文章（默认不会包含）：
+  ```bash
+  cd /host/workdir/projects/official-account/we-mp-rss
+  python3 tools/export_articles.py --all --include-empty-content
+  ```
+
+1.5 按公众号名称关键词导出（支持重复传入）：
+  ```bash
+  cd /host/workdir/projects/official-account/we-mp-rss
+  python3 tools/export_articles.py --all --mp-name-keyword 刘润
+  python3 tools/export_articles.py --all --mp-name-keyword 洞见 --mp-name-keyword 粥左罗
+  ```
+
+1.6 保留 Markdown 原始尾部，不做清理：
+  ```bash
+  cd /host/workdir/projects/official-account/we-mp-rss
+  python3 tools/export_articles.py --all --no-clean-md
+  ```
+
 2. 单篇文章测试导出（方案 B，默认导出最新一篇，用于验证 CSV / JSON / Markdown）
   - 这个测试只从数据库里导出一篇文章，不会批量处理整个公众号。
   - 不需要输入文章 ID，脚本会自动取**第一篇**文章（当前按发布时间倒序排序的最新一篇）。
@@ -652,6 +684,7 @@ cat data/wx.lic        # 不再是 {}，而是包含 token/cookie 的内容即�
   cd /host/workdir/projects/official-account/we-mp-rss
   python3 tools/export_articles.py
   ```
+  - 默认文件名前缀示例：`single_article_test_20260712_153000`（会带执行时的日期时间戳）。
 
 2.1 单篇测试的 Excel 友好版本（中文不乱码）：
   ```bash

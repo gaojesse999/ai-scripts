@@ -13,6 +13,8 @@
 - utf-8-sig: Excel 更友好，中文不容易乱码
 
 如果不指定 --json / --csv / --md，脚本默认同时导出 CSV、JSON 和 Markdown。
+如果不指定 --include-empty-content，脚本默认只导出有正文内容的文章。
+Markdown 默认会清理正文尾部的微信预览/扫码噪音。
 """
 
 from __future__ import annotations
@@ -28,7 +30,7 @@ import sys
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Iterable, List
+from typing import List
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -99,7 +101,17 @@ def parse_args() -> argparse.Namespace:
   5) 导出全部文章并使用 Excel 友好编码：
      python3 tools/export_articles.py --all --encoding utf-8-sig
 
-详情请看 WeRSS-安装与使用总结.md。
+  6) 按公众号名称关键词导出（支持重复传入）：
+      python3 tools/export_articles.py --all --mp-name-keyword 刘润
+      python3 tools/export_articles.py --all --mp-name-keyword 洞见 --mp-name-keyword 粥左罗
+
+  7) 包含无正文文章（默认会过滤无正文）：
+      python3 tools/export_articles.py --all --include-empty-content
+
+  8) 保留 Markdown 原始正文尾部，不做清理：
+      python3 tools/export_articles.py --all --no-clean-md
+
+详情请看 README-detailed.md。
         """,
     )
     parser.add_argument(
@@ -121,6 +133,13 @@ def parse_args() -> argparse.Namespace:
         help="多个文章 ID，逗号或空格分隔",
     )
     parser.add_argument(
+        "--mp-name-keyword",
+        action="append",
+        dest="mp_name_keywords",
+        default=[],
+        help="按公众号名称关键词过滤，可重复传入",
+    )
+    parser.add_argument(
         "--output-dir",
         default=str(DEFAULT_OUT_DIR),
         help="输出目录，默认 data/exports",
@@ -128,7 +147,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-name",
         default="",
-        help="输出文件名前缀，默认根据模式自动选择",
+        help="输出文件名前缀；不传时按模式自动命名并附带时间戳",
     )
     parser.add_argument(
         "--encoding",
@@ -175,6 +194,32 @@ def parse_args() -> argparse.Namespace:
         action="store_false",
         help="不导出 Markdown",
     )
+    parser.add_argument(
+        "--with-content-only",
+        dest="with_content_only",
+        action="store_true",
+        default=True,
+        help="仅导出有正文内容的文章（默认开启）",
+    )
+    parser.add_argument(
+        "--include-empty-content",
+        dest="with_content_only",
+        action="store_false",
+        help="包含无正文内容的文章",
+    )
+    parser.add_argument(
+        "--clean-md",
+        dest="clean_md",
+        action="store_true",
+        default=True,
+        help="清理 Markdown 正文尾部的微信预览/扫码噪音（默认开启）",
+    )
+    parser.add_argument(
+        "--no-clean-md",
+        dest="clean_md",
+        action="store_false",
+        help="不清理 Markdown 正文尾部，保留原始转换内容",
+    )
     return parser.parse_args()
 
 
@@ -200,46 +245,92 @@ def collect_article_ids(args: argparse.Namespace) -> List[str]:
     return result
 
 
-def fetch_articles(conn: sqlite3.Connection, article_ids: List[str], export_all: bool) -> List[sqlite3.Row]:
+def collect_mp_name_keywords(args: argparse.Namespace) -> List[str]:
+    keywords: List[str] = []
+    for item in getattr(args, "mp_name_keywords", []) or []:
+        if item and item.strip():
+            keywords.append(item.strip())
+
+    seen = set()
+    result: List[str] = []
+    for keyword in keywords:
+        if keyword not in seen:
+            seen.add(keyword)
+            result.append(keyword)
+    return result
+
+
+def build_filters(with_content_only: bool, mp_name_keywords: List[str]) -> tuple[str, List[str]]:
+    clauses: List[str] = ["a.status != 6"]
+    params: List[str] = []
+
+    if with_content_only:
+        clauses.append("(coalesce(trim(a.content), '') != '' or coalesce(trim(a.content_html), '') != '')")
+
+    if mp_name_keywords:
+        name_conditions = " or ".join(["mp_name like ?"] * len(mp_name_keywords))
+        clauses.append(f"a.mp_id in (select id from feeds where {name_conditions})")
+        params.extend([f"%{keyword}%" for keyword in mp_name_keywords])
+
+    return " and ".join(clauses), params
+
+
+def clean_markdown_tail(markdown_body: str) -> str:
+    for marker in ["预览时标签不可点", "微信扫一扫可打开此内容"]:
+        index = markdown_body.find(marker)
+        if index >= 0:
+            return markdown_body[:index].strip()
+    return markdown_body.strip()
+
+
+def fetch_articles(
+    conn: sqlite3.Connection,
+    article_ids: List[str],
+    export_all: bool,
+    with_content_only: bool,
+    mp_name_keywords: List[str],
+) -> List[sqlite3.Row]:
     conn.row_factory = sqlite3.Row
+    where_sql, where_params = build_filters(with_content_only, mp_name_keywords)
+
     if export_all:
         query = """
         select
-          id,
-          mp_id,
-          title,
-          url,
-          description,
-          publish_time,
-          copyright_stat,
-          has_content,
-          content,
-          content_html
-        from articles
-        where status != 6
-        order by publish_time desc
+          a.id,
+          a.mp_id,
+          a.title,
+          a.url,
+          a.description,
+          a.publish_time,
+          a.copyright_stat,
+          a.has_content,
+          a.content,
+          a.content_html
+        from articles a
+        where {where_sql}
+        order by a.publish_time desc
         """
-        return conn.execute(query).fetchall()
+        return conn.execute(query.format(where_sql=where_sql), where_params).fetchall()
 
     if not article_ids:
         latest_query = """
         select
-          id,
-          mp_id,
-          title,
-          url,
-          description,
-          publish_time,
-          copyright_stat,
-          has_content,
-          content,
-          content_html
-        from articles
-        where status != 6
-        order by publish_time desc
+          a.id,
+          a.mp_id,
+          a.title,
+          a.url,
+          a.description,
+          a.publish_time,
+          a.copyright_stat,
+          a.has_content,
+          a.content,
+          a.content_html
+        from articles a
+        where {where_sql}
+        order by a.publish_time desc
         limit 1
         """
-        rows = conn.execute(latest_query).fetchall()
+        rows = conn.execute(latest_query.format(where_sql=where_sql), where_params).fetchall()
         if rows:
             print("未指定文章 ID，默认导出第一篇文章（当前按发布时间倒序排序的最新一篇）")
         return rows
@@ -247,20 +338,20 @@ def fetch_articles(conn: sqlite3.Connection, article_ids: List[str], export_all:
     placeholders = ",".join(["?"] * len(article_ids))
     query = f"""
     select
-      id,
-      mp_id,
-      title,
-      url,
-      description,
-      publish_time,
-      copyright_stat,
-      has_content,
-      content,
-      content_html
-    from articles
-    where status != 6 and id in ({placeholders})
+      a.id,
+      a.mp_id,
+      a.title,
+      a.url,
+            a.description,
+            a.publish_time,
+            a.copyright_stat,
+            a.has_content,
+            a.content,
+            a.content_html
+        from articles a
+        where {where_sql} and a.id in ({placeholders})
     """
-    rows = conn.execute(query, article_ids).fetchall()
+    rows = conn.execute(query, where_params + article_ids).fetchall()
 
     # 按传入顺序排序，便于单篇/多篇测试时结果更可预测
     row_map = {row["id"]: row for row in rows}
@@ -318,7 +409,7 @@ def write_json(rows: List[sqlite3.Row], path: Path, encoding: str) -> None:
         json.dump(payload, f, ensure_ascii=False, indent=2)
 
 
-def write_markdown(rows: List[sqlite3.Row], path: Path, encoding: str) -> None:
+def write_markdown(rows: List[sqlite3.Row], path: Path, encoding: str, clean_md: bool) -> None:
     if str(TOOLS_DIR) not in sys.path:
         sys.path.insert(0, str(TOOLS_DIR))
 
@@ -341,6 +432,8 @@ def write_markdown(rows: List[sqlite3.Row], path: Path, encoding: str) -> None:
 
         source_html = article.get("content_html") or article.get("content") or ""
         markdown_body = convert_html_to_markdown(source_html) if source_html else ""
+        if clean_md:
+            markdown_body = clean_markdown_tail(markdown_body)
         markdown_body = markdown_body.strip() or "(无正文内容)"
 
         section = [
@@ -363,6 +456,7 @@ def write_markdown(rows: List[sqlite3.Row], path: Path, encoding: str) -> None:
 def main() -> None:
     args = parse_args()
     article_ids = collect_article_ids(args)
+    mp_name_keywords = collect_mp_name_keywords(args)
 
     export_all = bool(args.all)
     if export_all and article_ids:
@@ -373,12 +467,15 @@ def main() -> None:
 
     stem = args.output_name.strip()
     if not stem:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         if export_all:
-            stem = "all_articles"
-        elif len(article_ids) == 1 or len(article_ids) == 0:
-            stem = "single_article_test"
+            stem = f"all_articles_{timestamp}"
+        elif len(article_ids) == 0:
+            stem = f"single_article_test_{timestamp}"
+        elif len(article_ids) == 1:
+            stem = f"single_article_{timestamp}"
         else:
-            stem = "selected_articles"
+            stem = f"selected_articles_{timestamp}"
 
     db_path = DEFAULT_DB
     if not db_path.exists():
@@ -386,13 +483,23 @@ def main() -> None:
 
     conn = sqlite3.connect(str(db_path))
     try:
-        rows = fetch_articles(conn, article_ids, export_all)
+        rows = fetch_articles(
+            conn,
+            article_ids,
+            export_all,
+            bool(args.with_content_only),
+            mp_name_keywords,
+        )
         if not rows:
             raise SystemExit("没有可导出的文章")
 
         print(f"导出文章数: {len(rows)}")
         print(f"输出目录: {out_dir}")
         print(f"编码: {args.encoding}")
+        print(f"仅导出有正文: {bool(args.with_content_only)}")
+        print(f"清理 Markdown 尾部: {bool(args.clean_md)}")
+        if mp_name_keywords:
+            print(f"公众号名称关键词: {', '.join(mp_name_keywords)}")
 
         if args.export_csv:
             csv_path = out_dir / f"{stem}.csv"
@@ -406,7 +513,7 @@ def main() -> None:
 
         if args.export_md:
             md_path = out_dir / f"{stem}.md"
-            write_markdown(rows, md_path, args.encoding)
+            write_markdown(rows, md_path, args.encoding, bool(args.clean_md))
             print(f"Markdown: {md_path}")
 
     finally:
