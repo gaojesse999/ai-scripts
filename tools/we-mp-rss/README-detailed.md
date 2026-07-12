@@ -620,56 +620,73 @@ cat data/wx.lic        # 不再是 {}，而是包含 token/cookie 的内容即�
 
 适用场景：你要把所有公众号文章一次性导出成“一个总表”给外部分析工具。
 
-1. 导出全量 CSV（推荐）：
+1. 常规导出
+
+1.1 导出全量文章（CSV + JSON + Markdown）：
   ```bash
   cd /host/workdir/projects/official-account/we-mp-rss
-  mkdir -p data/exports
-  sqlite3 -header -csv data/db.db "
-  select
-    id,
-    mp_id,
-    title,
-    url,
-    description,
-    publish_time,
-    datetime(publish_time,'unixepoch','localtime') as publish_time_local,
-    copyright_stat,
-    has_content,
-    content,
-    content_html
-  from articles
-  where status != 6
-  order by publish_time desc;
-  " > data/exports/all_articles.csv
+  python3 tools/export_articles.py --all
   ```
 
-2. （可选）导出全量 JSON：
+1.2 多篇文章导出（示例：两篇文章，CSV + JSON + Markdown）：
   ```bash
   cd /host/workdir/projects/official-account/we-mp-rss
-  python3 - <<'PY'
-import sqlite3, json, os
-os.makedirs("data/exports", exist_ok=True)
-conn = sqlite3.connect("data/db.db")
-conn.row_factory = sqlite3.Row
-rows = conn.execute("""
-select id, mp_id, title, url, description, publish_time, copyright_stat, has_content, content, content_html
-from articles
-where status != 6
-order by publish_time desc
-""").fetchall()
-with open("data/exports/all_articles.json", "w", encoding="utf-8") as f:
-   json.dump([dict(r) for r in rows], f, ensure_ascii=False, indent=2)
-print("done:", len(rows))
-PY
+  python3 tools/export_articles.py \
+    --article-id 3582870021-2247623537_1 \
+    --article-id 2396392481-2651785530_1
   ```
 
-3. 输出目录：
-  - `we-mp-rss/data/exports/all_articles.csv`
-  - `we-mp-rss/data/exports/all_articles.json`
+1.3 中文不乱码参数：
+  - 默认 `--encoding utf-8`：适合程序处理。
+  - 如果不指定 CSV / JSON / Markdown 格式开关，脚本默认**同时导出三种格式**。
+  - 如果要直接给 Excel 打开，建议加 `--encoding utf-8-sig`，例如：
+  ```bash
+  cd /host/workdir/projects/official-account/we-mp-rss
+  python3 tools/export_articles.py --all --encoding utf-8-sig
+  ```
+
+2. 单篇文章测试导出（方案 B，默认导出最新一篇，用于验证 CSV / JSON / Markdown）
+  - 这个测试只从数据库里导出一篇文章，不会批量处理整个公众号。
+  - 不需要输入文章 ID，脚本会自动取**第一篇**文章（当前按发布时间倒序排序的最新一篇）。
+  ```bash
+  cd /host/workdir/projects/official-account/we-mp-rss
+  python3 tools/export_articles.py
+  ```
+
+2.1 单篇测试的 Excel 友好版本（中文不乱码）：
+  ```bash
+  cd /host/workdir/projects/official-account/we-mp-rss
+  python3 tools/export_articles.py --encoding utf-8-sig
+  ```
+
+详情看脚本帮助：
+
+```bash
+python3 tools/export_articles.py --help
+```
 
 两种方案如何选：
 - 需要“按公众号归档、可下载管理”：选方案 A。
 - 需要“统一全量数据做统计/建模”：选方案 B（更直接）。
+
+#### 导出字段说明（标题 / 正文）
+
+为避免后续对接工具时混淆，下面明确两种方案里“文章标题”和“正文”字段名：
+
+1. 方案 A（系统内置导出）
+  - JSON 单篇文件中的标题字段：`title`
+  - JSON 单篇文件中的正文字段：默认**无正文**（该 JSON 只含 `id/url/title/pic_url/description/status/publish_time`）
+  - CSV 汇总文件中的标题字段：第 1 列 `标题`
+  - CSV 汇总文件中的正文字段：默认**无正文列**（只有 `标题/链接/发布时间`）
+
+2. 方案 B（数据库全量导出）
+  - 标题字段：`title`
+  - 正文字段（纯文本/原始内容）：`content`
+  - 正文字段（HTML 形式）：`content_html`
+
+3. 如果你需要“系统内置导出”里也带正文
+  - 可改为导出 Markdown/PDF/DOCX（正文在文件内容中，不在 JSON/CSV 字段里）。
+  - 或直接使用方案 B 的 `content/content_html` 做结构化文本分析（最方便）。
 
 ### 实现要点（复用项目既有能力，未改动原有源码）
 - 搜索：`core.wx.search_Biz`
