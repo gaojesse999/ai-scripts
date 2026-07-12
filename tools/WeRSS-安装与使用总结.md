@@ -567,6 +567,110 @@ cat data/wx.lic        # 不再是 {}，而是包含 token/cookie 的内容即�
 - **标题高频词 Top N**（优先用 `jieba` 分词；未安装则退回中文二字词统计）
 - 最近 10 篇标题
 
+### 已抓取文章导出（两种方案，按需选择）
+
+你可以把“已抓取到数据库里的文章”导出给其他工具（pandas/BI/向量库等）做二次分析。下面给出两种稳定方案：
+
+#### 方案 A：系统内置导出（按公众号打包，适合留存/分号管理）
+
+适用场景：你希望按公众号分别导出，得到每个号自己的 zip（可含 JSON/CSV/MD/PDF）。
+
+1. 启动服务（终端 A）：
+  ```bash
+  cd /host/workdir/projects/official-account/we-mp-rss
+  ./run.sh noinit
+  ```
+
+2. 登录拿 Token（终端 B）：
+  ```bash
+  BASE=http://127.0.0.1:8001/api/v1/wx
+  TOKEN=$(curl -s -X POST "$BASE/auth/login" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    --data "username=admin&password=admin@123" \
+    | python3 -c "import sys,json; d=json.load(sys.stdin); print((d.get('data') or {}).get('access_token',''))")
+  echo "$TOKEN" | head -c 24; echo
+  ```
+
+3. 批量触发“所有订阅号”的导出（导出 JSON+CSV，不导 PDF/MD，避免浏览器依赖）：
+  ```bash
+  sqlite3 -separator '|' data/db.db \
+    "select id, mp_name from feeds where status=1 and faker_id!='MP_WXS_FEATURED_ARTICLES';" \
+  | while IFS='|' read -r MP_ID MP_NAME; do
+     echo "导出: $MP_NAME ($MP_ID)"
+     curl -s -X POST "$BASE/tools/export/articles" \
+      -H "Authorization: Bearer $TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "{\"mp_id\":\"$MP_ID\",\"page_size\":10,\"page_count\":0,\"export_json\":true,\"export_csv\":true,\"export_md\":false,\"export_docx\":false,\"export_pdf\":false,\"zip_filename\":\"${MP_ID}_all.zip\"}"
+     echo
+    done
+  ```
+
+4. 导出文件位置：
+  - `we-mp-rss/data/docs/<mp_id>/...zip`
+  - 可用以下命令查看：
+  ```bash
+  find data/docs -type f -name "*.zip" | sort
+  ```
+
+说明：
+- `page_count=0` 表示导出全部页（即该号当前已抓取的全部文章）。
+- 该方案走接口导出，入口在 `apis/tools.py` 的 `/tools/export/articles`。
+
+#### 方案 B：数据库全量导出（一次性全量，最适合分析）
+
+适用场景：你要把所有公众号文章一次性导出成“一个总表”给外部分析工具。
+
+1. 导出全量 CSV（推荐）：
+  ```bash
+  cd /host/workdir/projects/official-account/we-mp-rss
+  mkdir -p data/exports
+  sqlite3 -header -csv data/db.db "
+  select
+    id,
+    mp_id,
+    title,
+    url,
+    description,
+    publish_time,
+    datetime(publish_time,'unixepoch','localtime') as publish_time_local,
+    copyright_stat,
+    has_content,
+    content,
+    content_html
+  from articles
+  where status != 6
+  order by publish_time desc;
+  " > data/exports/all_articles.csv
+  ```
+
+2. （可选）导出全量 JSON：
+  ```bash
+  cd /host/workdir/projects/official-account/we-mp-rss
+  python3 - <<'PY'
+import sqlite3, json, os
+os.makedirs("data/exports", exist_ok=True)
+conn = sqlite3.connect("data/db.db")
+conn.row_factory = sqlite3.Row
+rows = conn.execute("""
+select id, mp_id, title, url, description, publish_time, copyright_stat, has_content, content, content_html
+from articles
+where status != 6
+order by publish_time desc
+""").fetchall()
+with open("data/exports/all_articles.json", "w", encoding="utf-8") as f:
+   json.dump([dict(r) for r in rows], f, ensure_ascii=False, indent=2)
+print("done:", len(rows))
+PY
+  ```
+
+3. 输出目录：
+  - `we-mp-rss/data/exports/all_articles.csv`
+  - `we-mp-rss/data/exports/all_articles.json`
+
+两种方案如何选：
+- 需要“按公众号归档、可下载管理”：选方案 A。
+- 需要“统一全量数据做统计/建模”：选方案 B（更直接）。
+
 ### 实现要点（复用项目既有能力，未改动原有源码）
 - 搜索：`core.wx.search_Biz`
 - 订阅入库：写 `core.models.feed.Feed`（逻辑与 `apis/mps.py::add_mp` 一致）
