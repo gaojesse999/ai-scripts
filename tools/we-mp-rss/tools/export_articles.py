@@ -283,6 +283,12 @@ def clean_markdown_tail(markdown_body: str) -> str:
     return markdown_body.strip()
 
 
+def make_safe_filename_part(value: str) -> str:
+    cleaned = re.sub(r'[\\/:*?"<>|\s]+', "_", value.strip())
+    cleaned = cleaned.strip("._")
+    return cleaned or "articles"
+
+
 def fetch_articles(
     conn: sqlite3.Connection,
     article_ids: List[str],
@@ -468,7 +474,9 @@ def main() -> None:
     stem = args.output_name.strip()
     if not stem:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        if export_all:
+        if export_all and len(mp_name_keywords) == 1:
+            stem = f"{make_safe_filename_part(mp_name_keywords[0])}_{timestamp}"
+        elif export_all:
             stem = f"all_articles_{timestamp}"
         elif len(article_ids) == 0:
             stem = f"single_article_test_{timestamp}"

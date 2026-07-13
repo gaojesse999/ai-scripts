@@ -670,6 +670,8 @@ cat data/wx.lic        # 不再是 {}，而是包含 token/cookie 的内容即�
   python3 tools/export_articles.py --all --mp-name-keyword 刘润
   python3 tools/export_articles.py --all --mp-name-keyword 洞见 --mp-name-keyword 粥左罗
   ```
+  - 只导出一个公众号时，默认文件名前缀示例：`刘润_20260712_153000`。
+  - 同时导出多个公众号时，默认命名规则不变，仍使用 `all_articles_20260712_153000`。
 
 1.6 保留 Markdown 原始尾部，不做清理：
   ```bash
