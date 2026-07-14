@@ -41,8 +41,8 @@
 
 ### 环境事实（本机）
 - 无法直连外网，也无法直连 GitHub / PyPI；
-- 你提供的 `10.158.101.1:8000` HTTP 代理**不可用**（端口拒绝连接）；
-- 探测发现 `10.158.101.1:1080` 为**可用的 SOCKS5 代理**，全程改用它联网。
+- 当前确认 `10.158.101.1:8080` 为**可用的 HTTP 代理**，后续联网优先使用它；
+- 安装早期曾探测并使用 `10.158.101.1:1080` SOCKS5 代理完成源码克隆与依赖安装。
 
 ### 实际执行的步骤
 1. **克隆源码**（通过 SOCKS5 代理）
@@ -69,7 +69,7 @@
 
 6. **Playwright 浏览器下载**：已成功下载 WebKit 浏览器（142 MB）。
    > 当时只探测到 SOCKS 端口而 Playwright 下载器不支持 SOCKS，曾临时用一个 HTTP→SOCKS 桥完成下载；
-   > 现已确认 `10.158.101.1:8080` 为可用 HTTP 代理，后续直接用它即可（`HTTPS_PROXY=http://10.158.101.1:8080`）。
+  > 现已确认 `10.158.101.1:8080` 为可用 HTTP 代理，后续直接用它即可（`HTTPS_PROXY=http://10.158.101.1:8080`）。
 
 7. **初始化数据库并启动服务验证**
    ```bash
@@ -92,7 +92,7 @@
 | `we-mp-rss/tools/analyze_accounts.py` | 从文件批量分析公众号的脚本（新增，见第六节） |
 
 > 注：早期为绕过「只探测到 SOCKS 端口」的问题曾新增过 `tools/http2socks.py`（HTTP→SOCKS 桥）。
-> 后确认 `10.158.101.1:8080` 是可直接使用的 **HTTP 代理**，已**删除该桥**，`run.sh` 改为直接用 8080。
+> 后确认 `10.158.101.1:8080` 是可直接使用的 **HTTP 代理**，已**删除该桥**；`run.sh` 不硬编码代理，运行前自行 export 即可。
 
 ### 已知限制（重要）
 - **WebKit 浏览器无法在本机运行**：本机是 RHEL 系发行版且非 root、无 `apt`，缺少 WebKit 运行所需的 Ubuntu 系统库（`libgtk-3`、`libEGL` 等）。**但它只影响很小一部分功能，不影响搜索/列表/分析。**
@@ -398,7 +398,7 @@ HTTPS_PROXY=http://10.158.101.1:8080 .venv/bin/pip install -r requirements.txt
 1. 已在后台完成 **扫码授权**（否则搜索/抓取会失败）。
 2. 已设置代理环境变量（**需你自己 export**；`run.sh` 与 `tools/*.py` 都不硬编码代理）：
    ```bash
-   export HTTPS_PROXY=http://<代理IP>:<端口>   # 例如本环境：http://10.158.101.1:8080
+  export HTTPS_PROXY=http://<代理IP>:<端口>   # 例如本环境：http://10.158.101.1:8080
    export HTTP_PROXY=http://<代理IP>:<端口>
    ```
 
@@ -529,7 +529,7 @@ cat data/wx.lic        # 不再是 {}，而是包含 token/cookie 的内容即�
    - `static/wx_qrcode.png` 已存在：源码里 `check_lock()` 实际判断的是**这个 png 是否存在**，存在就返回
      “请勿重复运行”、不再生成 → 先 `rm -f static/wx_qrcode.png` 再重跑；
    - 命令返回的 `code` 为 None / 报请求错误：多半是该机器没走通代理，先
-     `curl -x http://10.158.101.1:8080 -sI https://mp.weixin.qq.com | head -1` 测通再跑。
+    `curl -x http://10.158.101.1:8080 -sI https://mp.weixin.qq.com | head -1` 测通再跑。
 
 5. **想消除后台反复刷的浏览器错误日志**：把 `GATHER.CONTENT_AUTO_CHECK` 设为 `False`
    （默认 True，会周期性尝试用浏览器补正文，在无浏览器机器上只会刷错误，不影响搜索/列表/分析）。
