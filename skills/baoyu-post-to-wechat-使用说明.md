@@ -1,7 +1,8 @@
 # baoyu-post-to-wechat 使用说明
 
 > 本文档介绍 Cursor Skill `baoyu-post-to-wechat` 的功能、前置条件与完整使用流程。  
-> Skill 路径：`.cursor/skills/baoyu-post-to-wechat/`
+> - **Skill 安装目录**：`.cursor/skills/baoyu-post-to-wechat/`（代码与说明，安装后一般不用改）  
+> - **用户配置目录**：`.baoyu-skills/`（API 凭证与发布偏好，见 **第四章**）
 
 ---
 
@@ -70,15 +71,58 @@
 
 ### 3.1 通用依赖
 
-- **Bun 运行时**：脚本通过 `bun` 执行  
-  安装：`curl -fsSL https://bun.sh/install | bash`
-- **脚本依赖**：首次使用前在 skill 目录执行  
-  `cd .cursor/skills/baoyu-post-to-wechat/scripts/md && bun install`
+脚本通过 **Bun** 运行。**浏览器发布和 API 发布都需要**完成以下环境准备。以下命令不是每次发布都要执行。
+
+#### 首次在新环境使用时（按顺序执行一次）
+
+**步骤 1：安装 Bun 运行时**（若终端里还没有 `bun` 命令）
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+安装后，Bun 位于 `~/.bun/bin`。安装脚本会写入 shell 配置，但**当前终端可能不会自动生效**，需手动加载 PATH：
+
+```bash
+# 方式 A：加载 shell 配置（按你的环境，可能需执行其中一句或两句）
+source ~/.bashrc
+source ~/.bash_profile
+
+# 方式 B：当前终端临时生效（最稳妥）
+export PATH="$HOME/.bun/bin:$PATH"
+```
+
+然后确认：
+
+```bash
+bun --version
+```
+
+若仍提示找不到，**新开一个终端窗口**再试；或把 `export PATH="$HOME/.bun/bin:$PATH"` 写入 `~/.bashrc` 以便长期生效。
+
+**步骤 2：安装 skill 脚本依赖**（在 skill 的 `scripts/md` 目录执行一次）
+
+```bash
+cd .cursor/skills/baoyu-post-to-wechat/scripts/md && bun install
+```
+
+#### 日常发布
+
+环境准备好后，**无需重复执行上述命令**，直接发布即可。
+
+#### 何时需要重新执行
+
+| 情况 | 需要执行 |
+|------|----------|
+| 换了一台新机器 / 新容器 | 步骤 1 + 步骤 2 |
+| 终端提示找不到 `bun` | 执行 `export PATH="$HOME/.bun/bin:$PATH"`，或 `source ~/.bashrc` / `source ~/.bash_profile`；未安装则执行步骤 1 |
+| skill 更新后 `package.json` 有变化 | 步骤 2 |
+| 误删了 `scripts/md/node_modules` | 步骤 2 |
 
 ### 3.2 API 方式额外要求
 
 - 微信公众号 **AppID** 与 **AppSecret**（官方免费提供，**不需要购买第三方 API Key**）
-- 在 [微信开发者平台](https://developers.weixin.qq.com/console) 获取后，写入 `.baoyu-skills/.env`（详见 **第四章 4.2**）
+- 在 [微信开发者平台](https://developers.weixin.qq.com/console) 获取 AppID/AppSecret，并配置 **API IP 白名单**（详见 **第四章 4.2**）
 
 ### 3.3 浏览器方式额外要求
 
@@ -97,10 +141,35 @@ npx -y bun ${SKILL_DIR}/scripts/check-permissions.ts
 
 ## 第四章 首次配置
 
+### 两类目录说明（必读）
+
+Skill 涉及**两个彼此独立**的目录，不要混淆：
+
+| 目录 | 位置 | 用途 | 是否需要你创建 |
+|------|------|------|----------------|
+| **Skill 安装目录** | `.cursor/skills/baoyu-post-to-wechat/` | Skill 本体（`SKILL.md`、脚本、参考文档） | 安装 skill 时已有 |
+| **用户配置目录** | `.baoyu-skills/`（项目根目录下） | 你的 API 凭证与发布偏好 | 首次配置时创建 |
+
+**项目根目录推荐结构**：
+
+```
+项目根目录/
+├── .cursor/skills/baoyu-post-to-wechat/   ← Skill 安装目录（不要放 .env / EXTEND.md）
+│   ├── SKILL.md
+│   ├── scripts/
+│   └── references/
+└── .baoyu-skills/                         ← 用户配置目录（配置放这里）
+    ├── .env                               ← API 凭证：WECHAT_APP_ID、WECHAT_APP_SECRET
+    └── baoyu-post-to-wechat/
+        └── EXTEND.md                      ← 发布偏好：主题、发布方式、作者等
+```
+
+> **常见误区**：把 `.env` 或 `EXTEND.md` 放在 `.cursor/skills/baoyu-post-to-wechat/` 下**不会生效**。Skill 只从 `.baoyu-skills/`（或用户主目录下的 `~/.baoyu-skills/`）读取配置。
+
 **推荐配置顺序**：
 
 1. **4.1** 配置 `EXTEND.md`（发布偏好，含 `default_publish_method`）
-2. **4.2** 若选择 `api` 发布，配置并验证 `.env` 中的 API 凭证
+2. **4.2** 若选择 `api` 发布：在微信后台配置 **API IP 白名单**，并在项目中配置、验证 `.env` 中的 API 凭证
 3. **4.3** 注意安全，勿将 `.env` 提交到 Git
 
 ### 4.1 配置 EXTEND.md
@@ -167,7 +236,7 @@ chrome_profile_path: /path/to/chrome/profile
 
 | 值 | 说明 |
 |----|------|
-| `api` | API 发布（推荐，速度快；须先完成 **4.2** 的 API 凭证配置与验证） |
+| `api` | API 发布（推荐，速度快；须先完成 **4.2** 的 IP 白名单与 API 凭证配置） |
 | `browser` | 浏览器自动化发布（需 Chrome + 扫码登录） |
 
 未在 `EXTEND.md` 中指定时，发布流程会询问你选择 `api` 或 `browser`。
@@ -184,13 +253,60 @@ API 方式使用的是**你自己微信公众号**在官方平台提供的凭证
 | **是否需要购买 API Key** | 否，AppID/AppSecret 在公众平台**免费获取** |
 | **可能需要花钱的部分** | 公众号注册/认证本身（如企业认证约 300 元/年），与 API Key 无关 |
 
-#### 获取路径
+#### 微信开发者平台操作路径（统一入口）
 
-1. 登录 [微信开发者平台](https://developers.weixin.qq.com/console)
-2. 在控制台中进入 **我的业务**，选择 **公众号**
-3. 进入对应公众号，在开发配置中复制 **AppID** 和 **AppSecret**（Secret 首次生成后只显示一次，请妥善保存）
+AppID、AppSecret、API IP 白名单都在同一页面配置，路径如下：
 
-#### 配置
+1. 登录 [微信开发者平台](https://developers.weixin.qq.com/console)（首页）
+2. 在 **我的业务** 区域，点击 **公众号**（见图示：显示已绑定的公众号数量）
+3. 进入你的公众号（如「思维的河流」）
+4. 打开顶部 **基础信息** 标签页
+
+在 **基础信息** 页面中，相关配置位于 **开发密钥** 区块：
+
+| 配置项 | 页面位置 | 操作 |
+|--------|----------|------|
+| **AppID** | 账号详情 → AppID | 直接复制（页面可见） |
+| **AppSecret** | 开发密钥 → AppSecret | 点击 **重置** 生成并查看（仅显示一次，请立即保存） |
+| **API IP 白名单** | 开发密钥 → API IP白名单 | 点击 **设置名单**，添加公网 IP |
+
+> AppSecret 日常不显示明文，忘记时需 **重置** 获取新值，并同步更新 `.baoyu-skills/.env`。
+
+#### API IP 白名单
+
+API 发布时，脚本会从**运行它的机器**向 `api.weixin.qq.com` 发起请求。微信会校验请求来源的**公网出口 IP** 是否在白名单内；不在白名单将报错 `40164 invalid ip ... not in whitelist`。
+
+> **注意**：IP 白名单在**微信开发者平台 → 基础信息 → 开发密钥** 中配置，**不在** skill 的 `.env` 或 `EXTEND.md` 中配置。浏览器发布方式不需要 IP 白名单。
+
+**查询公网出口 IP**（在会执行 API 发布脚本的那台机器上运行）：
+
+```bash
+curl -s ifconfig.me
+# 或
+curl -s ip.sb
+# 或
+curl -s api.ipify.org
+```
+
+若需代理才能访问外网：
+
+```bash
+export http_proxy=http://10.158.101.1:8080 https_proxy=http://10.158.101.1:8080
+curl -s ifconfig.me
+```
+
+> 填进白名单的是**公网 IP**，不是内网地址（如 `192.168.x.x`、`172.17.x.x`）。本机、VPS、CI 服务器可各填一个，**支持配置多个 IP**；也支持网段格式如 `123.45.67.0/24`（详见[官方文档](https://developers.weixin.qq.com/doc/oplatform/developers/basic_func/ip_whitelist.html)）。
+
+**绑定 IP 白名单**（接上方统一入口，进入 **基础信息** 后）：
+
+1. 在 **开发密钥** 区块找到 **API IP白名单**（提示：「设置IP白名单后, 可调用 access_token」）
+2. 点击 **设置名单**
+3. 添加运行 API 发布脚本的机器**公网出口 IP**
+4. 保存后等待数分钟生效
+
+**使用阶段**：在 **第五章 Step 4（API 发布）** 执行时生效，覆盖获取 `access_token`、上传素材、`draft/add` 等全部 API 调用。须在首次 API 发布前完成配置。
+
+#### 配置 .env
 
 **选择存放位置**（二选一）：
 
@@ -279,7 +395,7 @@ bun ${SKILL_DIR}/scripts/check-permissions.ts
 
 - 优先使用 EXTEND.md 中的 `default_publish_method`（配置见 **第四章 4.1**）
 - 未在 EXTEND.md 中指定时，询问用户选择 `api` 或 `browser`
-- 选 API 时检查 `.env` 中是否已配置 `WECHAT_APP_ID`；缺失则引导按 **第四章 4.2** 填写
+- 选 API 时检查 `.env` 中是否已配置 `WECHAT_APP_ID`，以及运行脚本的机器公网 IP 是否已加入微信 **API IP 白名单**；缺失则引导按 **第四章 4.2** 处理
 
 ### Step 3：解析主题与校验元数据
 
@@ -431,6 +547,7 @@ API 凭证优先级见 **第四章 4.2**。
 | 问题 | 处理建议 |
 |------|----------|
 | 缺少 API 凭证 | 按 **第四章 4.2** 配置并验证 `.env` |
+| IP 不在白名单（`40164`） | 在运行脚本的机器上查公网 IP（`curl -s ifconfig.me`），添加到微信后台 **API IP 白名单**（见 **4.2**） |
 | Access Token 错误 | 检查 AppID/AppSecret 是否正确、是否过期 |
 | 浏览器未登录 | 首次运行打开 Chrome，扫码登录公众号后台 |
 | 找不到 Chrome | 设置环境变量 `WECHAT_BROWSER_CHROME_PATH` |
@@ -479,12 +596,27 @@ npx -y bun ${SKILL_DIR}/scripts/wechat-browser.ts \
 
 ## 附录 相关文件路径
 
+### Skill 安装目录（`.cursor/skills/baoyu-post-to-wechat/`）
+
 | 类型 | 路径 |
 |------|------|
 | Skill 主文件 | `.cursor/skills/baoyu-post-to-wechat/SKILL.md` |
 | 首次设置说明 | `.cursor/skills/baoyu-post-to-wechat/references/config/first-time-setup.md` |
 | 贴图参考 | `.cursor/skills/baoyu-post-to-wechat/references/image-text-posting.md` |
 | 文章参考 | `.cursor/skills/baoyu-post-to-wechat/references/article-posting.md` |
-| 项目偏好 | `.baoyu-skills/baoyu-post-to-wechat/EXTEND.md` |
-| 用户偏好 | `~/.baoyu-skills/baoyu-post-to-wechat/EXTEND.md` |
-| API 凭证 | `.baoyu-skills/.env` 或 `~/.baoyu-skills/.env` |
+
+### 用户配置目录（`.baoyu-skills/`，位于项目根目录）
+
+| 类型 | 项目级路径 | 用户级路径（所有项目共用） |
+|------|------------|---------------------------|
+| API 凭证 | `.baoyu-skills/.env` | `~/.baoyu-skills/.env` |
+| 发布偏好 | `.baoyu-skills/baoyu-post-to-wechat/EXTEND.md` | `~/.baoyu-skills/baoyu-post-to-wechat/EXTEND.md` |
+
+项目级配置优先于用户级；环境变量优先于 `.env` 文件。
+
+### 微信平台配置（不在项目目录中）
+
+| 类型 | 配置位置 |
+|------|----------|
+| AppID / AppSecret | 微信开发者平台 → 我的业务 → 公众号 → **基础信息** → 账号详情 / 开发密钥 |
+| API IP 白名单 | 同上 → **基础信息** → 开发密钥 → **设置名单**（见 **第四章 4.2**） |
