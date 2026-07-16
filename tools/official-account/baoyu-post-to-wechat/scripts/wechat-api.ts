@@ -44,6 +44,41 @@ const TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token";
 const UPLOAD_URL = "https://api.weixin.qq.com/cgi-bin/material/add_material";
 const DRAFT_URL = "https://api.weixin.qq.com/cgi-bin/draft/add";
 
+// Some environments have no direct route to api.weixin.qq.com. When a direct
+// request fails (or times out), we transparently retry through a proxy.
+// Priority: WECHAT_PROXY env > known-good fallback proxy.
+const FALLBACK_PROXY = process.env.WECHAT_PROXY || "http://10.158.101.1:8080";
+const DIRECT_TIMEOUT_MS = Number(process.env.WECHAT_DIRECT_TIMEOUT_MS || 15000);
+
+/**
+ * Fetch that first tries a direct connection (honoring any HTTPS_PROXY the
+ * runtime already applies). If that fails with a network/timeout error, it
+ * retries once through FALLBACK_PROXY. Set WECHAT_PROXY to override, or
+ * WECHAT_NO_PROXY_FALLBACK=1 to disable the fallback entirely.
+ */
+async function robustFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  try {
+    if (init.signal) {
+      return await fetch(url, init);
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), DIRECT_TIMEOUT_MS);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch (err) {
+    if (process.env.WECHAT_NO_PROXY_FALLBACK === "1" || !FALLBACK_PROXY) {
+      throw err;
+    }
+    const reason = err instanceof Error ? err.message : String(err);
+    console.error(`[wechat-api] Direct connection failed (${reason}). Retrying via proxy: ${FALLBACK_PROXY}`);
+    // `proxy` is a Bun-specific fetch option.
+    return await fetch(url, { ...init, proxy: FALLBACK_PROXY } as RequestInit);
+  }
+}
+
 function loadEnvFile(envPath: string): Record<string, string> {
   const env: Record<string, string> = {};
   if (!fs.existsSync(envPath)) return env;
@@ -88,7 +123,7 @@ function loadConfig(): WechatConfig {
 
 async function fetchAccessToken(appId: string, appSecret: string): Promise<string> {
   const url = `${TOKEN_URL}?grant_type=client_credential&appid=${appId}&secret=${appSecret}`;
-  const res = await fetch(url);
+  const res = await robustFetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch access token: ${res.status}`);
   }
@@ -112,7 +147,7 @@ async function uploadImage(
   let contentType: string;
 
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-    const response = await fetch(imagePath);
+    const response = await robustFetch(imagePath);
     if (!response.ok) {
       throw new Error(`Failed to download image: ${imagePath}`);
     }
@@ -164,7 +199,7 @@ async function uploadImage(
   const body = Buffer.concat([headerBuffer, fileBuffer, footerBuffer]);
 
   const url = `${UPLOAD_URL}?access_token=${accessToken}&type=image`;
-  const res = await fetch(url, {
+  const res = await robustFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": `multipart/form-data; boundary=${boundary}`,
@@ -269,7 +304,7 @@ async function publishToDraft(
     if (options.digest) article.digest = options.digest;
   }
 
-  const res = await fetch(url, {
+  const res = await robustFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

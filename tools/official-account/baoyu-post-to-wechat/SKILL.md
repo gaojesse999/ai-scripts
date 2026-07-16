@@ -372,6 +372,13 @@ Files created:
 2. `<cwd>/.baoyu-skills/.env`
 3. `~/.baoyu-skills/.env`
 
+**Network / Proxy (API method)**:
+- The API script (`wechat-api.ts`) first tries a direct connection to WeChat. If it fails or times out, it automatically retries once through a proxy.
+- Proxy priority: `WECHAT_PROXY` env → built-in fallback (`http://10.158.101.1:8080`).
+- Override the direct-attempt timeout with `WECHAT_DIRECT_TIMEOUT_MS` (default `15000`).
+- Set `WECHAT_NO_PROXY_FALLBACK=1` to disable the proxy retry entirely.
+- These can also be exported via `.baoyu-skills/.env`.
+
 ## Troubleshooting
 
 | Issue | Solution |
@@ -384,6 +391,7 @@ Files created:
 | No cover image | Add frontmatter cover or place `imgs/cover.png` in article directory |
 | Wrong comment defaults | Check `EXTEND.md` keys `need_open_comment` and `only_fans_can_comment` |
 | Paste fails | Check system clipboard permissions |
+| `Unable to connect` / connection timeout (API) | No direct route to `api.weixin.qq.com`. The API script auto-retries through a proxy — set `WECHAT_PROXY` (or `HTTPS_PROXY`) to your proxy. Disable auto-retry with `WECHAT_NO_PROXY_FALLBACK=1` |
 
 ## Extension Support
 
