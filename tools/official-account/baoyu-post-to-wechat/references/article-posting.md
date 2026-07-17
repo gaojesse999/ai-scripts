@@ -51,6 +51,24 @@ Regular paragraph with **bold** and *italic*.
 [Link text](https://example.com)
 ```
 
+## Cover Image (封面图)
+
+The API method (`article_type=news`) requires a cover image. Resolution order:
+
+1. `--cover <path>` CLI argument
+2. Frontmatter (`coverImage`, `featureImage`, `cover`, `image`)
+3. Article directory default `imgs/cover.png`
+4. First inline content image
+5. **Auto-generate** a cover with the agent's image-generation tool when none of the above exist
+
+**Auto-generation guidelines**:
+
+- Derive the visual concept from the article's title and opening paragraphs (theme/metaphor, mood, 1–2 key visual elements). Do not invent facts.
+- Aspect ratio `16:9`; keep the subject centered (WeChat crops covers to ~2.35:1).
+- Clean, modern editorial illustration; cohesive palette (align with `default_color` mood when sensible); no text/letters/logos in the image.
+- Save as `<article_dir>/cover.png`, confirm with the user (unless pre-approved), then pass it via `--cover`.
+- If image generation is unavailable, ask the user to provide a cover instead.
+
 ## Image Handling
 
 1. **Parse**: Images in markdown are replaced with `WECHATIMGPH_N`
