@@ -251,7 +251,23 @@ WECHAT_APP_SECRET=<user_input>
    2. Else use frontmatter (`coverImage`, `featureImage`, `cover`, `image`).
    3. Else check article directory default path: `imgs/cover.png`.
    4. Else fallback to first inline content image.
-   5. If still missing, stop and request a cover image before publishing.
+   5. Else **auto-generate a cover** (see below). Only if generation is unavailable or fails, stop and request a cover image before publishing.
+
+**Auto-Generate Cover** (when no cover is found in steps 1–4):
+
+Generate a cover that matches the article, then pass its path via `--cover` in Step 4.
+
+1. **Derive a visual concept from the article**: read the title and opening paragraphs, then distill the core theme/metaphor, mood, and 1–2 key visual elements. Do NOT invent facts beyond the article.
+2. **Generate the image** using the agent's image-generation tool with:
+   - **Aspect ratio**: `16:9` (WeChat cover ratio; 2.35:1 crop is applied by the platform, so keep the main subject centered and avoid important content near edges).
+   - **Style**: clean, modern editorial illustration; cohesive color palette (prefer aligning with EXTEND.md `default_color` when it maps to a mood, e.g. blue = calm/focus); atmospheric lighting.
+   - **No text**: the image MUST NOT contain any words, letters, or logos (WeChat covers should be clean; text is added by the layout).
+   - **Filename**: `cover.png`.
+3. **Place the file in the article directory** as `<article_dir>/cover.png` (copy from the generated asset path if needed).
+4. **Confirm with the user before publishing**: briefly show/describe the generated cover so they can approve or request a regeneration. If the user pre-approved auto-generation (e.g. via CLI/one-shot request), skip the extra confirmation.
+5. Use this path as the `--cover` argument in Step 4.
+
+> Note: Cover generation relies on the agent's built-in image-generation capability, not a skill script. If the running environment has no image-generation tool, fall back to asking the user for a cover image.
 
 ### Step 4: Publish to WeChat
 
@@ -352,6 +368,7 @@ Files created:
 | Themes | ✗ | ✓ | ✓ |
 | Auto-generate metadata | ✗ | ✓ | ✓ |
 | Default cover fallback (`imgs/cover.png`) | ✗ | ✓ | ✗ |
+| Auto-generate cover when missing | ✗ | ✓ | ✗ |
 | Comment control (`need_open_comment`, `only_fans_can_comment`) | ✗ | ✓ | ✗ |
 | Requires Chrome | ✓ | ✗ | ✓ |
 | Requires API credentials | ✗ | ✓ | ✗ |
@@ -388,7 +405,7 @@ Files created:
 | Not logged in (browser) | First run opens browser - scan QR to log in |
 | Chrome not found | Set `WECHAT_BROWSER_CHROME_PATH` env var |
 | Title/summary missing | Use auto-generation or provide manually |
-| No cover image | Add frontmatter cover or place `imgs/cover.png` in article directory |
+| No cover image | Skill auto-generates a cover via the agent's image tool; or add frontmatter cover / place `imgs/cover.png` in article directory. If image generation is unavailable, provide a cover manually |
 | Wrong comment defaults | Check `EXTEND.md` keys `need_open_comment` and `only_fans_can_comment` |
 | Paste fails | Check system clipboard permissions |
 | `Unable to connect` / connection timeout (API) | No direct route to `api.weixin.qq.com`. The API script auto-retries through a proxy — set `WECHAT_PROXY` (or `HTTPS_PROXY`) to your proxy. Disable auto-retry with `WECHAT_NO_PROXY_FALLBACK=1` |
