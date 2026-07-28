@@ -47,11 +47,13 @@ Every prompt for that scene includes a `⚠️空间布局` block that mirrors t
 Example:
 ```
 ⚠️空间布局（MAIN VIEW=从天桥入口看向巨型屏幕）：
-位置A：[Gandelfina]站在中央通道最前方靠近屏幕，面朝三人。
-位置B：[Roko]和[Lulu]在通道中间并肩站立，距[Gandelfina]约3米，面朝[Gandelfina]方向。
-位置C：[Rein]站在[Roko]和[Lulu]正后方1.5米处——不在他们旁边，严格在他们背后，被他们的身体部分遮挡——也面朝[Gandelfina]方向。
-⚠️[Roko]左肩与[Lulu]右肩间距约40厘米。[Rein]的头顶高度严格低于[Roko]和[Lulu]的肩部连线（站位较远造成的视觉缩小）。
+位置A：Gandelfina站在中央通道最前方靠近屏幕，面朝三人。
+位置B：Roko和Lulu在通道中间并肩站立，距Gandelfina约3米，面朝Gandelfina方向。
+位置C：Rein站在Roko和Lulu正后方1.5米处——不在他们旁边，严格在他们背后，被他们的身体部分遮挡——也面朝Gandelfina方向。
+⚠️Roko左肩与Lulu右肩间距约40厘米。Rein的头顶高度严格低于Roko和Lulu的肩部连线（站位较远造成的视觉缩小）。
 ```
+
+Note: spatial blocking sits in the prompt body, so asset names appear **plain, with no brackets** (`Roko`, `Gandelfina`). The `[Character1]` / `[Prop]` tokens in the schema template above are just fill-in placeholders — substitute the real asset name without brackets.
 
 Always include in the prompt:
 - Distances in meters

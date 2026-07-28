@@ -86,8 +86,8 @@ The full prompt envelope is 15 seconds. Divide internally for multi-shot prompts
 ### 6.2 Insert on prop (focus-locked)
 
 ```
-机位：50mm/85mm 大光圈定焦，⚠️F1.4极浅景深，⚠️焦平面从镜头第1帧到最后1帧严格锁定在[object]上——绝对禁止焦点漂移、rack focus、autofocus跳变。
-⚠️清晰度规则：画面中⚠️只有[object]绝对清晰锐利，所有其他元素强烈散焦虚化为模糊色块和柔光斑（heavy bokeh）——背景永远模糊。
+机位：50mm/85mm 大光圈定焦，⚠️F1.4极浅景深，⚠️焦平面从镜头第1帧到最后1帧严格锁定在<物体名>上——绝对禁止焦点漂移、rack focus、autofocus跳变。
+⚠️清晰度规则：画面中⚠️只有<物体名>绝对清晰锐利，所有其他元素强烈散焦虚化为模糊色块和柔光斑（heavy bokeh）——背景永远模糊。
 摄影机[angle].⚠️⚠️⚠️dolly out运动幅度极小：整个X秒内总位移仅约10-15厘米——速度慢到几乎察觉不到。禁zoom，禁突然推拉。
 ```
 

@@ -38,8 +38,8 @@ The declaration block has **two mapping lines** followed by **two description se
 ```
 
 ⚠️**Alias convention:**
-- **All asset references use bracket form `[name]`** — on the two mapping lines (`图片资产：[name]=name`, `声音资产：[name声音]=name声音`), in the description sections, and in the prompt body. There is no `@` prefix.
-- **Image assets** are bracket-referenced **everywhere in the prompt body** (机位 / 空间布局 / 动作 / 微表演 / 环境活动 / 对白 / warnings), e.g. `[Roko]`, `[Old Apartment]`.
+- **Bracket form `[name]` is used ONLY in the asset list** — on the two mapping lines (`图片资产：[name]=name`, `声音资产：[name声音]=name声音`) and in the two description sections (`图片资产描述：[name] — ...`, `声音资产描述：[name声音] — ...`). There is no `@` prefix.
+- **In the entire prompt body, refer to image assets by their plain name with NO brackets** (机位 / 空间布局 / 动作 / 微表演 / 环境活动 / 对白 / warnings), e.g. write `Roko`, `Old Apartment` — never `[Roko]`, `[Old Apartment]`. Example: `图片资产：[Roko]=Roko` declares the asset; the body then reads `Roko走出屋子`.
 - **Voice assets** appear only in the `声音资产` map line and `声音资产描述` section — never in the prompt body.
 - **Ambient / SFX** — have no alias at all; they are plain inline text.
 
@@ -82,7 +82,7 @@ When a prompt contains multiple internal cuts, each one is a `【镜头N】` blo
 ⚠️0.3-0.5秒后⚠️立刻硬切（hard cut）到镜头2——无过渡、无淡出、无停留。
 
 【镜头2】（紧接镜头1硬切而来）
-机位：⚠️85mm长焦，⚠️F1.4极浅景深，⚠️[Roko]侧面紧凑特写。
+机位：⚠️85mm长焦，⚠️F1.4极浅景深，⚠️Roko侧面紧凑特写。
 摄影机运动：[handheld / dolly / static + camera-emotion sync clause from CAMERA_EMOTION.md].
 背景：[detail].
 动作：[step-by-step].
@@ -108,9 +108,9 @@ For any prompt with 2+ characters in frame, declare the spatial relationship exp
 
 ```
 ⚠️空间布局（MAIN VIEW=从天桥入口看向巨型屏幕）：
-位置A：[Gandelfina]站在中央通道最前方靠近屏幕，面朝三人。
-位置B：[Roko]和[Lulu]在通道中间并肩站立，距[Gandelfina]约3米，面朝[Gandelfina]方向。
-[Rein]站在[Roko]和[Lulu]正后方1.5米处——不在他们旁边，严格在他们背后，被他们的身体部分遮挡——也面朝[Gandelfina]方向。
+位置A：Gandelfina站在中央通道最前方靠近屏幕，面朝三人。
+位置B：Roko和Lulu在通道中间并肩站立，距Gandelfina约3米，面朝Gandelfina方向。
+Rein站在Roko和Lulu正后方1.5米处——不在他们旁边，严格在他们背后，被他们的身体部分遮挡——也面朝Gandelfina方向。
 ```
 
 Use precise distances in meters. Use cardinal directions or "north/south/east/west" relative to the main view axis. Note who occludes whom, who faces which direction, and any heights/eyelines the model might get wrong.
@@ -136,7 +136,7 @@ Forbidden moves are explicit:
 This is the cinematographer's main creative output. Direct emotion as physical micro-events. See [MICRO_BEATS.md](MICRO_BEATS.md) for the full catalog by emotion.
 
 Tactics:
-- Eyeline shifts ("目光从[Gandelfina]方向微微移开向下")
+- Eyeline shifts ("目光从Gandelfina方向微微移开向下")
 - Breath ("胸腔深深起伏——一次漫长的吸气，然后缓慢呼出")
 - Throat/jaw micro-tells ("一次喉结上下吞咽", "颧骨处咬肌慢慢收缩")
 - Suppressed emotion as physical resistance ("他在试图忍住——每一块面部肌肉都在对抗涌上来的情绪")
@@ -156,15 +156,15 @@ Every dialogue line gets a pre-line beat, mid-line emphasis cues, and a post-lin
 ### Interruption (one character cuts another off)
 If character A interrupts character B mid-word:
 ```
-⚠️例外（对白打断）：第N镜头中[A]说"[start of A's line]——[word at break]"⚠️被第N+1镜头中[B]的台词强行打断——硬切发生在[A]说"[word]"中间，[A]的声音被[B]的台词覆盖切断。⚠️这是有意的对白打断（interruption），制造紧张冲突感。
+⚠️例外（对白打断）：第N镜头中A说"[start of A's line]——[word at break]"⚠️被第N+1镜头中B的台词强行打断——硬切发生在A说"[word]"中间，A的声音被B的台词覆盖切断。⚠️这是有意的对白打断（interruption），制造紧张冲突感。
 ```
 
-Then in shot N+1's description: `镜头第一帧时[B]通过鼻孔大幅度急吸气（sharp inhale）——抓取空气准备打断。`
+(`A` / `B` here are placeholders for the actual character names — write them in the body as plain names, no brackets.) Then in shot N+1's description: `镜头第一帧时B通过鼻孔大幅度急吸气（sharp inhale）——抓取空气准备打断。`
 
 ### Line addressing
 Every line must explicitly state **whom it's directed at**:
 ```
-严格朝向 [character X] 说（视线、声音方向都明确指向 [X]，不是对其他人说的）。
+严格朝向 character X 说（视线、声音方向都明确指向 X，不是对其他人说的）。
 ```
 
 ### Lines from bokeh
@@ -177,7 +177,7 @@ If a character in bokeh speaks, sound is allowed, but the shot must state all of
 For any scene with extras or environmental movement, callout what's happening in the background. Forbid empty backgrounds:
 
 ```
-环境活动（匹配[Underground Base Main Hall]）：⚠️背景必须充满大量活动的工作人员——禁止空旷背景。多名白衬衫分析员在工作站旁快速打字、站起交接文件、弯腰核对屏幕数据、两人并排讨论。多名白大褂科研人员透过显微镜观察古代文物。银色铰接机械臂全程持续运动。多人在通道和工作台之间来回走动。
+环境活动（匹配Underground Base Main Hall）：⚠️背景必须充满大量活动的工作人员——禁止空旷背景。多名白衬衫分析员在工作站旁快速打字、站起交接文件、弯腰核对屏幕数据、两人并排讨论。多名白大褂科研人员透过显微镜观察古代文物。银色铰接机械臂全程持续运动。多人在通道和工作台之间来回走动。
 ```
 
 For empty/quiet scenes (apartments, exteriors at night), still callout the *absence* — what isn't moving, what kind of silence:
@@ -189,7 +189,7 @@ For empty/quiet scenes (apartments, exteriors at night), still callout the *abse
 Character voices are declared once in Section 1 (`声音资产`) and **not referenced again here** — the model maps each character's dialogue to their declared voice automatically. In 声音设计, only describe **ambient and SFX as plain inline text (no alias)**, and place each cue on its beat:
 
 ```
-声音设计：全程低音床为远处城市低频嗡鸣+偶尔车流（ambient，非资产）。第N镜头[Roko]开口说"line"。拍立得弹出瞬间为机械咔嚓+滚轮声（SFX，非资产）。⚠️禁音乐、禁字幕——仅画面内SFX与人声。
+声音设计：全程低音床为远处城市低频嗡鸣+偶尔车流（ambient，非资产）。第N镜头Roko开口说"line"。拍立得弹出瞬间为机械咔嚓+滚轮声（SFX，非资产）。⚠️禁音乐、禁字幕——仅画面内SFX与人声。
 ```
 
 ## Section 9 — Lighting overrides per shot
@@ -246,7 +246,7 @@ What to mark with `⚠️`:
 - **Scale mismatch** — for shots with multiple characters, restate heights
 - **Camera pass-through** — for handheld, note "禁稳定器" but also "画面带有机呼吸感微晃" so it doesn't go wild
 - **Spurious cuts** — counter: `⚠️本视频严格只有N个镜头——禁止添加额外镜头`
-- **Focus drift on inserts** — counter: `⚠️焦平面严格锁定在 [object]——绝对禁止焦点漂移、绝对禁止 rack focus、绝对禁止 autofocus 跳变`
+- **Focus drift on inserts** — counter: `⚠️焦平面严格锁定在 <物体名>——绝对禁止焦点漂移、绝对禁止 rack focus、绝对禁止 autofocus 跳变`（写实际道具的资产名，不带方括号）
 
 ### Rule-replacement hierarchy
 
