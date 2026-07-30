@@ -20,6 +20,7 @@ from typing import Any
 from urllib.request import Request, urlopen
 
 import collection as collection_script
+from bili_common import ensure_network
 
 USER_AGENT = collection_script.USER_AGENT
 
@@ -49,6 +50,122 @@ def extract_bvid(url: str) -> str:
     if not match:
         raise ValueError(f"Unable to extract BV id from: {url}")
     return match.group(0)
+
+
+def extract_episode_id(url: str) -> int | None:
+    match = re.search(r"/ep(\d+)", url)
+    return int(match.group(1)) if match else None
+
+
+def extract_season_id(url: str) -> int | None:
+    match = re.search(r"/ss(\d+)", url)
+    return int(match.group(1)) if match else None
+
+
+def normalize_duration(value: object) -> float | int | None:
+    if not isinstance(value, (int, float)):
+        return value
+    if value > 10000:
+        return round(value / 1000.0, 3)
+    return value
+
+
+def fetch_bangumi_season(ep_id: int | None = None, season_id: int | None = None) -> dict:
+    if ep_id is not None:
+        query = f"ep_id={ep_id}"
+        referer = f"https://www.bilibili.com/bangumi/play/ep{ep_id}"
+    elif season_id is not None:
+        query = f"season_id={season_id}"
+        referer = f"https://www.bilibili.com/bangumi/play/ss{season_id}"
+    else:
+        raise ValueError("fetch_bangumi_season requires ep_id or season_id")
+
+    payload = fetch_json(f"https://api.bilibili.com/pgc/view/web/season?{query}", referer)
+    if payload.get("code") != 0:
+        raise RuntimeError(f"pgc season API failed: {payload.get('message')}")
+    return payload.get("result") or {}
+
+
+def build_bangumi_targets(result: dict) -> list[dict[str, Any]]:
+    season_title = result.get("title") or result.get("name")
+    targets: list[dict[str, Any]] = []
+    for episode in result.get("episodes") or []:
+        ep_id = episode.get("ep_id")
+        if ep_id is None:
+            continue
+        targets.append(
+            {
+                "kind": "episode",
+                "ep_id": ep_id,
+                "cid": episode.get("cid"),
+                "aid": episode.get("aid"),
+                "title": episode.get("share_copy") or episode.get("title") or season_title,
+                "duration": normalize_duration(episode.get("duration") or episode.get("duration_ms") or 0),
+                "url": f"https://www.bilibili.com/bangumi/play/ep{ep_id}",
+            }
+        )
+    return targets
+
+
+def resolve_single_mode_bangumi(url: str, ep_id: int | None, season_id: int | None) -> dict[str, Any]:
+    result = fetch_bangumi_season(ep_id=ep_id, season_id=season_id)
+    targets = build_bangumi_targets(result)
+    if not targets:
+        raise RuntimeError("No episodes returned by pgc season API")
+
+    if ep_id is not None:
+        target = next((item for item in targets if int(item["ep_id"]) == ep_id), targets[0])
+        recognized = "番剧单集链接"
+        notes: list[str] = []
+    else:
+        target = targets[0]
+        recognized = "番剧总链接 (season)"
+        notes = [f"Detected {len(targets)} episodes, descending to the first one."]
+
+    return {
+        "mode": "single",
+        "normalized_url": target["url"],
+        "input_link_type": "bangumi_episode" if ep_id is not None else "bangumi_season_root",
+        "resolved_scope": "single_episode",
+        "display_logic": {
+            "recognized_as": recognized,
+            "rule": "Single mode keeps one episode only",
+            "final_target": target,
+            "notes": notes,
+        },
+        "collection_context": {
+            "source": "bangumi",
+            "collection_title": result.get("title") or result.get("name"),
+            "total": len(targets),
+        },
+        "targets": [target],
+    }
+
+
+def resolve_collection_mode_bangumi(url: str, ep_id: int | None, season_id: int | None) -> dict[str, Any]:
+    result = fetch_bangumi_season(ep_id=ep_id, season_id=season_id)
+    targets = build_bangumi_targets(result)
+    if not targets:
+        raise RuntimeError("No episodes returned by pgc season API")
+
+    return {
+        "mode": "collection",
+        "normalized_url": url,
+        "input_link_type": "bangumi_episode" if ep_id is not None else "bangumi_season_root",
+        "resolved_scope": "full_bangumi_season",
+        "display_logic": {
+            "recognized_as": "番剧 (season)",
+            "rule": "Collection mode processes every episode in the season",
+            "notes": [f"Season contains {len(targets)} episodes."],
+        },
+        "collection_context": {
+            "source": "bangumi",
+            "collection_title": result.get("title") or result.get("name"),
+            "total": len(targets),
+            "total_expanded_units": len(targets),
+        },
+        "targets": targets,
+    }
 
 
 def extract_page_number(url: str) -> int | None:
@@ -346,10 +463,21 @@ def resolve_collection_mode_bv(url: str) -> dict[str, Any]:
 
 def main() -> int:
     args = parse_args()
+    ensure_network()
     url = args.url.strip()
 
     if "b23.tv" in url:
         url = collection_script.resolve_short_url(url)
+
+    ep_id = extract_episode_id(url)
+    season_id = extract_season_id(url)
+    if ep_id is not None or season_id is not None:
+        if args.mode == "single":
+            result = resolve_single_mode_bangumi(url, ep_id, season_id)
+        else:
+            result = resolve_collection_mode_bangumi(url, ep_id, season_id)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
 
     space_info = collection_script.parse_space_collection_url(url)
     if space_info:

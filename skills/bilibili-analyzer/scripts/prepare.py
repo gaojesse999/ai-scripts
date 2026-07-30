@@ -14,11 +14,14 @@ import cv2
 from PIL import Image
 import imagehash
 
-
-USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/123.0.0.0 Safari/537.36"
+import bili_common
+from bili_common import (
+    USER_AGENT,
+    build_headers,
+    ensure_network,
+    merge_streams,
+    pick_dash_streams,
+    stream_base_url,
 )
 
 
@@ -34,6 +37,12 @@ def parse_args() -> argparse.Namespace:
         help="Adjacent-frame similarity threshold for deduplication",
     )
     parser.add_argument("--no-dedup", action="store_true", help="Disable adjacent-frame deduplication")
+    parser.add_argument(
+        "--max-height",
+        type=int,
+        default=1080,
+        help="Cap DASH video resolution (e.g. 1080). Use 0 for the absolute best (4K/HDR).",
+    )
     return parser.parse_args()
 
 
@@ -42,6 +51,13 @@ def extract_bvid(url: str) -> str:
     if not match:
         raise ValueError(f"Unable to extract BV id from: {url}")
     return match.group(0)
+
+
+def extract_episode_id(url: str) -> int | None:
+    match = re.search(r"/ep(\d+)", url)
+    if not match:
+        return None
+    return int(match.group(1))
 
 
 def extract_page_number(url: str) -> int | None:
@@ -57,14 +73,13 @@ def extract_page_number(url: str) -> int | None:
 
 
 def fetch_json(url: str, referer: str) -> dict:
-    request = Request(
-        url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Referer": referer,
-            "Accept": "application/json, text/plain, */*",
-        },
-    )
+    request = Request(url, headers=build_headers(referer))
+    with urlopen(request) as response:
+        return json.load(response)
+
+
+def fetch_playurl(url: str, referer: str) -> dict:
+    request = Request(url, headers=build_headers(referer))
     with urlopen(request) as response:
         return json.load(response)
 
@@ -93,15 +108,57 @@ def select_page(info: dict, page_number: int | None) -> dict:
     return pages[0]
 
 
+def normalize_duration(value: object) -> float | int | None:
+    if not isinstance(value, (int, float)):
+        return value
+    if value > 10000:
+        return round(value / 1000.0, 3)
+    return value
+
+
+def get_bangumi_context(url: str) -> tuple[str, str, dict, dict]:
+    ep_id = extract_episode_id(url)
+    if ep_id is None:
+        raise ValueError(f"Unable to extract episode id from: {url}")
+
+    referer = f"https://www.bilibili.com/bangumi/play/ep{ep_id}"
+    season_data = fetch_json(f"https://api.bilibili.com/pgc/view/web/season?ep_id={ep_id}", referer)
+    if season_data.get("code") != 0:
+        raise RuntimeError(f"pgc season API failed: {season_data.get('message')}")
+
+    result = season_data.get("result") or {}
+    episodes = result.get("episodes") or []
+    if not episodes:
+        raise RuntimeError("No episode metadata returned by pgc season API")
+
+    episode = None
+    for item in episodes:
+        try:
+            if int(item.get("ep_id") or 0) == ep_id:
+                episode = item
+                break
+        except (TypeError, ValueError):
+            continue
+    if episode is None:
+        episode = episodes[0]
+
+    info = {
+        "title": result.get("title") or result.get("name") or episode.get("title") or f"EP{ep_id}",
+        "season_id": result.get("season_id"),
+        "ep_id": ep_id,
+    }
+    page = {
+        "page": 1,
+        "part": episode.get("share_copy") or episode.get("title") or info["title"],
+        "duration": normalize_duration(episode.get("duration") or episode.get("duration_ms") or 0),
+        "cid": episode.get("cid"),
+        "ep_id": ep_id,
+    }
+    return f"EP{ep_id}", referer, info, page
+
+
 def download_video(video_url: str, output_path: Path, referer: str) -> None:
-    request = Request(
-        video_url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Referer": referer,
-            "Accept": "*/*",
-        },
-    )
+    request = Request(video_url, headers=build_headers(referer, accept="*/*"))
     with urlopen(request) as response, output_path.open("wb") as file_handle:
         total_bytes = int(response.headers.get("Content-Length", "0") or 0)
         downloaded = 0
@@ -205,8 +262,45 @@ def write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def download_playable(play_payload: dict, video_path: Path, referer: str, output_dir: Path, max_height: int | None = 1080) -> None:
+    """Download the best available stream.
+
+    Prefers DASH (separate high-quality video + audio, merged with ffmpeg);
+    falls back to a progressive durl segment when DASH is unavailable.
+    """
+    dash = play_payload.get("dash")
+    if isinstance(dash, dict) and dash.get("video"):
+        selection = pick_dash_streams(dash, max_height=max_height)
+        if selection is not None:
+            best_video, best_audio = selection
+            video_stream = output_dir / "video_stream.m4s"
+            print(f"[INFO] Downloading DASH video stream (id={best_video.get('id')})")
+            download_video(stream_base_url(best_video), video_stream, referer)
+
+            audio_stream = None
+            if best_audio is not None:
+                audio_stream = output_dir / "audio_stream.m4s"
+                print("[INFO] Downloading DASH audio stream")
+                download_video(stream_base_url(best_audio), audio_stream, referer)
+
+            print("[INFO] Merging streams with ffmpeg")
+            merge_streams(video_stream, audio_stream, video_path)
+
+            video_stream.unlink(missing_ok=True)
+            if audio_stream is not None:
+                audio_stream.unlink(missing_ok=True)
+            return
+
+    durl = play_payload.get("durl") or play_payload.get("durls") or []
+    if not durl:
+        raise RuntimeError("No downloadable stream (DASH or durl) returned by playurl API")
+    print("[INFO] Downloading progressive stream (durl fallback)")
+    download_video(durl[0]["url"], video_path, referer)
+
+
 def main() -> int:
     args = parse_args()
+    ensure_network()
     output_dir = Path(args.output).resolve()
     raw_dir = output_dir / "images_raw"
     final_dir = output_dir / "images"
@@ -216,34 +310,49 @@ def main() -> int:
     raw_dir.mkdir(parents=True, exist_ok=True)
     final_dir.mkdir(parents=True, exist_ok=True)
 
-    bvid = extract_bvid(args.url)
-    referer = f"https://www.bilibili.com/video/{bvid}"
+    episode_id = extract_episode_id(args.url)
+    if episode_id is not None:
+        bvid, referer, info, page = get_bangumi_context(args.url)
+        cid = page["cid"]
+        print(f"[INFO] Fetching metadata for {bvid}")
+        print(f"[INFO] Title: {info['title']}")
+        print(f"[INFO] Page {page.get('page', 1)}: {page.get('part')}")
+        print(f"[INFO] Duration: {page.get('duration')} seconds")
 
-    print(f"[INFO] Fetching metadata for {bvid}")
-    view_data = fetch_json(f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}", referer)
-    if view_data.get("code") != 0:
-        raise RuntimeError(f"view API failed: {view_data.get('message')}")
+        play_data = fetch_playurl(
+            f"https://api.bilibili.com/pgc/player/web/playurl?ep_id={episode_id}&cid={cid}&fnval=4048&fourk=1",
+            referer,
+        )
+    else:
+        bvid = extract_bvid(args.url)
+        referer = f"https://www.bilibili.com/video/{bvid}"
 
-    info = view_data["data"]
-    page = select_page(info, extract_page_number(args.url))
-    cid = page["cid"]
-    print(f"[INFO] Title: {info['title']}")
-    print(f"[INFO] Page {page.get('page', 1)}: {page.get('part')}")
-    print(f"[INFO] Duration: {page.get('duration')} seconds")
+        print(f"[INFO] Fetching metadata for {bvid}")
+        view_data = fetch_json(f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}", referer)
+        if view_data.get("code") != 0:
+            raise RuntimeError(f"view API failed: {view_data.get('message')}")
 
-    play_data = fetch_json(
-        f"https://api.bilibili.com/x/player/playurl?bvid={bvid}&cid={cid}&qn=80&fnval=1",
-        referer,
-    )
+        info = view_data["data"]
+        page = select_page(info, extract_page_number(args.url))
+        cid = page["cid"]
+        print(f"[INFO] Title: {info['title']}")
+        print(f"[INFO] Page {page.get('page', 1)}: {page.get('part')}")
+        print(f"[INFO] Duration: {page.get('duration')} seconds")
+
+        play_data = fetch_json(
+            f"https://api.bilibili.com/x/player/playurl?bvid={bvid}&cid={cid}&fnval=4048&fourk=1",
+            referer,
+        )
+
     if play_data.get("code") != 0:
         raise RuntimeError(f"playurl API failed: {play_data.get('message')}")
 
-    durl = (play_data.get("data") or {}).get("durl") or []
-    if not durl:
-        raise RuntimeError("No downloadable durl returned by playurl API")
+    play_payload = play_data.get("data") or play_data.get("result") or {}
+    if isinstance(play_payload.get("result"), dict):
+        play_payload = play_payload["result"]
 
     print("[INFO] Downloading video")
-    download_video(durl[0]["url"], video_path, referer)
+    download_playable(play_payload, video_path, referer, output_dir, max_height=(args.max_height or None))
     print(f"[INFO] Saved video to {video_path}")
 
     print(f"[INFO] Extracting frames at {args.fps} fps")

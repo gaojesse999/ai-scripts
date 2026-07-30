@@ -47,18 +47,20 @@ B站视频、合集/系列与多P视频内容分析工具。提供视频、合�
 
 验证安装:
 ```bash
-python --version
+python3 --version
 ```
+
+> **环境说明**：部分环境只提供 `python3` 命令而没有 `python`。若 `python` 不可用，请把下文所有命令中的 `python` 替换为 `python3`。
 
 ### 2. 安装 Python 依赖
 
 推荐在虚拟环境中安装：
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install opencv-python-headless pillow ImageHash
+python3 -m pip install --upgrade pip
+python3 -m pip install opencv-python-headless pillow ImageHash imageio-ffmpeg
 ```
 
 Windows PowerShell:
@@ -67,20 +69,68 @@ Windows PowerShell:
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install opencv-python-headless pillow ImageHash
+python -m pip install opencv-python-headless pillow ImageHash imageio-ffmpeg
 ```
 
 说明：
 
 - `opencv-python-headless` 负责读取视频并按目标 `fps` 抽帧
 - `pillow` 与 `ImageHash` 用于计算相邻帧 `pHash`
-- `collection.py` 与 `text_prepare.py` 仅使用 Python 标准库访问 Bilibili 接口与字幕数据
+- `imageio-ffmpeg` 提供 `ffmpeg`，用于合并 DASH 高清视频流与音频流（也可使用系统安装的 `ffmpeg`）
+- `collection.py`、`resolve_scope.py` 与 `text_prepare.py` 仅使用 Python 标准库访问 Bilibili 接口与字幕数据
 - 本 skill 不要求安装 `.NET`
+
+### 3. 网络代理（按需）
+
+所有脚本在启动时会先做一次**轻量网络自检**：若无法连接 Bilibili，会立即终止并提示可能需要配置代理，以节约时间/成本。
+
+若当前环境需要代理，请在运行命令前设置标准环境变量（`urllib` 会自动使用）：
+
+```bash
+export http_proxy=http://<proxy-host>:<port>
+export https_proxy=http://<proxy-host>:<port>
+```
+
+### 4. 登录 Cookie（按需，用于高清/会员/付费内容）
+
+匿名请求只能拿到较低清晰度或受限内容。若需要下载高清、会员或付费番剧，可提供登录 Cookie（至少包含 `SESSDATA`）：
+
+```bash
+# 方式一：直接提供 Cookie 字符串
+export BILI_COOKIE="SESSDATA=xxxx; bili_jct=yyyy"
+
+# 方式二：从文件读取（推荐）
+export BILI_COOKIE_FILE=/path/to/bili_cookie.txt
+```
+
+脚本会自动把 Cookie 注入所有 Bilibili 接口请求。
+
+#### Cookie 文件模板
+
+**当需要用户提供 Cookie 时，请让用户严格按以下模板格式提供**（模板文件见 `templates/bili_cookie.example.txt`）。文件中以 `#` 开头的注释行会被自动忽略，只需保留末尾一行 `key=value; ...`：
+
+```text
+SESSDATA=<你的SESSDATA>; bili_jct=<你的bili_jct>; DedeUserID=<你的DedeUserID>; DedeUserID__ckMd5=<你的DedeUserID__ckMd5>
+```
+
+| 字段 | 是否必填 | 说明 |
+|------|----------|------|
+| `SESSDATA` | 必填 | 身份认证凭证，高清/会员/付费内容必须 |
+| `bili_jct` | 建议 | 常用校验字段 |
+| `DedeUserID` | 建议 | 你的用户 ID |
+| `DedeUserID__ckMd5` | 可选 | 校验字段 |
+| `buvid3` / `buvid4` | 可选 | 设备标识 |
+
+获取方法：登录 https://www.bilibili.com → 按 `F12` → **Application/应用** → **Cookies** → `https://www.bilibili.com`，复制对应字段的 Value。
+
+> **安全提醒**：Cookie 等同于登录凭证，请勿提交到仓库或分享；`SESSDATA` 通常约一个月过期，过期后需重新获取。
 
 ## Scope
 
 - 输入是 B站/bilibili 视频或合集链接，输出目标是专题文档、实操教程、课程笔记或结构化知识整理
 - 支持单个视频、UGC 合集 / 系列视频，以及多P视频全部分P的批量分析
+- 支持番剧 / PGC 链接（`bangumi/play/ep{id}` 单集、`bangumi/play/ss{id}` 整季）
+- 高清优先：下载时优先请求 DASH（`fnval=4048`），选取最佳视频流与音频流并用 ffmpeg 合并；无 DASH 时回退到 `durl` 单段
 - 支持“字幕优先 -> 图片兜底”的内容理解链路
 - 适合把视频内容重组成可阅读、可复用的文档，而不是保留时间线流水账
 - 不适用于纯字幕提取、逐句转录，或只做简短摘要的场景
@@ -108,6 +158,7 @@ python -m pip install opencv-python-headless pillow ImageHash
 
 - 解析 `b23.tv` 短链接
 - 判断当前输入是合集 / 系列总链接、普通视频链接、当前P链接还是多P总链接
+- 识别番剧 / PGC 链接：`ep{id}` 单集、`ss{id}` 整季；单视频模式下只取当前（或第一）集，合集模式下展开整季全部剧集
 - 在单视频模式下，把总链接下沉到第一个可分析单元
 - 在合集模式下，决定是处理整个合集 / 系列，还是处理当前 BV 的全部P
 - 展开合集 / 系列中嵌套的多P子视频，给出完整目标结构
@@ -162,6 +213,8 @@ python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./out
 
 **多P注意**：如果目标视频是多P视频，必须先通过 `resolve_scope.py` 得到明确的 `?p=` URL，再传给 `prepare.py`。`prepare.py` 不再接受模糊的多P总链接。
 
+**番剧注意**：`prepare.py` 支持 `bangumi/play/ep{id}` 单集链接；下载时优先 DASH 高清（`fnval=4048`）并用 ffmpeg 合并音视频，无 DASH 时回退到 `durl` 单段。
+
 #### 参数说明
 
 | 参数 | 说明 | 默认值 |
@@ -171,6 +224,7 @@ python scripts/prepare.py "https://www.bilibili.com/video/BV1xx411c7mD" -o ./out
 | `--fps` | 每秒提取帧数 | 1.0 |
 | `--similarity` | 相似度阈值（0-1），超过此值的相邻帧会被去重 | 0.80 |
 | `--no-dedup` | 禁用相似帧去重 | false |
+| `--max-height` | DASH 高清分辨率上限（如 `1080`）；`0` 表示取最佳（4K/HDR） | 1080 |
 
 #### 相似帧去重
 

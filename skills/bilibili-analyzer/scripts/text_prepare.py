@@ -18,11 +18,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
-USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/123.0.0.0 Safari/537.36"
-)
+import bili_common
+from bili_common import USER_AGENT, build_headers, ensure_network
 
 
 def parse_args() -> argparse.Namespace:
@@ -33,27 +30,13 @@ def parse_args() -> argparse.Namespace:
 
 
 def fetch_json(url: str, referer: str) -> dict:
-    request = Request(
-        url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Referer": referer,
-            "Accept": "application/json, text/plain, */*",
-        },
-    )
+    request = Request(url, headers=build_headers(referer))
     with urlopen(request) as response:
         return json.load(response)
 
 
 def fetch_text_json(url: str, referer: str) -> dict:
-    request = Request(
-        url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Referer": referer,
-            "Accept": "application/json, text/plain, */*",
-        },
-    )
+    request = Request(url, headers=build_headers(referer))
     with urlopen(request) as response:
         return json.loads(response.read().decode("utf-8"))
 
@@ -63,6 +46,21 @@ def extract_bvid(url: str) -> str:
     if not match:
         raise ValueError(f"Unable to extract BV id from: {url}")
     return match.group(0)
+
+
+def extract_episode_id(url: str) -> int | None:
+    match = re.search(r"/ep(\d+)", url)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def normalize_duration(value: object) -> float | int | None:
+    if not isinstance(value, (int, float)):
+        return value
+    if value > 10000:
+        return round(value / 1000.0, 3)
+    return value
 
 
 def extract_page_number(url: str) -> int | None:
@@ -131,11 +129,68 @@ def get_video_context(url: str) -> tuple[str, str, dict, dict]:
     return bvid, referer, info, page
 
 
+def get_bangumi_context(url: str) -> tuple[str, str, dict, dict]:
+    ep_id = extract_episode_id(url)
+    if ep_id is None:
+        raise ValueError(f"Unable to extract episode id from: {url}")
+
+    referer = f"https://www.bilibili.com/bangumi/play/ep{ep_id}"
+    season_data = fetch_json(f"https://api.bilibili.com/pgc/view/web/season?ep_id={ep_id}", referer)
+    if season_data.get("code") != 0:
+        raise RuntimeError(f"pgc season API failed: {season_data.get('message')}")
+
+    result = season_data.get("result") or {}
+    episodes = result.get("episodes") or []
+    if not episodes:
+        raise RuntimeError("No episode metadata returned by pgc season API")
+
+    episode = None
+    for item in episodes:
+        try:
+            if int(item.get("ep_id") or 0) == ep_id:
+                episode = item
+                break
+        except (TypeError, ValueError):
+            continue
+    if episode is None:
+        episode = episodes[0]
+
+    info = {
+        "title": result.get("title") or result.get("name") or episode.get("title") or f"EP{ep_id}",
+        "season_id": result.get("season_id"),
+        "ep_id": ep_id,
+        "aid": episode.get("aid"),
+    }
+    page = {
+        "page": 1,
+        "part": episode.get("share_copy") or episode.get("title") or info["title"],
+        "duration": normalize_duration(episode.get("duration") or episode.get("duration_ms") or 0),
+        "cid": episode.get("cid"),
+        "ep_id": ep_id,
+        "aid": episode.get("aid"),
+    }
+    return f"EP{ep_id}", referer, info, page
+
+
 def fetch_subtitle_entries(bvid: str, cid: int, referer: str) -> list[dict]:
     player_data = fetch_json(f"https://api.bilibili.com/x/player/v2?bvid={bvid}&cid={cid}", referer)
     if player_data.get("code") != 0:
         raise RuntimeError(f"player/v2 API failed: {player_data.get('message')}")
 
+    subtitle = (player_data.get("data") or {}).get("subtitle") or {}
+    return subtitle.get("subtitles") or []
+
+
+def fetch_bangumi_subtitle_entries(ep_id: int, cid: int, aid: object, referer: str) -> list[dict]:
+    query = f"ep_id={ep_id}&cid={cid}"
+    if aid:
+        query += f"&aid={aid}"
+    try:
+        player_data = fetch_json(f"https://api.bilibili.com/x/player/v2?{query}", referer)
+    except Exception:
+        return []
+    if player_data.get("code") != 0:
+        return []
     subtitle = (player_data.get("data") or {}).get("subtitle") or {}
     return subtitle.get("subtitles") or []
 
@@ -203,16 +258,24 @@ def image_only_result(reason: str) -> dict:
 
 def main() -> int:
     args = parse_args()
+    ensure_network()
     output_dir = Path(args.output).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    bvid, referer, info, page = get_video_context(args.url)
-    cid = page["cid"]
+    episode_id = extract_episode_id(args.url)
+    if episode_id is not None:
+        bvid, referer, info, page = get_bangumi_context(args.url)
+        cid = page["cid"]
+        print(f"[INFO] Preparing text context for {bvid}")
+        print(f"[INFO] Page {page.get('page', 1)}: {page.get('part')}")
+        subtitle_entries = fetch_bangumi_subtitle_entries(episode_id, cid, page.get("aid"), referer)
+    else:
+        bvid, referer, info, page = get_video_context(args.url)
+        cid = page["cid"]
+        print(f"[INFO] Preparing text context for {bvid}")
+        print(f"[INFO] Page {page.get('page', 1)}: {page.get('part')}")
+        subtitle_entries = fetch_subtitle_entries(bvid, cid, referer)
 
-    print(f"[INFO] Preparing text context for {bvid}")
-    print(f"[INFO] Page {page.get('page', 1)}: {page.get('part')}")
-
-    subtitle_entries = fetch_subtitle_entries(bvid, cid, referer)
     usable_subtitles = [entry for entry in subtitle_entries if normalize_subtitle_url(entry.get("subtitle_url", ""))]
 
     if usable_subtitles:

@@ -1,0 +1,21 @@
+# Bilibili Cookie 模板（占位示例，请替换为你自己的值）
+#
+# 用法：
+#   1. 登录 https://www.bilibili.com （建议使用有大会员的账号）。
+#   2. 按 F12 打开开发者工具 -> Application/应用 -> Cookies -> https://www.bilibili.com
+#   3. 复制下面各字段对应的 Value，替换 <...> 占位符。
+#   4. 把内容保存为一行（去掉本文件的所有注释行），或直接用下面“单行格式”那一行。
+#   5. 运行脚本前设置环境变量指向本文件：
+#        export BILI_COOKIE_FILE=/path/to/bili_cookie.txt
+#
+# 关键字段说明：
+#   SESSDATA            必填，身份认证凭证，高清/会员/付费内容必须。
+#   bili_jct            建议提供。
+#   DedeUserID          建议提供，你的用户 ID。
+#   DedeUserID__ckMd5   可选。
+#   buvid3 / buvid4     可选，设备标识。
+#
+# 安全提醒：本文件等同于你的登录凭证，请勿提交到仓库或分享给他人；SESSDATA 通常约一个月过期。
+
+# —— 单行格式（脚本实际读取的就是这样一行，把 <...> 换成真实值）——
+SESSDATA=<你的SESSDATA>; bili_jct=<你的bili_jct>; DedeUserID=<你的DedeUserID>; DedeUserID__ckMd5=<你的DedeUserID__ckMd5>
