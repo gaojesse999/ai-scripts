@@ -1,0 +1,32 @@
+{
+  "title": "",
+  "language": "zh-CN",
+  "aspect_ratio": "16:9",
+  "delivery": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "codec": "h264",
+    "profile": "baseline",
+    "level": "4.0",
+    "pixel_format": "yuv420p",
+    "bframes": 0,
+    "audio": "aac",
+    "audio_rate": 48000,
+    "faststart": true
+  },
+  "visual": {
+    "system": "editorial-dark",
+    "cjk_font": "Noto Sans CJK SC",
+    "latin_font": "Inter",
+    "accent": "orange",
+    "container_density": "low"
+  },
+  "motion": {
+    "engine": "KME",
+    "one_focus": true,
+    "context_persists": true,
+    "native_fps": true,
+    "optical_flow": false
+  }
+}

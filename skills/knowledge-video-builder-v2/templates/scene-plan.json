@@ -1,0 +1,17 @@
+{
+  "version": "2.0",
+  "scenes": [
+    {
+      "id": "S01",
+      "purpose": "Introduce the core idea",
+      "narration": "",
+      "evidence_ids": [],
+      "screen_text": [],
+      "visual_template": "editorial_overview",
+      "persistent_elements": [],
+      "semantic_beats": [],
+      "assets": [],
+      "transition_intent": "continue_canvas"
+    }
+  ]
+}

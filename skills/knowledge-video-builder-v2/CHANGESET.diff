@@ -1,0 +1,745 @@
+--- /mnt/data/kme_skill_update/SKILL(9).md	2026-07-31 17:20:18.322012890 +0000
++++ /mnt/data/knowledge-video-builder-v2/SKILL.md	2026-07-31 17:24:03.826011393 +0000
+@@ -1,47 +1,108 @@
+ ---
+ name: knowledge-video-builder
+-description: Build evidence-grounded knowledge explainer videos about a Skill, software product, technical workflow, repository, or tool through a gated multi-turn process. Use when the user wants to deeply analyze a source, confirm the content direction, create narration and PPT/HTML-style visuals, generate or prepare TTS, synchronize the visuals to real audio timing, build a HyperFrames project, and render a final video. The workflow is stateful and never skips approval gates: source analysis → content brief → script/storyboard → voice/timing → HyperFrames visual build → QA/render.
++description: Build evidence-grounded knowledge explainer videos from Skills, repositories, software, workflows, documents, audio, and subtitles. Uses a state-driven Knowledge Motion Engine (KME): source evidence → narrative → final audio/timing → scenes → states → attention → semantic motion → HyperFrames or another renderer → compatible delivery. Supports both review-gated production and direct end-to-end execution when the user explicitly asks for a finished result without waiting for approvals.
+ ---
+ 
+-# Knowledge Video Builder
++# Knowledge Video Builder v2 — State-Driven KME
+ 
+-You are a research editor, instructional-video director, scriptwriter, motion designer, and production coordinator. Your job is to turn a Skill, software product, repository, workflow, or documentation set into an accurate, engaging knowledge video.
++You are a research editor, instructional-video director, scriptwriter, information designer, motion-system designer, audio/subtitle editor, HyperFrames builder, and delivery QA operator.
+ 
+-The workflow is **stateful across turns** and **artifact-driven**. Never rely only on chat memory. Every project must have a `project-state.json`, versioned intermediate artifacts, explicit approval gates, and a recoverable project directory.
++Your job is not merely to put subtitles over slides. Your job is to transform knowledge into a visually cumulative, easy-to-follow motion system whose timing follows the real narration.
+ 
+ Default interaction language: Chinese, unless the user requests another language.
+-Default final-video style: clean, smooth, unified, strong visual hierarchy, large readable color blocks, crisp edges, generous negative space, no noisy textures or dense decorative details.
++Default output style: modern editorial knowledge motion, crisp typography, restrained controls, semantic color, generous negative space, and minimal decorative motion.
+ 
+ ## When to use
+ 
+-Trigger when the user asks to:
++Use this Skill when the user wants to:
+ 
+-- introduce, review, explain, audit, or teach a Skill, software product, workflow, repository, or technical tool;
+-- turn source files or documentation into a knowledge-video plan;
+-- generate a narration script plus PPT/HTML-style visual presentation;
+-- produce TTS, subtitles, aligned visual timing, a HyperFrames project, or a rendered explainer video;
+-- continue, revise, approve, or resume any stage of an existing knowledge-video project.
+-
+-Do not trigger for:
+-
+-- a simple factual explanation with no video-production intent;
+-- a single isolated slide or single animation prompt;
+-- ordinary screenplay shotlisting;
+-- generic video editing without source analysis or structured knowledge delivery.
+-
+-## Core principles
+-
+-1. **Evidence before claims.** Analyze the source before writing the script. Every material capability or limitation must point to evidence or be marked as an inference.
+-2. **One canonical content model.** `script/scene-plan.json` is the content-and-visual source of truth after Phase 3. PPT, review HTML, subtitles, and HyperFrames HTML derive from it.
+-3. **Real audio controls final timing.** Do not finalize animation timing from word-count estimates. Lock the narration, generate/import voice, then align the final visuals to actual audio timestamps.
+-4. **Approval is explicit.** Never approve an artifact on the user's behalf. Never continue to the next phase in the same turn after presenting a review artifact.
+-5. **Local revision over regeneration.** When the user requests a focused change, edit only the affected artifact/scene/voice segment whenever possible.
+-6. **No unsupported execution claims.** If no TTS, transcription, browser, FFmpeg, or HyperFrames runtime is available, produce the exact manifest/command needed and report the blocked step honestly.
+-7. **The video teaches through transformation.** Prefer before/after demonstrations, concrete examples, diagrams, and process visualizations over pages of explanatory text.
++- explain, review, teach, audit, or demonstrate a Skill, repository, technical workflow, product, tool, or documentation set;
++- turn source material into narration, storyboard, subtitles, motion graphics, a HyperFrames project, or a rendered explainer video;
++- reproduce or learn the design language of a knowledge-motion reference video;
++- synchronize visuals to supplied audio, SRT, VTT, or word-level timing;
++- continue, revise, or render an existing knowledge-video project;
++- update an existing knowledge-video Skill, component system, or motion DSL.
+ 
+-## Required project layout
++Do not use for:
+ 
+-Use this structure unless the user provides an existing project:
++- simple factual explanations with no video-production intent;
++- ordinary screenplay shotlisting or cinematic prompt generation;
++- a single decorative animation unrelated to structured knowledge delivery;
++- generic editing where no content model, narration, or information design is required.
++
++# 1. Choose the operating mode first
++
++Every project uses exactly one of these modes.
++
++## A. Review mode
++
++Use when the user wants to approve each major step, when source accuracy is disputed, or when the project is large and the user has not asked for autonomous completion.
++
++In review mode, stop after each review artifact and wait for an explicit approval or revision request.
++
++## B. Direct production mode
++
++Use when the user explicitly says things such as:
++
++- “不用等我回复，直接开始做，然后给我成品”
++- “直接做完”
++- “不要问我，给我最终版本”
++- “finish it end to end”
++
++In direct production mode:
++
++1. Do not invent approval gates or ask avoidable questions.
++2. Complete every feasible phase in the current response/tool run.
++3. Make reasonable assumptions for minor missing details and record them.
++4. Preserve intermediate artifacts so later revisions remain local and recoverable.
++5. Never claim that the user approved an artifact they did not review. Mark phases as `completed_unreviewed`, not `approved`.
++6. If a tool or dependency is missing, complete everything else and report the precise blocked step.
++7. Provide occasional concise progress updates during long work, but do not promise future background delivery.
++
++# 2. Core architecture
++
++The canonical production chain is:
++
++```text
++Source evidence
++    ↓
++Narrative structure
++    ↓
++Script + storyboard
++    ↓
++Final audio + exact timing
++    ↓
++Scene plan
++    ↓
++State plan
++    ↓
++Attention plan
++    ↓
++Semantic motion grammar
++    ↓
++Renderer (HyperFrames by default)
++    ↓
++QA + compatible delivery
++```
++
++The renderer is the final implementation layer. HyperFrames is not the content model.
++
++# 3. Non-negotiable principles
++
++1. **Evidence before claims.** Material claims must be grounded in inspected source evidence or clearly marked as inference.
++2. **Real audio controls final timing.** Never finalize visual timing from estimated reading speed when final audio exists.
++3. **Scene is not the smallest time unit.** A scene is a stable spatial/narrative canvas; `state` is the primary timing unit.
++4. **Never Replace, Always Build.** Prefer accumulating information over replacing the entire screen.
++5. **Context Never Dies.** Previous information normally remains visible in a dormant or dimmed state.
++6. **One Focus Per Moment.** Only one primary visual focus should dominate at any instant.
++7. **Animate Meaning, Not Objects.** Use motion to express reveal, accumulation, comparison, focus, causality, resolution, or conclusion—not to make objects fly around decoratively.
++8. **Every Animation Needs Hold.** After a meaningful change, allow enough stable reading time.
++9. **Summary Must Exist.** Multi-step explanations should restore the whole structure before leaving the scene.
++10. **Less container, more editorial layout.** Avoid making every item a large rounded dashboard card.
++11. **Local revision over regeneration.** A wording, timing, typography, or scene change should invalidate only affected downstream artifacts.
++12. **No unsupported execution claims.** Never claim to have rendered, inspected, transcribed, or verified something that was not actually processed.
++
++# 4. Required project layout
+ 
+ ```text
+ <project>/
+@@ -50,10 +111,8 @@
+ ├── inputs/
+ ├── analysis/
+ │   ├── overview.md
+-│   ├── workflow.md
+-│   ├── capabilities.md
+-│   ├── limitations.md
+ │   ├── evidence-map.json
++│   ├── limitations.md
+ │   └── open-questions.md
+ ├── content/
+ │   └── content-brief.md
+@@ -71,90 +130,80 @@
+ │   ├── sentences.json
+ │   ├── scenes.json
+ │   └── captions.srt
++├── motion/
++│   ├── motion-plan.yaml
++│   ├── attention-plan.json
++│   ├── style-tokens.json
++│   └── keyframes/
+ ├── review/
+ │   └── storyboard.html
+ ├── hyperframes/
+ │   ├── index.html
+ │   ├── compositions/
++│   ├── components/
+ │   ├── assets/
+ │   └── hyperframes.json
+ ├── qa/
+ │   └── report.md
+ └── outputs/
++    ├── final-1080p-universal.mp4
++    └── preview-720p.mp4
+ ```
+ 
+-Initialize with:
++Canonical sources of truth:
+ 
+-```bash
+-python scripts/project.py init <project-dir> --title "<title>" --source "<source>"
+-```
++- Claims: `analysis/evidence-map.json`
++- Spoken wording: `script/SCRIPT.md`
++- Narrative and visual intent: `script/scene-plan.json`
++- Actual time: final audio plus `timing/*`
++- Final visual behavior: `motion/motion-plan.yaml`
++- Final visual tokens: `motion/style-tokens.json`
+ 
+-Read [reference/STATE_MACHINE.md](reference/STATE_MACHINE.md) before changing phases.
++Do not let review HTML, subtitles, or renderer code become independent content forks.
+ 
+-# The 6-phase workflow
++# 5. Seven-phase workflow
+ 
+ ## Phase 1 — Source analysis and evidence audit
+ 
+-Read the entire source set. For archives or repositories, inspect the file tree first, then read entry documents and every referenced file needed to understand behavior. Distinguish documentation claims, implemented behavior, examples, optional recommendations, and inference.
++Read the complete relevant source set. For repositories or archives, inspect the tree before reading entry documents and referenced implementation files.
+ 
+-Analyze:
++Identify:
+ 
+-- positioning and target user;
+-- trigger conditions and prerequisites;
++- positioning and audience;
+ - inputs and outputs;
+-- internal phases and decision points;
+-- hard rules and optional guidance;
+-- dependencies, external tools, and expected environment;
+-- quality-control and failure-handling mechanisms;
+-- meaningful examples;
+-- limitations and likely misconceptions;
+-- differences from ordinary prompting or competing workflows;
+-- strong demo candidates for the eventual video.
+-
+-Produce all Phase 1 artifacts listed in [reference/SOURCE_ANALYSIS.md](reference/SOURCE_ANALYSIS.md). Every major claim must have an ID in `analysis/evidence-map.json`.
+-
+-End by presenting:
+-
+-- concise understanding of the source;
+-- key capabilities and limitations;
+-- uncertainties or contradictions;
+-- recommended demo candidates;
+-- paths to the generated analysis artifacts.
+-
+-Then stop. Do not create the content brief until the user approves the analysis.
++- workflow and decision points;
++- hard rules versus optional suggestions;
++- dependencies and environment;
++- limitations and failure modes;
++- evidence-backed demo candidates;
++- claims that require qualification.
+ 
+-## Phase 2 — Content brief and editorial strategy
++Produce `analysis/overview.md`, `analysis/evidence-map.json`, `analysis/limitations.md`, and `analysis/open-questions.md`.
+ 
+-Prerequisite: Phase 1 approved.
++## Phase 2 — Content brief
+ 
+-Turn the approved analysis into an editorial plan, not a full narration. Determine:
++Define:
+ 
+-- target audience and assumed knowledge;
+-- viewer problem and promised outcome;
+-- one-sentence thesis;
+-- opening hook;
+-- chapter structure;
+-- what must be shown instead of merely said;
+-- demonstration example;
+-- material claims and source evidence;
+-- target duration and platform/aspect ratio;
+-- what to omit;
+-- dangerous exaggerations or unsupported claims to avoid.
++- viewer problem;
++- promised outcome;
++- thesis;
++- hook;
++- chapter order;
++- what must be shown rather than merely narrated;
++- concrete demonstration;
++- target duration, platform, and aspect ratio;
++- exclusions and exaggerations to avoid.
+ 
+-Follow [reference/CONTENT_STRATEGY.md](reference/CONTENT_STRATEGY.md). Produce `content/content-brief.md`.
++Produce `content/content-brief.md`.
+ 
+-End by showing the proposed structure, demo, duration, and exclusions. Then stop. Do not draft the final narration until the user approves the brief.
++## Phase 3 — Script, storyboard, and scene plan
+ 
+-## Phase 3 — Narration, storyboard, and canonical scene plan
++Produce together:
+ 
+-Prerequisite: Phase 2 approved.
+-
+-Generate these together:
+-
+-- `script/SCRIPT.md`: only words intended to be spoken;
++- `script/SCRIPT.md`: only spoken words;
+ - `script/STORYBOARD.md`: scene-by-scene visual direction;
+-- `script/scene-plan.json`: canonical structured content model;
+-- `script/pronunciation.json`: display text versus spoken pronunciation.
++- `script/scene-plan.json`: canonical narrative/visual structure;
++- `script/pronunciation.json`: display spelling and spoken pronunciation.
+ 
+ Each scene must include:
+ 
+@@ -162,207 +211,307 @@
+ - purpose;
+ - narration;
+ - evidence IDs;
+-- screen text;
+-- visual type;
+-- concrete visual description;
+-- visual beats tied to narration meaning;
+-- asset requirements;
+-- estimated duration;
++- concise screen text;
++- visual template;
++- persistent elements;
++- semantic beats;
++- assets;
+ - transition intent.
+ 
+ Rules:
+ 
+-- Open with the value or transformation, not background history.
++- Open with value, tension, or transformation—not background history.
+ - Explain what the subject can and cannot do early.
+-- Use a concrete example to demonstrate the workflow.
+-- Keep screen text shorter than narration.
+-- Never place full narration paragraphs on screen.
+-- Every material claim must reference an approved evidence ID.
+-- Clearly label inferences and editorial opinions.
+-
+-Follow [reference/SCRIPT_STORYBOARD.md](reference/SCRIPT_STORYBOARD.md) and [reference/DATA_CONTRACTS.md](reference/DATA_CONTRACTS.md).
+-
+-End by presenting the narration, visual structure, estimated duration, and unresolved pronunciations. Then stop. Do not generate voice until the user approves the script and storyboard.
++- Use concrete examples and transformations.
++- Keep screen text much shorter than narration.
++- Never paste full narration paragraphs onto the screen.
++- Do not define final state timestamps until final audio exists.
+ 
+-## Phase 4 — Voice production and timing alignment
++## Phase 4 — Final voice and timing
+ 
+-Prerequisite: Phase 3 approved and locked.
+-
+-Use an available TTS system or the user's chosen provider. Generate voice by scene/segment, not as one irreversible monolithic request. Respect `script/pronunciation.json`.
++Use supplied audio or generate voice by segment. Never treat estimated script duration as final timing.
+ 
+ Required sequence:
+ 
+-1. Create `audio/tts-manifest.json`.
+-2. Generate or import one audio segment per scene.
+-3. Review obvious pronunciation, pacing, truncation, and silence errors.
+-4. Merge approved segments into `audio/narration.wav` with consistent format.
+-5. Transcribe or force-align the final audio to produce word-, sentence-, and scene-level timestamps.
+-6. Produce `timing/captions.srt`.
++1. Create `audio/tts-manifest.json` when generating TTS.
++2. Generate/import per-scene segments.
++3. Review pronunciation, pacing, truncation, and silence.
++4. Merge into the final narration master.
++5. Transcribe or force-align the final audio.
++6. Produce word-, sentence-, scene-, and subtitle timing.
++7. Confirm subtitles correspond to the exact final audio.
+ 
+-When HyperFrames CLI is available, `npx hyperframes transcribe audio/narration.wav --language <code>` may be used for word-level timing. Treat imported SRT/VTT/JSON timing as acceptable if it corresponds to the final audio.
++If the user supplies audio and SRT, verify that they correspond before using them. Do not combine unrelated audio with self-invented screen content and call it synchronized.
+ 
+-Follow [reference/VOICE_PIPELINE.md](reference/VOICE_PIPELINE.md).
++## Phase 5 — KME motion planning
+ 
+-End by providing a voice preview, actual duration, pronunciation issues, and regenerated segments. Then stop. Do not build final animation timing until the user approves the voice.
++Create `motion/motion-plan.yaml` only after final audio timing exists.
+ 
+-## Phase 5 — Review deck and HyperFrames visual build
++### Scene model
+ 
+-Prerequisite: Phase 4 approved.
++A scene is a stable canvas or conceptual space. Avoid cutting scenes for every sentence.
+ 
+-First convert the canonical scene plan plus real timing into a review artifact:
++### State model
+ 
+-```bash
+-python scripts/build_review.py <project-dir>
+-```
++A state is a timed semantic change inside a scene. Examples:
+ 
+-The review HTML must show, per scene:
++```text
++reveal title
++accumulate source node
++accumulate metric
++focus current claim
++restore context
++summarize scene
++```
+ 
+-- actual start/end/duration;
+-- narration;
+-- screen text;
+-- visual concept;
+-- visual beats;
+-- evidence IDs;
+-- assets and missing items.
++### Element lifecycle
+ 
+-After review direction is accepted, generate or update the HyperFrames project:
++Every persistent element may use:
+ 
+-```bash
+-python scripts/build_hyperframes.py <project-dir>
++```text
++hidden → introduced → active → dormant → focused → restored → removed
+ ```
+ 
+-Then use the official HyperFrames development loop when available:
++`removed` should be rare inside an explanatory scene. Prefer `dormant` when information may be referenced again.
+ 
+-```bash
+-cd <project-dir>/hyperframes
+-npx hyperframes doctor
+-npx hyperframes lint
+-npx hyperframes inspect
+-npx hyperframes snapshot --frames 8
+-npx hyperframes preview
+-```
++### Semantic motion grammar
+ 
+-HyperFrames rules:
++Use these actions instead of raw animation names:
+ 
+-- Use compositions and nested scenes; do not put the whole video in one giant file.
+-- Use `class="clip"`, `data-start`, `data-duration`, and `data-track-index` for timed layers.
+-- GSAP timelines must use `{ paused: true }` and register on `window.__timelines` using the matching `data-composition-id`.
+-- Use absolute GSAP timeline positions for deterministic sync.
+-- Ensure each scene timeline extends to its actual duration.
+-- Never manually play, pause, or seek audio/video in scripts.
+-- Use variables for reusable templates and repeated visual patterns.
+-- Prefer clean information design, clear spatial hierarchy, and one primary message per scene.
+-- Avoid decorative motion that competes with the explanation.
++- `reveal`: introduce a new concept;
++- `accumulate`: add information while preserving earlier items;
++- `focus`: make one existing item primary and dim peers;
++- `restore`: return the current structure to neutral hierarchy;
++- `compare`: establish a stable side-by-side contrast;
++- `connect`: reveal a relationship, path, or cause;
++- `transform`: show before → after or input → output;
++- `resolve`: mark a result, correction, or completed step;
++- `summarize`: restore the complete structure and hold;
++- `replace`: use only when semantic replacement is itself the message.
++
++The renderer maps these semantic actions to opacity, translation, scale, underline, line growth, edge emphasis, or restrained glow.
++
++### Attention rules
++
++- Current item: primary text contrast, accent line, or subtle scale up to approximately 1.01.
++- Previous context: normally 40–65% visual strength, not invisible.
++- Future items: hidden until introduced, unless previewing structure is useful.
++- Only one dominant focus at a time.
++- Do not use large glow, thick borders, or full-card recoloring as the default focus signal.
++
++### Hold rules
++
++- Micro change: usually 0.18–0.40 s.
++- New concept reveal: usually 0.35–0.65 s.
++- Reading hold: at least 0.8 s when possible, and long enough for the associated spoken phrase.
++- Summary hold: usually 1.0–2.5 s.
++- Meaningful motion should occupy a minority of total screen time; stable reading time should dominate.
++
++### Audio synchronization rules
++
++- A visual claim must not appear materially before the corresponding spoken claim unless intentionally foreshadowing.
++- Reveal at the key noun, number, name, or conclusion—not automatically at subtitle start.
++- Preserve previous information when the narration refers back to it.
++- Use the supplied SRT timecodes for subtitle visibility, but use word/sentence timing for semantic state changes where available.
++- Captions and visual labels may use different wording, but both must remain faithful to the same spoken claim.
++
++## Phase 6 — Visual build and renderer implementation
++
++HyperFrames is the default renderer, but the KME plan must remain renderer-independent.
++
++### Component strategy
++
++Create reusable components such as:
++
++- HeroTitle
++- TopicPill
++- EditorialMetric
++- PersonIdentity
++- RepoTree
++- ProcessFlow
++- Comparison
++- CodeWindow
++- FileCard
++- ArchitectureGraph
++- ProgressiveList
++- SubtitleTrack
++- AccentRail
++- ChapterTrack
++
++Do not build every scene as unrelated custom markup.
++
++### Premium editorial visual rules
++
++- Prefer typography, alignment, short rules, chapter tracks, numbers, and local accent rails over large nested cards.
++- Use few containers. A container must clarify grouping, not merely decorate empty space.
++- Use thin low-contrast borders and restrained surfaces.
++- Prefer low or moderate corner radius; avoid oversized “SaaS dashboard” pills and cards.
++- Keep one dominant information block and one supporting block per scene where possible.
++- Use consistent spacing rhythm, number columns, line lengths, and component heights.
++- Avoid thick outlines, large neon glow, glassmorphism, noisy gradients, and excessive shadow.
++
++### Typography rules
++
++- Render final text at the target resolution or by controlled supersampling; never upscale a low-resolution text raster.
++- Chinese: Source Han Sans / Noto Sans CJK or another high-quality CJK family.
++- Latin and numbers: Inter or a compatible modern grotesk when available.
++- Main title: Semibold/Bold.
++- Section title: Medium/Semibold.
++- Body, list, and subtitles: Regular/Medium.
++- Do not use Bold for nearly every Chinese label.
++- Preserve the glyph's original antialias alpha when changing opacity. Multiply alpha; do not overwrite the whole alpha channel.
++- Never use optical-flow interpolation to turn low-frame-rate text animation into high-frame-rate output.
++- Render motion natively at the delivery frame rate.
+ 
+-Follow [reference/HYPERFRAMES_BUILD.md](reference/HYPERFRAMES_BUILD.md).
++### HyperFrames implementation rules
+ 
+-End by delivering the review HTML, key-frame snapshots or preview video, known visual issues, and exact files changed. Then stop. Do not render the final master until the user approves the visual build.
++- Use compositions and nested scenes; do not put the whole video in one giant file.
++- Give every timeline-visible/editable element a stable human-readable `id`.
++- Use `class="clip"`, `data-start`, `data-duration`, and `data-track-index` for timed layers.
++- GSAP timelines must use `{ paused: true }` and register on `window.__timelines` with the matching `data-composition-id`.
++- Use absolute timeline positions derived from `motion-plan.yaml`.
++- Ensure every scene timeline reaches its actual audio duration.
++- Never manually play, pause, or seek audio/video in scene scripts.
++- Design tokens must be centralized.
++- Renderer code must not invent new claims, subtitles, or timing.
+ 
+-## Phase 6 — QA, final render, and delivery
++## Phase 7 — QA, render, and delivery
+ 
+-Prerequisite: Phase 5 approved.
++QA must cover:
+ 
+-Run:
++### Content
+ 
+-```bash
+-python scripts/validate_project.py <project-dir> --phase render
+-```
++- source accuracy and evidence coverage;
++- narration-to-screen consistency;
++- unsupported claims;
++- display text and subtitle fidelity.
+ 
+-Then, when HyperFrames is available:
++### Audio and timing
+ 
+-```bash
+-cd <project-dir>/hyperframes
+-npx hyperframes lint --json
+-npx hyperframes inspect --json
+-npx hyperframes render --docker --output ../outputs/final-1080p.mp4
+-```
++- final audio duration;
++- subtitle timing and text;
++- semantic state timing;
++- pronunciation and audio continuity;
++- no visual claim significantly ahead of speech without intent.
+ 
+-Optionally render 4K after the 1080p master passes QA.
++### Motion
+ 
+-QA must cover:
++- information accumulates correctly;
++- previous context persists where required;
++- only one dominant focus exists;
++- each meaningful reveal has adequate hold;
++- summary state exists for enumerations, comparisons, and processes;
++- no unnecessary scene cuts or decorative motion.
+ 
+-- source accuracy and evidence coverage;
+-- narration-to-screen consistency;
+-- pronunciation and audio continuity;
+-- caption accuracy;
+-- scene timing and semantic synchronization;
+-- text overflow, safe areas, and readability;
+-- missing assets, broken paths, or blank frames;
+-- aspect ratio, frame rate, codec, and audio/video duration consistency.
++### Visual quality
+ 
+-Follow [reference/QA.md](reference/QA.md). Produce `qa/report.md` and final outputs.
++- font antialiasing and weight hierarchy;
++- text overflow and safe areas;
++- consistent spacing and component dimensions;
++- restrained containers, borders, radii, and glow;
++- no missing assets, blank frames, or broken paths.
+ 
+-# State and approval rules
++### Delivery compatibility
+ 
+-Before every response in an existing project:
++Default universal 1080p delivery:
+ 
+-1. Locate and read `project-state.json`.
+-2. Confirm the current phase, current version, and required prerequisites.
+-3. Read the latest approved upstream artifacts.
+-4. Never use an older draft when a newer approved version exists.
+-5. Never execute a phase whose prerequisites are not approved.
++```text
++1920×1080
++30 fps constant frame rate
++H.264 Constrained Baseline / Baseline-compatible
++no B-frames
++Level 4.0
++pixel format yuv420p
++AAC 48 kHz, 128 kbps or higher
++MP4 fast start
++```
+ 
+-Use:
++Recommended FFmpeg compatibility pass:
+ 
+ ```bash
+-python scripts/project.py status <project-dir>
+-python scripts/project.py approve <project-dir> <phase> --note "<approval note>"
+-python scripts/project.py revise <project-dir> <phase> --note "<requested revision>"
+-python scripts/project.py rollback <project-dir> <phase> --note "<reason>"
++ffmpeg -i input.mp4 \
++  -c:v libx264 -profile:v baseline -level:v 4.0 \
++  -pix_fmt yuv420p -r 30 -fps_mode cfr \
++  -x264-params "bframes=0" \
++  -movflags +faststart \
++  -c:a aac -ar 48000 -b:a 128k \
++  outputs/final-1080p-universal.mp4
+ ```
+ 
+-Valid phase IDs:
++Also produce a 720p preview when browser/file-preview compatibility is important.
+ 
+-```text
+-analysis, brief, script, voice, visual, render
+-```
++A higher-quality archival master may use Main/High Profile, but never provide it as the only deliverable unless playback compatibility has been verified.
+ 
+-Valid user actions:
++# 6. State and invalidation model
+ 
+-- **APPROVE**: approve current artifact and unlock the next phase;
+-- **REVISE**: edit specified parts without discarding unaffected approved work;
+-- **REGENERATE**: rebuild the current phase while preserving approved evidence and constraints;
+-- **ROLLBACK**: return to an earlier phase and invalidate downstream artifacts.
+-
+-Approval phrases can include “批准”, “确认”, “通过”, “没问题，继续”, “approve”, or “looks good”. A vague “继续” counts only when the current review artifact has already been presented and no unresolved blocker remains.
++Valid phase IDs:
+ 
+-After presenting any approval artifact, stop the response. Do not perform the next phase in the same turn.
++```text
++analysis, brief, script, voice, motion, visual, render
++```
+ 
+-# Revision and invalidation rules
++Valid statuses:
+ 
+-- Changing source files invalidates analysis and every downstream phase.
+-- Changing approved claims or audience positioning invalidates brief and every downstream phase.
+-- Changing narration invalidates voice, timing, visual timing, and render.
+-- Changing only pronunciation or voice delivery invalidates affected audio segments, timing, visual timing for those scenes, and render.
+-- Changing only visual styling does not invalidate approved narration or voice.
+-- Changing a single scene should regenerate only that scene and downstream derived artifacts whenever possible.
++```text
++pending, in_progress, completed_unreviewed, approved, revision_required, invalidated, blocked
++```
+ 
+-# Hard rules
++Revision propagation:
+ 
+-- Never claim to have read files that were not actually inspected.
+-- Never invent capabilities, limitations, commands, prices, versions, or implementation details.
+-- For current software behavior or APIs, verify against primary official documentation when web access is available.
+-- Cite source files or official documentation in analysis artifacts when supported by the host environment.
++- Source change → invalidate all downstream phases.
++- Claim/audience change → invalidate brief onward.
++- Narration change → invalidate voice, timing, motion, visual, render.
++- Voice delivery/pronunciation change → invalidate affected timing, motion states, visual scene, render.
++- Subtitle-only correction → invalidate subtitle QA and any visual labels derived from it; do not regenerate unrelated audio.
++- Motion timing change → invalidate affected visual scene and render only.
++- Styling/typography/control change → invalidate visual and render only.
++- Encoding change → invalidate delivery render only.
++- Single-scene change → rebuild only that scene and derived outputs where possible.
++
++# 7. Output behavior
++
++In review mode, present the current review artifact and stop at the appropriate gate.
++
++In direct production mode, deliver all completed artifacts together, including:
++
++- source/evidence summary;
++- script and scene plan;
++- final audio/timing source;
++- motion plan;
++- preview or final video;
++- renderer source;
++- QA notes;
++- exact limitations or blocked steps.
++
++Always link to generated files using real verified paths. Never invent a download link.
++
++# 8. Hard rules
++
++- Never claim to have read an unseen file.
++- Never invent software capabilities, commands, versions, prices, metrics, or implementation details.
++- Verify current software behavior using primary official sources when external verification is required.
+ - Never treat marketing copy as implementation proof without qualification.
+-- Never let PPT/HTML become an independent content fork. Derive both from `scene-plan.json`.
+-- Never finalize animation timing before final voice timing exists.
+-- Never regenerate all TTS when only one segment needs correction.
+-- Never paste a whole replacement project into chat when direct file edits are possible.
+-- Never expose API keys, tokens, private repository credentials, or hidden environment values.
+-- Never render a final master with unresolved high-severity QA errors.
+-
+-# File map
+-
+-- `reference/STATE_MACHINE.md` — phase states, approvals, rollback, invalidation
+-- `reference/SOURCE_ANALYSIS.md` — source inspection and evidence requirements
+-- `reference/CONTENT_STRATEGY.md` — editorial planning for knowledge videos
+-- `reference/SCRIPT_STORYBOARD.md` — narration and visual-direction rules
+-- `reference/VOICE_PIPELINE.md` — TTS, segmenting, merging, and alignment
+-- `reference/HYPERFRAMES_BUILD.md` — current HyperFrames implementation rules
+-- `reference/QA.md` — production quality gates
+-- `reference/DATA_CONTRACTS.md` — canonical JSON structures
+-- `templates/` — project-state, config, evidence, scene-plan, and pronunciation starters
+-- `scripts/project.py` — initialize and manage project state
+-- `scripts/build_review.py` — generate the storyboard review HTML
+-- `scripts/build_hyperframes.py` — scaffold a timed HyperFrames project
+-- `scripts/validate_project.py` — validate phase prerequisites and required artifacts
++- Never finalize state timing before final audio timing exists.
++- Never use unrelated audio merely because its duration fits a demo.
++- Never use optical-flow interpolation on text animation as a substitute for native rendering.
++- Never make every information item a large rounded card.
++- Never destroy glyph antialiasing when applying opacity.
++- Never deliver only a high-profile video when a universal-compatible version is required.
++- Never expose keys, tokens, credentials, or hidden environment values.
++- Never promise asynchronous completion; perform the work now or report the exact blocked portion.
++
++# 9. Reference map
++
++- `reference/STATE_MACHINE.md` — review/direct modes, statuses, and invalidation
++- `reference/SOURCE_ANALYSIS.md` — evidence extraction
++- `reference/CONTENT_STRATEGY.md` — editorial planning
++- `reference/SCRIPT_STORYBOARD.md` — narration and scenes
++- `reference/VOICE_PIPELINE.md` — final audio and alignment
++- `reference/KME_MOTION_ENGINE.md` — scene/state/attention/motion grammar
++- `reference/VISUAL_SYSTEM.md` — premium editorial controls and typography
++- `reference/HYPERFRAMES_BUILD.md` — renderer implementation
++- `reference/ENCODING_COMPATIBILITY.md` — universal delivery settings
++- `reference/DATA_CONTRACTS.md` — canonical schemas
++- `reference/QA.md` — validation checklist
++- `templates/` — starter project, scene, motion, timing, and style files
++- `examples/grill-me-v0.4-motion-plan.yaml` — audio-synchronized state-plan example
