@@ -124,6 +124,7 @@ The renderer is the final implementation layer. HyperFrames is not the content m
 ├── audio/
 │   ├── segments/
 │   ├── tts-manifest.json
+│   ├── tail-silence.json
 │   └── narration.wav
 ├── timing/
 │   ├── words.json
@@ -227,6 +228,20 @@ Rules:
 - Never paste full narration paragraphs onto the screen.
 - Do not define final state timestamps until final audio exists.
 
+### Semantic beat contract
+
+Declare every beat in `script/scene-plan.json` with a narration anchor instead of a timestamp:
+
+```json
+{ "id": "b3", "action": "focus", "cue": "你到底想说什么", "targets": ["s01-question"], "hold": 0.9 }
+```
+
+- `cue` is a short verbatim phrase copied from that scene's narration in `SCRIPT.md`. It is the anchor that Phase 5 resolves into an absolute time once real audio exists.
+- Place the cue on the key noun, number, name, or conclusion the beat is about, not at the start of the sentence.
+- Cues inside one scene must appear in the same order as the beats, so resolution can move forward monotonically and never match an earlier phrase twice.
+- Keep cues short—roughly 3–10 Chinese characters—and unique within the scene. Do not use bare filler such as 这个 / 所以 / 然后.
+- Never write `at`, `start`, or absolute seconds into `scene-plan.json`. Resolved times belong to `motion/motion-plan.yaml` only.
+
 ## Phase 4 — Final voice and timing
 
 Use supplied audio or generate voice by segment. Never treat estimated script duration as final timing.
@@ -237,11 +252,31 @@ Required sequence:
 2. Generate/import per-scene segments.
 3. Review pronunciation, pacing, truncation, and silence.
 4. Merge into the final narration master.
-5. Transcribe or force-align the final audio.
+5. Capture engine word boundaries during synthesis, or transcribe/force-align when the audio is supplied.
 6. Produce word-, sentence-, scene-, and subtitle timing.
 7. Confirm subtitles correspond to the exact final audio.
 
 If the user supplies audio and SRT, verify that they correspond before using them. Do not combine unrelated audio with self-invented screen content and call it synchronized.
+
+### Word-level timing acquisition
+
+Prefer boundary metadata emitted by the TTS engine over post-hoc transcription; it is exact rather than estimated, and it needs no alignment model.
+
+- With `edge-tts`, request word-level events explicitly: `edge_tts.Communicate(text, voice, boundary="WordBoundary")`. The default emits sentence-level boundaries only, which is far too coarse to anchor beats.
+- Collect each `WordBoundary` event's offset and duration per segment, convert to seconds, then add the segment's start offset in the merged master to get global times.
+- Write `timing/words.json`, group it into `timing/sentences.json` at sentence-ending punctuation, and derive `timing/scenes.json` from the segment boundaries so scene times carry zero drift against the audio.
+- Fall back to forced alignment or ASR only when the audio is user-supplied or the engine emits no boundary data. Record which method produced the timing in `audio/tts-manifest.json`.
+- Keep trailing silence out of synthesis. Store per-scene padding as separate configuration, for example `audio/tail-silence.json`, so pacing can be retuned by rebuilding the master without re-synthesizing any voice.
+
+### Caption segmentation rules
+
+Generate `timing/captions.srt` from word timing, not by slicing script lines.
+
+- Break hard at sentence-ending punctuation (。！？…).
+- Allow a soft break at clause punctuation (、，：；) only once the current cue already holds about 8 characters.
+- Cap a cue at roughly 24 Chinese characters; when exceeded, split at the nearest earlier word boundary.
+- Strip punctuation from rendered cue text, including quote characters (`"`, `“ ”`, `《 》`). A quote that survives a break leaves a dangling opener stranded on the next cue.
+- Take each cue's in/out from its first and last word, and extend a very short cue's out-time to a minimum readable hold rather than flashing it.
 
 ## Phase 5 — KME motion planning
 
@@ -307,6 +342,18 @@ The renderer maps these semantic actions to opacity, translation, scale, underli
 - Summary hold: usually 1.0–2.5 s.
 - Meaningful motion should occupy a minority of total screen time; stable reading time should dominate.
 
+### Cue resolution
+
+Compiling `scene-plan.json` into `motion/motion-plan.yaml` is a mechanical resolution step, not a re-authoring step.
+
+1. Concatenate the scene's words from `timing/words.json` into one punctuation-free string, keeping a map from each character position back to its owning word index.
+2. For each beat in order, search that string for the beat's `cue`, starting after the previous beat's match. Never search backward; monotonic search is what keeps beats in narration order.
+3. Take the matched word's start time as the beat's absolute time, then lay out its hold and any following easing from there.
+4. Treat an unresolved cue as a build error. Report the scene, beat ID, and cue text and stop; never silently fall back to an estimated or evenly spaced time.
+5. Report the resolved count (for example `94/94 cues resolved`) so a wording change that breaks an anchor is visible immediately.
+
+Because resolution is deterministic, a narration rewrite only requires re-running Phase 4 and this step—cues, not timestamps, are what the author maintains.
+
 ### Audio synchronization rules
 
 - A visual claim must not appear materially before the corresponding spoken claim unless intentionally foreshadowing.
@@ -368,7 +415,10 @@ Do not build every scene as unrelated custom markup.
 - Use compositions and nested scenes; do not put the whole video in one giant file.
 - Give every timeline-visible/editable element a stable human-readable `id`.
 - Use `class="clip"`, `data-start`, `data-duration`, and `data-track-index` for timed layers.
-- GSAP timelines must use `{ paused: true }` and register on `window.__timelines` with the matching `data-composition-id`.
+- The renderer must expose a deterministic seek interface: one entry point that takes an absolute time and puts every element into exactly the state that time implies, independent of playback history. Seeking to the same `t` twice must produce identical frames.
+  - With an animation library, satisfy this by building timelines with `{ paused: true }`, registering them on `window.__timelines` under the matching `data-composition-id`, and driving them only through the library's own seek API.
+  - For offline frame extraction, a plain interpolation engine is preferred and fully acceptable in place of a library timeline: compile each beat into per-element keyframes of `{ time, opacity, translateY, duration }`, sort them, and have `window.__seek(t)` find the last keyframe at or before `t` and ease toward the next. This drops timeline state entirely while preserving the semantic motion grammar.
+  - Either way, never advance state from wall-clock time, `requestAnimationFrame` accumulation, CSS transitions or `@keyframes`, or one-shot entry animations. None of those can be seeked, and they will produce non-reproducible frames.
 - Use absolute timeline positions derived from `motion-plan.yaml`.
 - Ensure every scene timeline reaches its actual audio duration.
 - Never manually play, pause, or seek audio/video in scene scripts.
@@ -410,6 +460,19 @@ QA must cover:
 - consistent spacing and component dimensions;
 - restrained containers, borders, radii, and glow;
 - no missing assets, blank frames, or broken paths.
+
+Then render and deliver:
+
+### Frame extraction
+
+With an HTML renderer, produce frames by seeking and screenshotting. Do not screen-record playback.
+
+- Serve the project over a local HTTP server—an ephemeral port on `127.0.0.1` is enough—and load the page over `http://`. Under `file://`, `fetch()` of `motion-plan.json`, `captions.srt`, and similar artifacts is blocked, and the page renders empty without any obvious failure.
+- Launch headless Chromium at the exact delivery size with device scale factor 1, and pass `--disable-lcd-text`. Subpixel antialiasing leaves colored fringes on CJK glyph edges that survive H.264 encoding as chroma noise.
+- Load fonts through `@font-face` from local files and await `document.fonts.ready` before the first screenshot, so no frame is captured in a fallback family.
+- For frame `n`, seek to `n / fps`, screenshot, write the PNG. Collect console errors for the whole run and fail loudly rather than shipping blank scenes.
+- Reuse frames while the timeline is clean. Mark a frame dirty only when it falls inside a beat's animation window, a scene transition, a subtitle in/out, or a scene-specific continuous-motion window; otherwise copy the previous frame's bytes. Because reading hold dominates a knowledge video, this typically skips 60–70% of screenshots.
+- Encode the sequence against the narration master with the settings below, and keep the frame directory until QA passes so a single-scene fix re-renders only its own range.
 
 ### Delivery compatibility
 
@@ -492,6 +555,8 @@ Always link to generated files using real verified paths. Never invent a downloa
 - Verify current software behavior using primary official sources when external verification is required.
 - Never treat marketing copy as implementation proof without qualification.
 - Never finalize state timing before final audio timing exists.
+- Never drive renderer state from wall-clock time, rAF accumulation, or CSS transitions when frames must be extracted deterministically.
+- Never silently substitute an estimated time for a beat cue that failed to resolve against the word timeline.
 - Never use unrelated audio merely because its duration fits a demo.
 - Never use optical-flow interpolation on text animation as a substitute for native rendering.
 - Never make every information item a large rounded card.
