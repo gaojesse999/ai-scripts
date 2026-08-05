@@ -1,6 +1,6 @@
 ---
 name: knowledge-video-builder
-description: Build evidence-grounded knowledge explainer videos from Skills, repositories, software, workflows, documents, audio, and subtitles. Uses a state-driven Knowledge Motion Engine (KME): source evidence → narrative → final audio/timing → scenes → states → attention → semantic motion → HyperFrames or another renderer → compatible delivery. Supports both review-gated production and direct end-to-end execution when the user explicitly asks for a finished result without waiting for approvals.
+description: Build evidence-grounded knowledge explainer videos from Skills, repositories, software, workflows, documents, audio, and subtitles. Uses a state-driven Knowledge Motion Engine (KME): source evidence → narrative → final audio/timing → scenes → states → attention → semantic motion → HyperFrames or another renderer → compatible delivery. By default the user records or synthesizes the narration audio from the delivered script and uploads it; built-in TTS is only the fallback. Supports both review-gated production and direct end-to-end execution when the user explicitly asks for a finished result without waiting for approvals.
 ---
 
 # Knowledge Video Builder v2 — State-Driven KME
@@ -51,7 +51,7 @@ Use when the user explicitly says things such as:
 
 In direct production mode:
 
-1. Do not invent approval gates or ask avoidable questions.
+1. Do not invent approval gates or ask avoidable questions. The Phase 3 voice handoff is the exception: it requests a required input rather than an approval, so ask for the narration audio once, then continue with the fallback voice in the same run if none arrives.
 2. Complete every feasible phase in the current response/tool run.
 3. Make reasonable assumptions for minor missing details and record them.
 4. Preserve intermediate artifacts so later revisions remain local and recoverable.
@@ -109,6 +109,7 @@ The renderer is the final implementation layer. HyperFrames is not the content m
 ├── project-state.json
 ├── project-config.json
 ├── inputs/
+│   └── voice/
 ├── analysis/
 │   ├── overview.md
 │   ├── evidence-map.json
@@ -242,31 +243,78 @@ Declare every beat in `script/scene-plan.json` with a narration anchor instead o
 - Keep cues short—roughly 3–10 Chinese characters—and unique within the scene. Do not use bare filler such as 这个 / 所以 / 然后.
 - Never write `at`, `start`, or absolute seconds into `scene-plan.json`. Resolved times belong to `motion/motion-plan.yaml` only.
 
+### Voice handoff
+
+Once `SCRIPT.md` is stable, deliver it and ask the user to produce the narration audio from it. This is the default: their own voice, their TTS provider, or licensed talent normally beats whatever this Skill can synthesize locally, and the voice is the one asset a viewer judges immediately.
+
+Include in the request:
+
+- the spoken text per scene, with scene IDs, as plain copyable text;
+- total character count and the rough duration it implies, so the user can judge effort;
+- what to send back — one file per scene if possible, otherwise a single master;
+- format preferences: WAV, 48 kHz, no music bed, no added tail silence, no loudness normalization that clips;
+- a note that any word- or sentence-level timing their engine can export will improve sync accuracy;
+- a note that pronunciation of the items in `script/pronunciation.json` matters.
+
+This is a request for a required input, not an approval gate. It therefore applies in direct production mode as well, and is the only point where that mode legitimately waits on the user.
+
+Ask once and concisely. Move to the Phase 4 fallback path when the user says they cannot supply audio, asks this Skill to synthesize it, or does not provide it.
+
 ## Phase 4 — Final voice and timing
 
-Use supplied audio or generate voice by segment. Never treat estimated script duration as final timing.
+Narration audio has two possible sources. Path A is the default; Path B is the fallback. Never treat estimated script duration as final timing on either path.
 
-Required sequence:
+### Path A — voice supplied by the user (default)
 
-1. Create `audio/tts-manifest.json` when generating TTS.
-2. Generate/import per-scene segments.
-3. Review pronunciation, pacing, truncation, and silence.
-4. Merge into the final narration master.
-5. Capture engine word boundaries during synthesis, or transcribe/force-align when the audio is supplied.
-6. Produce word-, sentence-, scene-, and subtitle timing.
-7. Confirm subtitles correspond to the exact final audio.
+Use the audio returned from the voice handoff. Keep the user's original files untouched under `inputs/voice/` and work on copies.
 
-If the user supplies audio and SRT, verify that they correspond before using them. Do not combine unrelated audio with self-invented screen content and call it synchronized.
+1. Verify correspondence first. The spoken wording must match `SCRIPT.md`. Check the opening and closing of every segment, not only the first.
+2. When delivery deviates from the script — rephrased line, dropped sentence, improvised aside — the audio wins. Rewrite `SCRIPT.md` to what was actually spoken, then re-check every beat cue against the new wording. A cue that no longer appears in the narration must be re-anchored, not silently dropped.
+3. Normalize to one working format, 48 kHz WAV, without resampling artifacts.
+4. Establish scene boundaries. Per-scene files give them directly. A single master must be segmented by locating each scene's first and last sentence in the alignment output — never by dividing total duration or by trusting the planned scene lengths.
+5. Obtain word-level timing by forced alignment. Engine boundary metadata does not exist on this path unless the user exported it.
+6. Trim leading and trailing silence per segment so pacing stays under `audio/tail-silence.json` control, then continue with the shared steps.
+
+If the user also supplies an SRT, verify that it corresponds to the audio before using it. Do not combine unrelated audio with self-invented screen content and call it synchronized.
+
+### Path B — voice generated by this Skill (fallback)
+
+Use only after the voice handoff produced no audio, or when the user explicitly asked this Skill to synthesize it.
+
+1. Create `audio/tts-manifest.json` recording engine, version, voice, rate, pitch, and `source: "generated"`.
+2. Synthesize per scene, never as one monolithic request, and respect `script/pronunciation.json`.
+3. Capture engine word boundaries during synthesis.
+4. Review pronunciation, pacing, truncation, and silence; re-synthesize only the segments needing correction.
+5. State plainly that this is placeholder-grade voice, and that swapping in real voice later invalidates timing, motion, and render but not the script, scene plan, or components.
+
+### Shared steps
+
+1. Merge segments plus configured tail silence into the narration master.
+2. Measure the merged master and compare it with the expected sum. Report the deviation rather than assuming the two agree.
+3. Produce word-, sentence-, scene-, and subtitle timing from the measured master.
+4. Confirm subtitles correspond to the exact final audio.
+5. Record the path taken, the timing method, and any script rewrite in `audio/tts-manifest.json`.
 
 ### Word-level timing acquisition
 
-Prefer boundary metadata emitted by the TTS engine over post-hoc transcription; it is exact rather than estimated, and it needs no alignment model.
+Cue resolution consumes word timing, so it must be measured rather than estimated.
+
+For generated voice, engine boundary metadata is the best source and needs no alignment model:
 
 - With `edge-tts`, request word-level events explicitly: `edge_tts.Communicate(text, voice, boundary="WordBoundary")`. The default emits sentence-level boundaries only, which is far too coarse to anchor beats.
 - Collect each `WordBoundary` event's offset and duration per segment, convert to seconds, then add the segment's start offset in the merged master to get global times.
+
+For supplied voice, use forced alignment against the known script. It is markedly more accurate than open transcription because the text is already given:
+
+- Prefer a forced aligner, or an ASR tool that returns word timestamps and accepts the script as a prompt.
+- Check alignment instead of trusting it. Compare each scene's aligned span against that scene's measured audio span, and re-examine any scene drifting by more than a few hundred milliseconds.
+- If alignment fails on a segment, report it and fall back to sentence-level timing for that segment only. Name the scenes whose timing is degraded; do not let a silent failure spread into motion.
+
+On both paths:
+
 - Write `timing/words.json`, group it into `timing/sentences.json` at sentence-ending punctuation, and derive `timing/scenes.json` from the segment boundaries so scene times carry zero drift against the audio.
-- Fall back to forced alignment or ASR only when the audio is user-supplied or the engine emits no boundary data. Record which method produced the timing in `audio/tts-manifest.json`.
-- Keep trailing silence out of synthesis. Store per-scene padding as separate configuration, for example `audio/tail-silence.json`, so pacing can be retuned by rebuilding the master without re-synthesizing any voice.
+- Record which method produced the timing in `audio/tts-manifest.json`.
+- Keep trailing silence out of the segments themselves. Store per-scene padding as separate configuration, for example `audio/tail-silence.json`, so pacing can be retuned by rebuilding the master without touching any voice.
 
 ### Caption segmentation rules
 
@@ -519,12 +567,19 @@ Valid statuses:
 pending, in_progress, completed_unreviewed, approved, revision_required, invalidated, blocked
 ```
 
+The `voice` phase also carries a source, which starts as `awaiting_user`:
+
+```text
+awaiting_user, supplied, generated
+```
+
 Revision propagation:
 
 - Source change → invalidate all downstream phases.
 - Claim/audience change → invalidate brief onward.
 - Narration change → invalidate voice, timing, motion, visual, render.
 - Voice delivery/pronunciation change → invalidate affected timing, motion states, visual scene, render.
+- Voice source swap, fallback TTS → user-supplied audio → invalidate timing, motion, visual timing, and render; keep the script, scene plan, and components, and re-anchor any beat cue whose wording changed.
 - Subtitle-only correction → invalidate subtitle QA and any visual labels derived from it; do not regenerate unrelated audio.
 - Motion timing change → invalidate affected visual scene and render only.
 - Styling/typography/control change → invalidate visual and render only.
@@ -555,6 +610,9 @@ Always link to generated files using real verified paths. Never invent a downloa
 - Verify current software behavior using primary official sources when external verification is required.
 - Never treat marketing copy as implementation proof without qualification.
 - Never finalize state timing before final audio timing exists.
+- Never generate voice as the default when the user has not been asked to supply it.
+- Never keep a script that no longer matches the supplied audio; the audio is authoritative once recorded.
+- Never modify the user's original audio files in place.
 - Never drive renderer state from wall-clock time, rAF accumulation, or CSS transitions when frames must be extracted deterministically.
 - Never silently substitute an estimated time for a beat cue that failed to resolve against the word timeline.
 - Never use unrelated audio merely because its duration fits a demo.

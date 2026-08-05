@@ -21,6 +21,7 @@
     "voice": {
       "status": "pending",
       "version": 0,
+      "source": "awaiting_user",
       "notes": []
     },
     "motion": {
