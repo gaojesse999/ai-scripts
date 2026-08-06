@@ -1,0 +1,37 @@
+{
+  "language": "zh-CN",
+  "video": {
+    "aspect_ratio": "16:9",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "target_duration": 240
+  },
+  "style": {
+    "name": "editorial-technical-dark",
+    "density": "medium",
+    "motion": "semantic",
+    "captions": true,
+    "reference_profile": "analysis/reference-style-profile.md",
+    "tokens": {
+      "canvas": "#171917",
+      "surface": "#292b29",
+      "ink": "#f5f5f0",
+      "muted": "#8b9089",
+      "accent": "#ff9f0a",
+      "danger": "#ff5362",
+      "success": "#39d98a"
+    }
+  },
+  "voice": {
+    "provider": "configured-or-manual",
+    "voice": "default",
+    "sample_rate": 48000,
+    "channels": 1
+  },
+  "hyperframes": {
+    "example": "blank",
+    "resolution": "landscape",
+    "docker_render": true
+  }
+}

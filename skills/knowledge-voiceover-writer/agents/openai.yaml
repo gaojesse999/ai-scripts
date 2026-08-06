@@ -1,0 +1,4 @@
+interface:
+  display_name: "Knowledge Voiceover Writer"
+  short_description: "Write high-retention Chinese knowledge narration"
+  default_prompt: "Use $knowledge-voiceover-writer to write a knowledge-sharing video voiceover from my topic or source material."

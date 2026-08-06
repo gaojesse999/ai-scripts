@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "project_id": "project-slug",
+  "title": "Knowledge Video",
+  "current_phase": "analysis",
+  "status": "active",
+  "source": {
+    "path": "",
+    "sha256": ""
+  },
+  "phases": {
+    "analysis": {
+      "status": "in_progress",
+      "version": 1,
+      "approved_at": null,
+      "note": ""
+    },
+    "brief": {
+      "status": "not_started",
+      "version": 0,
+      "approved_at": null,
+      "note": ""
+    },
+    "script": {
+      "status": "not_started",
+      "version": 0,
+      "approved_at": null,
+      "note": ""
+    },
+    "voice": {
+      "status": "not_started",
+      "version": 0,
+      "approved_at": null,
+      "note": ""
+    },
+    "visual": {
+      "status": "not_started",
+      "version": 0,
+      "approved_at": null,
+      "note": ""
+    },
+    "render": {
+      "status": "not_started",
+      "version": 0,
+      "approved_at": null,
+      "note": ""
+    }
+  },
+  "history": []
+}
