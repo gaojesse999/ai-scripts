@@ -11,13 +11,27 @@ A staged Agent Skill for producing evidence-grounded knowledge videos about Skil
 5. HyperFrames visual build
 6. QA and render
 
-Every phase stops for explicit user approval.
+Voice generation defaults to the bundled `mimo-tts` Skill. Other TTS providers are considered only when MiMo is unavailable, and the fallback must be recorded.
+
+User-facing approvals occur at the complete narration gate and after each
+completed chapter; internal analysis, brief, voice, and visual artifacts do not
+create extra approval requests unless a blocking ambiguity requires one.
 
 ## Initialize a project
 
 ```bash
 python scripts/project.py init ./my-project --title "My Explainer" --source ./input.skill
 ```
+
+## Engineering-root network proxy
+
+Keep one `.skill.env` in the fixed engineering root—the directory containing `.cursor/skills/knowledge-video-builder`—rather than copying it into each video artifact directory. Set `SKILL_PROXY` before external source inspection, TTS, transcription, HyperFrames, or dependency downloads:
+
+```text
+SKILL_PROXY=http://xxx.xxx.xxx.xxx:xxxx
+```
+
+When this Skill is active, the proxy is required and direct fallback is disabled. Export `HTTP_PROXY`, `HTTPS_PROXY`, and `ALL_PROXY` for subprocesses such as `npx` and Playwright; those tools do not read `.skill.env` automatically. Keep the real `.skill.env` local-only and never copy it into generated video artifacts.
 
 ## Check status
 

@@ -20,6 +20,42 @@ Default final-video style: modern editorial knowledge motion, crisp typography, 
 
 When the reference uses layered UI, illustrated assets, path tracing, or camera-like movement, a sequence of static cards plus fades is not a sufficient style match. The visual build must expose asset layers, semantic motion beats, and a renderer capable of compositing them. Prefer a browser/Canvas or HyperFrames composition for reference-matched motion; use direct FFmpeg filters for simple timing proofs, captions, or a deliberately minimal fallback. If the reference is 60 fps or higher, default the draft to 60 fps unless the user requests otherwise.
 
+## Runtime network configuration
+
+This project has two different roots and they must not be confused:
+
+- `ENGINEERING_ROOT`: the fixed directory that contains `.cursor/skills/knowledge-video-builder` and the engineering-root `.skill.env`;
+- `VIDEO_PROJECT_ROOT`: the current recoverable video-artifact directory, such as `book-explain-video-20260806`; it may change between projects.
+
+Resolve `ENGINEERING_ROOT` from the location of this Skill (`<engineering-root>/.cursor/skills/knowledge-video-builder/SKILL.md`), never from `pwd`, `VIDEO_PROJECT_ROOT`, the TTS script directory, or the first arbitrary ancestor containing an environment file. Resolve the environment file as:
+
+```text
+<ENGINEERING_ROOT>/.skill.env
+```
+
+Before making any external network request for source inspection, documentation lookup, TTS, transcription, HyperFrames, npm, browser installation, or rendering dependencies:
+
+1. Require `<ENGINEERING_ROOT>/.skill.env`; if it is missing, stop and report the configuration error.
+2. Read `SKILL_PROXY` from that file without printing its value; use the bundled `.skill.env.example` as the configuration reference.
+3. Require a non-empty `SKILL_PROXY` for this Skill. Do not silently fall back to a direct connection.
+4. For subprocesses that do not read `.skill.env` themselves, export the proxy as `HTTP_PROXY`, `HTTPS_PROXY`, and `ALL_PROXY` for that command only.
+5. If the proxied request fails, stop and report the proxy failure. Retry directly only after the user explicitly authorizes a direct connection.
+
+Tools that do not expose a proxy parameter, including generic web-search or web-fetch integrations, cannot be guaranteed to use `SKILL_PROXY`. Under this strict policy, do not call those tools for external data; use a local/proxy-aware subprocess instead, or ask the user to explicitly authorize the unproxied tool.
+
+For MiMo, also pass the fixed environment path and root explicitly:
+
+```bash
+SKILL_PROJECT_ROOT="$ENGINEERING_ROOT" \
+SKILL_PROXY_STRICT=1 \
+python3 "$ENGINEERING_ROOT/.cursor/skills/mimo-tts/scripts/mimo_tts.py" \
+  --env-file "$ENGINEERING_ROOT/.skill.env" \
+  --output-root "$VIDEO_PROJECT_ROOT/audio/mimo-outputs" \
+  ...
+```
+
+Treat `SKILL_PROXY` as the single proxy URL for HTTP and HTTPS. Do not expose proxy credentials, API keys, or other hidden environment values in logs, manifests, generated files, or responses. The engineering-root `.skill.env` is configuration, not an artifact to copy into every video project.
+
 ## When to use
 
 Trigger when the user asks to:
@@ -305,12 +341,26 @@ End by presenting the complete narration, chapter map, visual structure, estimat
 
 Prerequisite: the complete narration approval gate is approved. Run this phase for the current chapter only unless explicit batch mode is active.
 
-Use an available TTS system or the user's chosen provider. Generate voice by scene/segment, not as one irreversible monolithic request. Respect `script/pronunciation.json`.
+Use the bundled `mimo-tts` Skill by default. Before generating audio, verify that `$ENGINEERING_ROOT/.cursor/skills/mimo-tts/SKILL.md` and `$ENGINEERING_ROOT/.cursor/skills/mimo-tts/scripts/mimo_tts.py` are available, then read `$ENGINEERING_ROOT/.skill.env`. Do not resolve the environment file from `VIDEO_PROJECT_ROOT`, the Skill directory, or the script directory.
+
+Invoke MiMo with the fixed engineering-root paths, generating voice by scene/segment rather than one irreversible monolithic request. Respect `script/pronunciation.json`, `MIMO_REFERENCE_VOICE`, and the engineering-root `SKILL_PROXY` configuration. Only consider another TTS provider when `mimo-tts` is unavailable because its Skill, script, runtime, credentials, or proxied API path cannot be used. Record any fallback provider and the reason in `audio/tts-manifest.json` and `qa/report.md`; never switch silently.
+
+Default invocation:
+
+```bash
+SKILL_PROJECT_ROOT="$ENGINEERING_ROOT" \
+SKILL_PROXY_STRICT=1 \
+HTTP_PROXY="$SKILL_PROXY" HTTPS_PROXY="$SKILL_PROXY" ALL_PROXY="$SKILL_PROXY" \
+python3 "$ENGINEERING_ROOT/.cursor/skills/mimo-tts/scripts/mimo_tts.py" \
+  --input <scene-or-segment-text-file> \
+  --env-file "$ENGINEERING_ROOT/.skill.env" \
+  --output-root "$VIDEO_PROJECT_ROOT/audio/mimo-outputs"
+```
 
 Required sequence:
 
 1. Create `audio/tts-manifest.json`.
-2. Generate or import one audio segment per scene.
+2. Run `mimo-tts` to generate one audio segment per scene, using the project-root `.skill.env`; import audio only when MiMo is unavailable or a fallback is explicitly recorded.
 3. Review obvious pronunciation, pacing, truncation, and silence errors.
 4. Merge approved segments into `audio/narration.wav` with consistent format.
 5. Transcribe or force-align the final audio to produce word-, sentence-, and scene-level timestamps.
@@ -360,12 +410,17 @@ Then use the official HyperFrames development loop when available:
 
 ```bash
 cd <project-dir>/hyperframes
+export HTTP_PROXY="$SKILL_PROXY"
+export HTTPS_PROXY="$SKILL_PROXY"
+export ALL_PROXY="$SKILL_PROXY"
 npx hyperframes doctor
 npx hyperframes lint
 npx hyperframes inspect
 npx hyperframes snapshot --frames 8
 npx hyperframes preview
 ```
+
+`npx`, Playwright, and browser package managers do not read `.skill.env` automatically. The proxy exports above are required for those subprocesses and must be set from `$ENGINEERING_ROOT/.skill.env` without printing the file or its secrets. If the proxy request fails, stop; do not silently retry through a direct connection.
 
 HyperFrames rules:
 
@@ -406,6 +461,9 @@ Then, when HyperFrames is available:
 
 ```bash
 cd <project-dir>/hyperframes
+export HTTP_PROXY="$SKILL_PROXY"
+export HTTPS_PROXY="$SKILL_PROXY"
+export ALL_PROXY="$SKILL_PROXY"
 npx hyperframes lint --json
 npx hyperframes inspect --json
 npx hyperframes render --docker --output ../outputs/final-1080p.mp4

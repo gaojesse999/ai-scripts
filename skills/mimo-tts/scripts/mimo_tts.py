@@ -18,13 +18,34 @@ from wave import open as wave_open
 
 
 API_URL = "https://api.xiaomimimo.com/v1/chat/completions"
-DEFAULT_OUTPUT_ROOT = Path("audio-outputs")
-DEFAULT_ENV_FILE = Path(".mimo.env")
 VALID_MODELS = {
     "mimo-v2.5-tts",
     "mimo-v2.5-tts-voicedesign",
     "mimo-v2.5-tts-voiceclone",
 }
+
+
+def find_project_root() -> Path:
+    """Find the project root, never the Skill or script directory."""
+    forced = os.environ.get("SKILL_PROJECT_ROOT")
+    if forced:
+        return Path(forced).expanduser().resolve()
+    starts = [Path.cwd().resolve(), Path(__file__).resolve().parent]
+    checked: set[Path] = set()
+    for start in starts:
+        current = start if start.is_dir() else start.parent
+        for parent in (current, *current.parents):
+            if parent in checked:
+                continue
+            checked.add(parent)
+            if (parent / ".skill.env").is_file():
+                return parent
+    return Path.cwd().resolve()
+
+
+PROJECT_ROOT = find_project_root()
+DEFAULT_OUTPUT_ROOT = PROJECT_ROOT / "audio-outputs"
+DEFAULT_ENV_FILE = PROJECT_ROOT / ".skill.env"
 
 
 def load_env(path: Path) -> None:
@@ -44,7 +65,7 @@ def load_env(path: Path) -> None:
 def install_proxy(proxy: str | None) -> None:
     """Use a configured proxy; otherwise keep urllib's direct connection."""
     if proxy and ("xxx.xxx.xxx.xxx" in proxy or "xxxx" in proxy):
-        raise SystemExit("MIMO_PROXY 仍是占位地址，请填写真实代理，或删除该配置以直连。")
+        raise ValueError("SKILL_PROXY 仍是占位地址。")
     opener = urllib.request.build_opener(
         urllib.request.ProxyHandler(
             {"http": proxy, "https": proxy} if proxy else {}
@@ -142,6 +163,9 @@ def make_voice(args: argparse.Namespace, model: str,
             "指定 mp3 或 wav 音色样本。"
         )
     sample = Path(voice_sample)
+    if not sample.is_absolute():
+        sample = PROJECT_ROOT / sample
+    sample = sample.resolve()
     if not sample.exists():
         raise SystemExit(f"参考语音文件不存在：{sample}")
     if sample.suffix.lower() not in {".mp3", ".wav"}:
@@ -210,17 +234,48 @@ def request_audio(api_key: str, model: str, text: str, instruction: str | None,
         headers={"api-key": api_key, "Content-Type": "application/json"},
         method="POST",
     )
-    install_proxy(proxy)
-    try:
-        with urllib.request.urlopen(request, timeout=180) as response:
-            body = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"MiMo API HTTP {exc.code}: {detail}") from exc
-    except urllib.error.URLError as exc:
-        route = f"代理 {proxy}" if proxy else "直连"
-        hint = "如网络受限，请在 .mimo.env 中配置 MIMO_PROXY。" if not proxy else "请检查代理地址、端口和代理服务状态。"
-        raise RuntimeError(f"通过{route}无法连接 MiMo API: {exc.reason}。{hint}") from exc
+    strict_proxy = os.environ.get("SKILL_PROXY_STRICT", "").lower() in {"1", "true", "yes"}
+    if strict_proxy and not proxy:
+        raise RuntimeError("SKILL_PROXY_STRICT=1，但没有配置 SKILL_PROXY。")
+    routes = [("proxy", proxy)] if strict_proxy else (
+        [("proxy", proxy), ("direct", None)] if proxy else [("direct", None)]
+    )
+    last_error: Exception | None = None
+    body = None
+    for route_name, route_proxy in routes:
+        try:
+            install_proxy(route_proxy)
+            with urllib.request.urlopen(request, timeout=180) as response:
+                body = json.loads(response.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            if route_proxy is not None and exc.code in {407, 502, 503, 504}:
+                last_error = exc
+                continue
+            raise RuntimeError(f"MiMo API HTTP {exc.code}: {detail}") from exc
+        except (urllib.error.URLError, ValueError) as exc:
+            last_error = exc
+            continue
+    else:
+        reason = getattr(last_error, "reason", str(last_error))
+        if strict_proxy:
+            message = (
+                f"通过 SKILL_PROXY 连接 MiMo API 失败: {reason}。"
+                "严格代理模式已阻止直连，请检查调用方传入的 .skill.env。"
+            )
+        elif proxy:
+            message = (
+                "先尝试代理后直连 MiMo API 仍失败"
+                f": {reason}。网络可能受限，请在调用方指定的 .skill.env 中配置 SKILL_PROXY。"
+            )
+        else:
+            message = (
+                f"直连 MiMo API 失败: {reason}。网络可能受限，"
+                "请在调用方指定的 .skill.env 中配置 SKILL_PROXY。"
+            )
+        raise RuntimeError(message) from last_error
+
     try:
         encoded = body["choices"][0]["message"]["audio"]["data"]
         return base64.b64decode(encoded)
@@ -249,7 +304,11 @@ def parse_args() -> argparse.Namespace:
         help="不同 slide/片段之间的静音秒数，默认 1.0",
     )
     parser.add_argument("--output-root", default=str(DEFAULT_OUTPUT_ROOT))
-    parser.add_argument("--env-file", default=str(DEFAULT_ENV_FILE))
+    parser.add_argument(
+        "--env-file",
+        default=str(DEFAULT_ENV_FILE),
+        help="环境文件，默认读取当前工程根目录的 .skill.env",
+    )
     return parser.parse_args()
 
 
@@ -259,7 +318,7 @@ def main() -> int:
     api_key = os.environ.get("MIMO_API_KEY")
     if not api_key:
         raise SystemExit(f"未找到 MIMO_API_KEY，请在 {args.env_file} 中配置，或先导出环境变量。")
-    proxy = os.environ.get("MIMO_PROXY") or None
+    proxy = os.environ.get("SKILL_PROXY") or os.environ.get("MIMO_PROXY") or None
     reference_voice = os.environ.get("MIMO_REFERENCE_VOICE") or None
     model = args.model
     if model == "auto":

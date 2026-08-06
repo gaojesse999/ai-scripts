@@ -24,10 +24,13 @@
     }
   },
   "voice": {
-    "provider": "configured-or-manual",
-    "voice": "default",
+    "provider": "mimo-tts",
+    "script": ".cursor/skills/mimo-tts/scripts/mimo_tts.py",
+    "env_file": ".skill.env",
+    "voice": "auto",
     "sample_rate": 48000,
-    "channels": 1
+    "channels": 1,
+    "fallback_policy": "only-if-mimo-unavailable"
   },
   "hyperframes": {
     "example": "blank",

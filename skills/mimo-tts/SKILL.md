@@ -13,16 +13,18 @@ Use the bundled script to synthesize WAV audio through the official MiMo API:
 ## Credential policy
 
 - Never ask the user to paste an API key into chat.
-- Read `MIMO_API_KEY` from the environment or the project-root `.mimo.env`.
-- `.mimo.env` is local-only and must remain ignored by Git.
+- Read `MIMO_API_KEY` from the environment or the `.skill.env` path supplied by the caller.
+- `.skill.env` is local-only and must remain ignored by Git.
 - Never print, expose, or include the key in manifests, logs, generated files, or responses.
 
 Expected local configuration:
 
 ```text
+# When called by knowledge-video-builder, this file is the fixed engineering-root
+# .skill.env passed through --env-file, never the video artifact directory.
 MIMO_API_KEY=replace-with-your-key
 # Optional. Leave empty or omit for direct connection.
-MIMO_PROXY=http://xxx.xxx.xxx.xxx:xxxx
+SKILL_PROXY=http://xxx.xxx.xxx.xxx:xxxx
 # Optional. Leave empty for standard MiMo synthesis.
 # Relative paths are resolved from the project root.
 # Example: MIMO_REFERENCE_VOICE=reference-voice/my-teacher-voice.wav
@@ -32,11 +34,25 @@ MIMO_REFERENCE_VOICE=
 
 Proxy behavior:
 
-- If `MIMO_PROXY` is absent or empty, use a direct connection.
-- If `MIMO_PROXY` contains a real proxy URL, use it for HTTP and HTTPS requests.
+- Read `SKILL_PROXY` from the `.skill.env` supplied by the caller. The legacy `MIMO_PROXY` environment variable is accepted only as a compatibility fallback.
+- If `SKILL_PROXY` contains a real proxy URL, try HTTP and HTTPS requests through it first.
+- If `SKILL_PROXY_STRICT=1`, do not retry directly when the proxied request fails; report the proxy failure.
+- Without `SKILL_PROXY_STRICT=1`, retain the standalone fallback behavior and retry directly after a proxy failure.
+- If `SKILL_PROXY` is absent or empty, use a direct connection.
 - `http://xxx.xxx.xxx.xxx:xxxx` is only a template placeholder and must be replaced or removed.
-- If direct connection fails, tell the user that network restrictions may require setting `MIMO_PROXY`.
+- If the direct connection also fails, tell the user that network restrictions may require setting `SKILL_PROXY` in the project-root `.skill.env`.
 - Never expose the proxy credential, API key, or hidden environment values in output.
+
+When invoked by `knowledge-video-builder`, the caller should set:
+
+```text
+SKILL_PROJECT_ROOT=<fixed engineering root>
+SKILL_PROXY_STRICT=1
+```
+
+and pass `--env-file <engineering-root>/.skill.env`. This keeps relative
+`MIMO_REFERENCE_VOICE` paths and proxy policy tied to the engineering root even
+when the video artifact directory changes.
 
 ## Workflow
 
@@ -110,7 +126,7 @@ python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
   --instruction "自然、沉稳、清晰，适合知识讲解"
 ```
 
-Automatic clone from `.mimo.env`:
+Automatic clone from `.skill.env`:
 
 ```text
 MIMO_REFERENCE_VOICE=reference-voice/voice.wav
