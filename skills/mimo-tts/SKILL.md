@@ -23,6 +23,11 @@ Expected local configuration:
 MIMO_API_KEY=replace-with-your-key
 # Optional. Leave empty or omit for direct connection.
 MIMO_PROXY=http://xxx.xxx.xxx.xxx:xxxx
+# Optional. Leave empty for standard MiMo synthesis.
+# Relative paths are resolved from the project root.
+# Example: MIMO_REFERENCE_VOICE=reference-voice/my-teacher-voice.wav
+# Example: MIMO_REFERENCE_VOICE=reference-voice/female-narrator.mp3
+MIMO_REFERENCE_VOICE=
 ```
 
 Proxy behavior:
@@ -36,23 +41,34 @@ Proxy behavior:
 ## Workflow
 
 1. Confirm the text source (`--text`, `--input`, or supplied content).
-2. Choose a model:
+2. Use automatic model selection unless the user explicitly chooses a model:
+   - empty `MIMO_REFERENCE_VOICE` → `mimo-v2.5-tts`;
+   - configured `MIMO_REFERENCE_VOICE` → `mimo-v2.5-tts-voiceclone`.
+   A command-line `--voice-sample` overrides the environment setting. An explicit
+   `--model` overrides automatic selection.
+3. Choose or confirm the style:
    - `mimo-v2.5-tts`: preset voices; default to `mimo_default` if unspecified.
    - `mimo-v2.5-tts-voicedesign`: describe a new voice in `--instruction`.
    - `mimo-v2.5-tts-voiceclone`: provide an authorized `.mp3` or `.wav` sample with `--voice-sample`.
-3. Ask for or infer voice, gender, emotion, pacing, and other style requirements. Do not silently invent a strong emotional direction.
-4. Run `scripts/mimo_tts.py`.
-5. Verify the returned WAV exists and report its exact path.
+4. Ask for or infer voice, gender, emotion, pacing, and other style requirements. Do not silently invent a strong emotional direction.
+5. Run `scripts/mimo_tts.py`.
+6. Verify the returned WAV exists and report its exact path.
 
 The script creates:
 
 ```text
 audio-outputs/<semantic-title>-YYYYMMDD-HHMMSS/
 ├── narration.wav
+├── segments/
 └── tts-manifest.json
 ```
 
 The semantic title is extracted from the first line/sentence unless `--title` is supplied.
+When the input contains `## S01 · ...`-style headings, the script removes those
+headings, synthesizes each slide body separately, and inserts 1 second of silence
+between segments by default. Set `--pause` to change it; use `--pause 0` to disable
+the pauses. Long slide bodies are further split at sentence boundaries to prevent
+single requests from being truncated. The manifest records each segment and duration.
 
 ## Commands
 
@@ -62,6 +78,7 @@ Preset male voice:
 python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
   --input script.txt \
   --voice 苏打 \
+  --pause 1.0 \
   --instruction "男声，沉稳、清晰，语速适中，适合知识讲解"
 ```
 
@@ -91,6 +108,20 @@ python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
   --input script.txt \
   --voice-sample voice.wav \
   --instruction "自然、沉稳、清晰，适合知识讲解"
+```
+
+Automatic clone from `.mimo.env`:
+
+```text
+MIMO_REFERENCE_VOICE=reference-voice/voice.wav
+```
+
+Then run without `--model` or `--voice-sample`:
+
+```bash
+python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
+  --input script.md \
+  --instruction "沉稳、清晰，适合教程讲解"
 ```
 
 ## API-specific rules

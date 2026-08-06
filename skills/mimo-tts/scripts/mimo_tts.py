@@ -13,6 +13,8 @@ import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+from wave import Error as WaveError
+from wave import open as wave_open
 
 
 API_URL = "https://api.xiaomimimo.com/v1/chat/completions"
@@ -70,14 +72,78 @@ def read_text(args: argparse.Namespace) -> str:
     raise SystemExit("请通过 --text、--input 或标准输入提供要合成的文字。")
 
 
-def make_voice(args: argparse.Namespace) -> str | None:
-    if args.model == "mimo-v2.5-tts":
+def split_long_text(text: str, max_chars: int = 700) -> list[str]:
+    """Split oversized prose at sentence boundaries before calling the API."""
+    if len(text) <= max_chars:
+        return [text.strip()]
+    sentences = re.split(r"(?<=[。！？!?；;])", text)
+    chunks: list[str] = []
+    current = ""
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+        if current and len(current) + len(sentence) > max_chars:
+            chunks.append(current)
+            current = ""
+        current += sentence
+    if current:
+        chunks.append(current)
+    return chunks or [text.strip()]
+
+
+def split_slides(text: str) -> list[tuple[str, str]]:
+    """Extract ## S01-style slide sections and discard their headings."""
+    heading = re.compile(r"^\s*##\s*(S\d+)\s*[·.\-–—]\s*(.*?)\s*$")
+    sections: list[tuple[str, str]] = []
+    current_id: str | None = None
+    current_lines: list[str] = []
+    found_slide_heading = False
+
+    for line in text.splitlines():
+        match = heading.match(line)
+        if match:
+            found_slide_heading = True
+            if current_id is not None:
+                body = "\n".join(current_lines).strip()
+                if body:
+                    sections.append((current_id, body))
+            current_id = match.group(1)
+            current_lines = []
+        elif current_id is not None:
+            current_lines.append(line)
+
+    if current_id is not None:
+        body = "\n".join(current_lines).strip()
+        if body:
+            sections.append((current_id, body))
+
+    if not found_slide_heading:
+        return [("TEXT", text.strip())]
+
+    expanded: list[tuple[str, str]] = []
+    for section_id, body in sections:
+        parts = split_long_text(body)
+        for index, part in enumerate(parts, start=1):
+            suffix = "" if len(parts) == 1 else f"-{index}"
+            expanded.append((f"{section_id}{suffix}", part))
+    return expanded
+
+
+def make_voice(args: argparse.Namespace, model: str,
+               voice_sample: str | None) -> str | None:
+    if model == "mimo-v2.5-tts":
         return args.voice or "mimo_default"
-    if args.model == "mimo-v2.5-tts-voicedesign":
+    if model == "mimo-v2.5-tts-voicedesign":
         return None
-    if not args.voice_sample:
-        raise SystemExit("voiceclone 模型必须通过 --voice-sample 指定 mp3 或 wav 音色样本。")
-    sample = Path(args.voice_sample)
+    if not voice_sample:
+        raise SystemExit(
+            "voiceclone 模型必须通过 --voice-sample 或 MIMO_REFERENCE_VOICE "
+            "指定 mp3 或 wav 音色样本。"
+        )
+    sample = Path(voice_sample)
+    if not sample.exists():
+        raise SystemExit(f"参考语音文件不存在：{sample}")
     if sample.suffix.lower() not in {".mp3", ".wav"}:
         raise SystemExit("音色样本只支持 .mp3 或 .wav。")
     encoded = base64.b64encode(sample.read_bytes()).decode("ascii")
@@ -85,6 +151,41 @@ def make_voice(args: argparse.Namespace) -> str | None:
         raise SystemExit("音色样本的 Base64 字符串不能超过 10 MB。")
     mime = "audio/mpeg" if sample.suffix.lower() == ".mp3" else "audio/wav"
     return f"data:{mime};base64,{encoded}"
+
+
+def write_wav_with_pauses(segment_paths: list[Path], output_path: Path,
+                           pause_seconds: float) -> list[float]:
+    """Concatenate PCM WAV segments and insert silence between segments."""
+    if not segment_paths:
+        raise RuntimeError("没有可合并的音频片段。")
+    durations: list[float] = []
+    try:
+        with wave_open(str(segment_paths[0]), "rb") as first:
+            params = first.getparams()
+            if params.comptype != "NONE":
+                raise RuntimeError("MiMo 返回的 WAV 不是未压缩 PCM。")
+            with wave_open(str(output_path), "wb") as output:
+                output.setparams(params)
+                for index, path in enumerate(segment_paths):
+                    with wave_open(str(path), "rb") as segment:
+                        if (
+                            segment.getnchannels() != params.nchannels
+                            or segment.getsampwidth() != params.sampwidth
+                            or segment.getframerate() != params.framerate
+                            or segment.getcomptype() != params.comptype
+                        ):
+                            raise RuntimeError(f"音频片段格式不一致：{path}")
+                        frames = segment.readframes(segment.getnframes())
+                        output.writeframes(frames)
+                        durations.append(segment.getnframes() / params.framerate)
+                    if index < len(segment_paths) - 1 and pause_seconds > 0:
+                        silence_frames = round(pause_seconds * params.framerate)
+                        output.writeframes(
+                            b"\x00" * silence_frames * params.nchannels * params.sampwidth
+                        )
+    except (WaveError, EOFError) as exc:
+        raise RuntimeError("无法解析 MiMo 返回的 WAV 音频。") from exc
+    return durations
 
 
 def request_audio(api_key: str, model: str, text: str, instruction: str | None,
@@ -132,10 +233,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--text", help="直接提供待合成文字")
     parser.add_argument("--input", help="UTF-8 文本或 Markdown 文件")
     parser.add_argument("--title", help="输出目录标题；不提供时从文字自动提取")
-    parser.add_argument("--model", default="mimo-v2.5-tts", choices=sorted(VALID_MODELS))
+    parser.add_argument(
+        "--model",
+        default="auto",
+        choices=["auto", *sorted(VALID_MODELS)],
+        help="默认 auto：根据 MIMO_REFERENCE_VOICE 自动选择普通合成或 clone",
+    )
     parser.add_argument("--voice", help="预置音色 ID，例如 冰糖、茉莉、苏打、白桦、Milo")
     parser.add_argument("--instruction", help="自然语言音色/情绪/语速指导")
     parser.add_argument("--voice-sample", help="voiceclone 的 mp3/wav 音色样本")
+    parser.add_argument(
+        "--pause",
+        type=float,
+        default=1.0,
+        help="不同 slide/片段之间的静音秒数，默认 1.0",
+    )
     parser.add_argument("--output-root", default=str(DEFAULT_OUTPUT_ROOT))
     parser.add_argument("--env-file", default=str(DEFAULT_ENV_FILE))
     return parser.parse_args()
@@ -148,23 +260,50 @@ def main() -> int:
     if not api_key:
         raise SystemExit(f"未找到 MIMO_API_KEY，请在 {args.env_file} 中配置，或先导出环境变量。")
     proxy = os.environ.get("MIMO_PROXY") or None
+    reference_voice = os.environ.get("MIMO_REFERENCE_VOICE") or None
+    model = args.model
+    if model == "auto":
+        model = "mimo-v2.5-tts-voiceclone" if reference_voice else "mimo-v2.5-tts"
+    voice_sample = args.voice_sample or reference_voice
     text = read_text(args).strip()
     if not text:
         raise SystemExit("待合成文字为空。")
-    voice = make_voice(args)
+    if args.pause < 0:
+        raise SystemExit("--pause 不能小于 0。")
+    voice = make_voice(args, model, voice_sample)
     title = clean_title(args.title or text)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     output_dir = Path(args.output_root) / f"{title}-{stamp}"
     output_dir.mkdir(parents=True, exist_ok=False)
-    audio = request_audio(api_key, args.model, text, args.instruction, voice, proxy)
+    segments = split_slides(text)
+    segment_dir = output_dir / "segments"
+    segment_dir.mkdir()
+    segment_paths: list[Path] = []
+    segment_manifest = []
+    for index, (section_id, segment_text) in enumerate(segments, start=1):
+        print(f"合成片段 {index}/{len(segments)}: {section_id}", flush=True)
+        audio = request_audio(
+            api_key, model, segment_text, args.instruction, voice, proxy
+        )
+        segment_path = segment_dir / f"{section_id}.wav"
+        segment_path.write_bytes(audio)
+        segment_paths.append(segment_path)
+        segment_manifest.append({
+            "id": section_id,
+            "text": segment_text,
+            "audio": str(segment_path),
+        })
     audio_path = output_dir / "narration.wav"
-    audio_path.write_bytes(audio)
+    durations = write_wav_with_pauses(segment_paths, audio_path, args.pause)
+    for item, duration in zip(segment_manifest, durations):
+        item["duration_seconds"] = round(duration, 3)
     manifest = {
-        "model": args.model,
-        "voice": args.voice or ("voiceclone-sample" if args.voice_sample else "mimo_default"),
+        "model": model,
+        "voice": args.voice or ("voiceclone-sample" if voice_sample else "mimo_default"),
         "instruction": args.instruction,
         "source": args.input or "inline",
-        "text": text,
+        "pause_seconds": args.pause,
+        "segments": segment_manifest,
         "audio": str(audio_path),
         "created_at": datetime.now().isoformat(timespec="seconds"),
     }
