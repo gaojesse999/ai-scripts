@@ -77,6 +77,28 @@ Normalize all segments before merge:
 - consistent loudness
 - controlled gaps between segments
 
+## Per-segment objective checks
+
+Run these on every generated segment, including after voice review has been delegated. Subjective sign-off can be delegated; these cannot, because they catch defects that are inaudible on a first listen but bake into the master.
+
+```bash
+ffmpeg -hide_banner -i seg.wav -af astats=metadata=1 -f null - 2>&1 \
+  | rg -o "Peak level dB: [-0-9.]+|Flat factor: [0-9.]+|Peak count: [0-9]+"
+ffmpeg -hide_banner -i seg.wav -af volumedetect -f null - 2>&1 | rg -o '(mean|max)_volume: [-0-9.]+ dB'
+```
+
+**Flat factor is the check that matters, and `volumedetect` cannot substitute for it.** TTS engines occasionally emit a clipped take. A clipped segment reports a `max_volume` around −0.1 dB, which looks merely hot rather than broken, while `astats` exposes the real signature: a non-zero flat factor and a peak count in the dozens. A healthy segment reads flat factor `0.000` with a peak count of 2.
+
+Clipping means the waveform is already flattened, so **attenuating afterwards cannot undo it — regenerate the segment.** Because TTS is non-deterministic, generate two retakes and pick on measurements: flat factor `0.000` and a duration in line with the rest of the project. A retake several seconds longer than the original has drifted in pace and will not cut against motion anchored to the original timing.
+
+Also compare each segment's mean level against the project's existing spread rather than an absolute target; a segment is only an outlier if it falls outside the range you have already accepted.
+
+Verify after every merge that the previously approved portion is untouched, by comparing raw PCM rather than the container — appending a segment rewrites the WAV header's RIFF and data length fields, so the files legitimately differ byte-for-byte while the audio is identical:
+
+```bash
+ffmpeg -v error -t <prev_duration> -i new.wav -f s16le - | cmp - <(ffmpeg -v error -i prev.wav -f s16le -)
+```
+
 ## Alignment
 
 Timing must be generated from the final merged audio or from final approved segments with exact offsets.

@@ -37,6 +37,7 @@
     "min_hold": 0.8,
     "summary_hold": 1.5,
     "focus_scale": 1.01,
-    "dormant_opacity": 0.5
+    "dormant_opacity": 0.32,
+    "present_opacity": 1.0
   }
 }

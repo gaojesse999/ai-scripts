@@ -130,7 +130,14 @@ Default timing guidance:
 - reading hold: at least 0.8 seconds when possible;
 - summary hold: 1.0–2.5 seconds.
 
-At any moment, the current item receives the strongest contrast or accent, previous context remains available at roughly 40–65% visual strength, and future items stay hidden unless a structural preview helps comprehension. Anchor reveals to the spoken noun, number, name, or conclusion rather than automatically to subtitle start. When an enumeration has finished, remove the old accent rather than leaving a stale highlight on an earlier item.
+At any moment, the current item receives the strongest contrast or accent, and future items stay hidden unless a structural preview helps comprehension. Anchor reveals to the spoken noun, number, name, or conclusion rather than automatically to subtitle start. When an enumeration has finished, remove the old accent rather than leaving a stale highlight on an earlier item.
+
+**De-emphasise with two levels, not a gradient.** It is tempting to step context back through 0.65 → 0.5 → 0.4, but on a dark stage that middle band is a trap: text there is too faint to read and still fails WCAG AA. On a `#292b29` surface, text at 0.45 opacity tops out at **4.09:1 even in pure white** — no colour choice can rescue it, because the opacity is the ceiling. Pick two levels and stay on them:
+
+- **dormant context ≈ 0.32** — clearly backgrounded, reads as "not now", exempt from body-text contrast expectations;
+- **present = 1.0** — full strength, must pass 4.5:1.
+
+If an element needs to stay legible, it stays at 1.0; carry the focus with an accent bar, border, or colour change instead of a dimmer. For `accumulate` in particular, letting each named item stay at full and marking only the newest with an accent underline reads better than progressively dimming the earlier ones — the set visibly grows instead of decaying. Verify with `npx hyperframes check`, which samples the timeline and reports the offending selector, ratio, and time.
 
 ### Visual density gate
 
@@ -195,7 +202,19 @@ Use this structure unless the user provides an existing project:
 ├── qa/
 │   └── report.md
 └── outputs/
+    ├── final-1080p.mp4              # renderer master, assembled video
+    ├── final-1080p-universal.mp4    # compatibility pass, the delivery file
+    ├── final-720p-preview.mp4
+    ├── scenes/                      # per-scene review cuts, e.g. S01-1080p-universal.mp4
+    ├── snapshots/                   # construction frames + contact sheet
+    └── verify/                      # frames extracted back out of the encoded master
 ```
+
+## Naming
+
+Name the project directory `<topic-slug>-video-<YYYYMMDD>`, lowercase and hyphenated, using the date the project starts. Do not invent a fresh scheme per run — a predictable name is what lets `VIDEO_PROJECT_ROOT`, later chapters, and QA references stay valid.
+
+Use the output filenames above verbatim. `final-*` is reserved for the assembled video; anything covering a single scene belongs in `outputs/scenes/` with an `<SID>-` prefix. Keeping the two apart matters because a per-scene cut and the finished video are easy to confuse once several chapters exist.
 
 Initialize with:
 
@@ -217,6 +236,18 @@ Keep the six phases as internal production bookkeeping, but do not expose every 
 Internal artifacts such as the analysis, brief, review deck, motion plan, timing manifest, and QA report must still be generated and validated. They are not separate user approval gates unless the user asks to inspect them individually or a blocking ambiguity requires a decision.
 
 # The 6-phase workflow
+
+## Phase 0 — Environment preflight
+
+Run `npx hyperframes doctor` before authoring anything. Discovering a missing browser or encoder after the script, voice, and visuals are finished turns a ten-minute fix into a stalled project — and worse, the intervening work gets planned around a constraint that may not be real, such as switching to a Canvas fallback or a nested container that was never needed.
+
+Resolve gaps in a user-owned prefix before reaching for heavier isolation. Three checks settle it quickly:
+
+- Is the runtime actually incompatible, or merely incomplete? Compare the real glibc version against the browser's highest required symbol instead of trusting `/etc/os-release`, which is frequently stale in derived images.
+- Are you already inside a container? Then `--docker` adds nothing. Remove any scaffolding an abandoned attempt left behind.
+- Does the encoder check cover both `ffmpeg` and `ffprobe`? Some bundled distributions ship only the former, and HyperFrames needs both.
+
+Record the working environment in a committed `render-env.sh` so later chapters inherit it. Full remediation recipe: [reference/HYPERFRAMES_BUILD.md](reference/HYPERFRAMES_BUILD.md).
 
 ## Phase 1 — Source analysis and evidence audit
 
@@ -368,6 +399,26 @@ Required sequence:
 
 When HyperFrames CLI is available, `npx hyperframes transcribe audio/narration.wav --language <code>` may be used for word-level timing. Treat imported SRT/VTT/JSON timing as acceptable if it corresponds to the final audio.
 
+### Inter-segment pauses are content, not dead air
+
+The TTS step inserts a pause between segments. Treat it as a deliberate breathing and reaction beat, record its length in `project-config.json`, and reuse the same value for every scene so pacing stays even.
+
+Two consequences for later phases. Scene boundaries inherit the pause, so the visual timeline must keep covering the screen while the audio is silent — see "Visual coverage must be contiguous even where audio is not" in [reference/HYPERFRAMES_BUILD.md](reference/HYPERFRAMES_BUILD.md). And never trim the pause to make numbers line up; re-derive the layout from the measured timing instead.
+
+### Voice review is a project decision, decided once
+
+Voice approval is per project, not per scene. Once the user has signed off on the voice and pacing from the first scenes, record it in `project-config.json` — for example `"voice": { "review_policy": { "mode": "delegated", "accepted_by_user": true } }` — and stop raising it as an approval gate.
+
+Delegated does not mean unchecked. Keep verifying duration, peak and mean level, truncation, and unexpected silence on every scene, and report anomalies without being asked. Re-raise the question only if a scene fails those checks or the user asks to revisit it.
+
+### Timing granularity is a project decision, decided once
+
+Word-level timing is the target, but a project can ship on measured segment-level timing when no aligner is available and the user accepts the tradeoff. Treat this as a one-time decision, not a per-chapter question.
+
+Record it in `project-config.json`, for example `"timing": { "granularity": "segment", "accepted_by_user": true }`, and state plainly what it costs: captions break at segment boundaries rather than at readable cue lengths, and beats anchor to sentence starts instead of the exact word. Beats that need a position inside a segment get distributed across it — disclose those specific beats in `qa/report.md` as estimated rather than measured.
+
+Once recorded, do not re-raise the question on later chapters. Revisit only if an aligner becomes available or the user asks for tighter sync.
+
 Follow [reference/VOICE_PIPELINE.md](reference/VOICE_PIPELINE.md).
 
 Use the resulting voice preview, actual duration, pronunciation issues, and regenerated segments as internal inputs to Phase 5. Do not request a separate voice approval; stop only after the current chapter has completed the combined production loop in Phase 6.
@@ -426,7 +477,9 @@ HyperFrames rules:
 
 - Use compositions and nested scenes; do not put the whole video in one giant file.
 - Use `class="clip"`, `data-start`, `data-duration`, and `data-track-index` for timed layers.
-- GSAP timelines must use `{ paused: true }` and register on `window.__timelines` using the matching `data-composition-id`.
+- GSAP timelines must use `{ paused: true }` and register on `window.__timelines` using the matching `data-composition-id`. This is the only shape HyperFrames drives: the runtime accepts the entry only if it exposes `duration()`, `time()`, `seek()`, `play()`, `pause()`. A `window.renderAt` or `{ duration, renderAt }` object is silently ignored — lint passes, the render succeeds, and every frame is the initial state. Verify by diffing two frames from different beats.
+- Vendor GSAP and fonts into `assets/`; never load them from a CDN. The render browser is often offline or proxy-isolated, and a failed script tag freezes the whole composition on frame one.
+- Treat `scripts/build_hyperframes.py` output as a starting point, never a deliverable. It gives every scene the same generic layout driven by `screen_text`; the art direction that carries the scene's actual claim is still yours to write. Grep any composition generated before this rule existed for `eyebrow`, `lede`, `footer`, and `stage-nav` and delete them — they leak layout names, director notes, and metadata onto the canvas.
 - Use absolute GSAP timeline positions for deterministic sync.
 - Ensure each scene timeline extends to its actual duration.
 - Never manually play, pause, or seek audio/video in scripts.
@@ -466,8 +519,20 @@ export HTTPS_PROXY="$SKILL_PROXY"
 export ALL_PROXY="$SKILL_PROXY"
 npx hyperframes lint --json
 npx hyperframes inspect --json
-npx hyperframes render --docker --output ../outputs/final-1080p.mp4
+npx hyperframes render --fps 30 --quality high -o ../outputs/final-1080p.mp4
 ```
+
+### Container-aware rendering
+
+First determine whether the current runtime is already inside a container. If it
+is, do not pass `--docker`: that creates a nested renderer, repeats the browser
+and FFmpeg dependency installation, and can fail independently of the current
+container's proxy and permissions. Prefer the local HyperFrames renderer inside
+the current container after its browser and FFmpeg dependencies are available.
+
+Use `npx hyperframes render --docker` only when the agent is running on a host
+outside Docker and an isolated renderer is explicitly needed. Record the
+chosen renderer in `qa/report.md`.
 
 Optionally render 4K after the 1080p master passes QA.
 
@@ -564,6 +629,20 @@ After presenting the complete narration gate or a chapter gate, stop the respons
 - Never expose API keys, tokens, private repository credentials, or hidden environment values.
 - Never render a final master with unresolved high-severity QA errors.
 - Never treat a reference video's visual style as permission to copy its content or unsupported claims.
+- Never register a timeline in a shape the renderer does not drive; prove it by diffing two frames from different beats.
+- Never load a composition's scripts or fonts from a CDN.
+- Never render a composition that still contains scaffold placeholders — layout names, director notes, metadata footers, or another template's chrome.
+- Never maintain two parallel renderer implementations of the same scene; pick one and delete the other.
+- Never author a whole-video element inside a scene composition. A progress rail scoped to one scene resets at every boundary; persistent elements belong to the root composition.
+- Never leave a hole in visual coverage. Size scene hosts and chapter labels from the next scene's start so inter-scene silence holds the outgoing frame; only captions may go blank during a pause.
+- Never trim a TTS pause to make the visual timeline fit. The pause is deliberate reaction time; re-derive the layout instead.
+- Never sign off a multi-scene video on per-scene review alone. Seam defects are invisible in isolation; measure across every boundary in the assembled render.
+- Never ship a TTS segment without checking `astats` flat factor. A clipped take reads as merely hot in `volumedetect`, and attenuation cannot undo it — regenerate.
+- Never de-emphasise text into the middle opacity band. On a dark stage it is unreadable and fails WCAG at any colour; use dormant 0.32 or present 1.0.
+- Never trust a pixel-coverage number without checking the brightness threshold against that region's own background.
+- Never invent a project-directory or output-file name; use the scheme under "Naming".
+- Never escalate to a Canvas fallback, a nested container, or cloud rendering before checking whether the missing dependency installs without root.
+- Never re-ask a question that `project-config.json` already answers.
 
 # File map
 
