@@ -36,5 +36,11 @@
     "example": "blank",
     "resolution": "landscape",
     "docker_render": true
+  },
+  "audio": {
+    "segment_pause_seconds": 0.8,
+    "scene_gap_seconds": 0.8,
+    "purpose": "段间与场间停顿是换气/反应时间，属于设计意图，不是可以压掉的静音。",
+    "visual_rule": "场景间停顿期间画面必须保持上一场末帧；scene host 与章节标签按下一场起点排布，不得留空。"
   }
 }

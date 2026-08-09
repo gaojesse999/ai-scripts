@@ -75,7 +75,7 @@ Normalize all segments before merge:
 - 48 kHz
 - mono or consistent stereo
 - consistent loudness
-- controlled gaps between segments
+- controlled gaps between segments **and** between scenes — default **0.8 s** for both (`audio.segment_pause_seconds` / `audio.scene_gap_seconds` in `project-config.json`); keep them equal unless the user overrides
 
 ## Per-segment objective checks
 

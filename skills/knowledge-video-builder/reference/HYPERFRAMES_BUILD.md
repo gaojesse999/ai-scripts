@@ -102,7 +102,9 @@ Two consequences worth planning for:
 
 ## Visual coverage must be contiguous even where audio is not
 
-TTS pipelines insert deliberate pauses between segments — breathing room, and reaction time before the slide changes. That silence is design intent, not dead air to be trimmed.
+TTS pipelines insert deliberate pauses between segments **and** between scenes — breathing room, and reaction time before the slide or next scene changes. That silence is design intent, not dead air to be trimmed.
+
+Default length is **0.8 s** for both (`project-config.json` → `audio.segment_pause_seconds` and `audio.scene_gap_seconds`). Keep them equal unless the user overrides. Slideshow / module beats inside a scene use the segment pause; do not invent a separate “slide gap”.
 
 The trap: those pauses are in the *audio* timeline, and it is natural to size scene hosts from each scene's own audio duration. Do that and every inter-scene pause becomes a window with **no scene mounted at all** — a black flash. If the incoming scene also fades up from `opacity: 0`, the two compound into roughly half a second of nothing.
 

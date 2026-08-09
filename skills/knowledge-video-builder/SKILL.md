@@ -401,9 +401,26 @@ When HyperFrames CLI is available, `npx hyperframes transcribe audio/narration.w
 
 ### Inter-segment pauses are content, not dead air
 
-The TTS step inserts a pause between segments. Treat it as a deliberate breathing and reaction beat, record its length in `project-config.json`, and reuse the same value for every scene so pacing stays even.
+The TTS / master-audio step inserts a pause between spoken segments **and** between scenes. Treat it as a deliberate breathing and reaction beat — the gap before the next slide or next scene starts — not dead air to trim.
 
-Two consequences for later phases. Scene boundaries inherit the pause, so the visual timeline must keep covering the screen while the audio is silent — see "Visual coverage must be contiguous even where audio is not" in [reference/HYPERFRAMES_BUILD.md](reference/HYPERFRAMES_BUILD.md). And never trim the pause to make numbers line up; re-derive the layout from the measured timing instead.
+**Default (project decision, locked unless the user overrides):** `0.8` seconds for both.
+
+Record it once in `project-config.json` and reuse the same value everywhere so pacing stays even:
+
+```json
+"audio": {
+  "segment_pause_seconds": 0.8,
+  "scene_gap_seconds": 0.8,
+  "purpose": "段间与场间停顿是换气/反应时间，属于设计意图，不是可以压掉的静音。",
+  "visual_rule": "场景间停顿期间画面必须保持上一场末帧；scene host 与章节标签按下一场起点排布，不得留空。"
+}
+```
+
+- `segment_pause_seconds` — silence between consecutive TTS segments inside a scene (including consecutive module/slideshow beats).
+- `scene_gap_seconds` — silence between scenes on the master timeline. Prefer the same value as `segment_pause_seconds` unless the user asks otherwise.
+- Do not invent a third pause length for “slides only”; slideshow beats are segment pauses.
+
+Two consequences for later phases. Scene boundaries inherit the pause, so the visual timeline must keep covering the screen while the audio is silent — see "Visual coverage must be contiguous even where audio is not" in [reference/HYPERFRAMES_BUILD.md](reference/HYPERFRAMES_BUILD.md). And never trim the pause to make numbers line up; re-derive the layout from the measured timing instead. Change the default only when the user explicitly requests a different length.
 
 ### Voice review is a project decision, decided once
 
@@ -635,7 +652,7 @@ After presenting the complete narration gate or a chapter gate, stop the respons
 - Never maintain two parallel renderer implementations of the same scene; pick one and delete the other.
 - Never author a whole-video element inside a scene composition. A progress rail scoped to one scene resets at every boundary; persistent elements belong to the root composition.
 - Never leave a hole in visual coverage. Size scene hosts and chapter labels from the next scene's start so inter-scene silence holds the outgoing frame; only captions may go blank during a pause.
-- Never trim a TTS pause to make the visual timeline fit. The pause is deliberate reaction time; re-derive the layout instead.
+- Never trim a TTS pause to make the visual timeline fit. The pause is deliberate reaction time (default **0.8 s** segment + scene gaps); re-derive the layout instead.
 - Never sign off a multi-scene video on per-scene review alone. Seam defects are invisible in isolation; measure across every boundary in the assembled render.
 - Never ship a TTS segment without checking `astats` flat factor. A clipped take reads as merely hot in `volumedetect`, and attenuation cannot undo it — regenerate.
 - Never de-emphasise text into the middle opacity band. On a dark stage it is unreadable and fails WCAG at any colour; use dormant 0.32 or present 1.0.
