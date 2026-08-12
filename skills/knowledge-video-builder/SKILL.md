@@ -176,12 +176,19 @@ Use this structure unless the user provides an existing project:
 │   ├── SCRIPT.md
 │   ├── STORYBOARD.md
 │   ├── scene-plan.json
-│   └── pronunciation.json
+│   ├── pronunciation.json
+│   └── voice-plan.json               # exact pauses; never inline TTS markers
 ├── audio/
 │   ├── segments/
+│   ├── tts-plan.json
 │   ├── tts-manifest.json
+│   ├── voice-production.json
+│   ├── voice-plan-application.json
 │   └── narration.wav
 ├── timing/
+│   ├── align/                       # per-chapter forced-alignment output
+│   ├── cues/                        # per-chapter caption cues
+│   ├── beats.json                   # motion anchors, keyed by unit id
 │   ├── words.json
 │   ├── sentences.json
 │   ├── scenes.json
@@ -295,7 +302,7 @@ Turn the approved analysis into an editorial plan, not a full narration. Determi
 - viewer problem and promised outcome;
 - one-sentence thesis;
 - opening hook;
-- chapter structure;
+- chapter structure, defaulting to the five stages 解决什么问题 → 原理 → 怎么做 → 举例 → 总结;
 - what must be shown instead of merely said;
 - demonstration example;
 - material claims and source evidence;
@@ -306,6 +313,8 @@ Turn the approved analysis into an editorial plan, not a full narration. Determi
 When a reference style profile exists, also lock the canvas, chapter/progress treatment, caption treatment and safe area, design tokens, layout primitives, motion grammar, and which reference traits are required, optional, or excluded.
 
 Follow [reference/CONTENT_STRATEGY.md](reference/CONTENT_STRATEGY.md). Produce `content/content-brief.md`.
+
+The default chapter framework is 解决什么问题 → 原理 → 怎么做 → 举例 → 总结. Treat those five as content stages, not as a slide count: allocate scenes by how much a stage actually carries, so an enumerating stage may span several scenes while a single-claim stage stays one. Record any deviation from the five stages in the brief.
 
 When the user asks for a knowledge-sharing video, YouTube-style explainer, viral breakdown, creator-style narration, or supplies a reference SRT/script with a high-retention educational tone, also read [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) before choosing the opening, chapter engine, examples, and ending.
 
@@ -328,6 +337,7 @@ Generate these together:
 - `script/STORYBOARD.md`: scene-by-scene visual direction;
 - `script/scene-plan.json`: canonical structured content model;
 - `script/pronunciation.json`: display text versus spoken pronunciation.
+- `script/voice-plan.json`: structured exact pauses anchored to stable narration-unit IDs; create an empty plan when no exact pause is required.
 
 Each scene must include:
 
@@ -388,16 +398,126 @@ python3 "$ENGINEERING_ROOT/.cursor/skills/mimo-tts/scripts/mimo_tts.py" \
   --output-root "$VIDEO_PROJECT_ROOT/audio/mimo-outputs"
 ```
 
+For production work, prefer the provider-independent orchestrator. Running it
+without `--generate` writes and reviews a duration-bounded plan; `--generate`
+performs candidate generation, objective selection, normalization, merge,
+structured pauses, final alignment, timing rebuild, and the sync gate:
+
+```bash
+python3 scripts/produce_voice.py --project <project-dir>
+python3 scripts/produce_voice.py --project <project-dir> --generate
+```
+
+`produce_voice.py` calls `mimo-tts` unchanged. Provider limits, selection
+thresholds, target pace, loudness, and adjacency tolerances come from
+`project-config.json`, so the quality policy stays with the video builder.
+
 Required sequence:
 
 1. Create `audio/tts-manifest.json`.
-2. Run `mimo-tts` to generate one audio segment per scene, using the project-root `.skill.env`; import audio only when MiMo is unavailable or a fallback is explicitly recorded.
+2. Run `mimo-tts` to generate one clean-text audio segment per scene, using the project-root `.skill.env`; import audio only when MiMo is unavailable or a fallback is explicitly recorded.
 3. Review obvious pronunciation, pacing, truncation, and silence errors.
-4. Merge approved segments into `audio/narration.wav` with consistent format.
-5. Transcribe or force-align the final audio to produce word-, sentence-, and scene-level timestamps.
-6. Produce `timing/captions.srt`.
+4. Run a preliminary forced alignment for any chapter with enabled exact pauses in `script/voice-plan.json`.
+5. Apply those pauses with `scripts/apply_voice_plan.py`; it inserts PCM silence after a measured narration unit and records the resulting audio hash.
+6. Merge approved segments into `audio/narration.wav` with consistent format.
+7. Force-align the final audio against the script to produce character-, sentence-, and scene-level timestamps.
+8. Derive every timing artifact from that final alignment.
 
-When HyperFrames CLI is available, `npx hyperframes transcribe audio/narration.wav --language <code>` may be used for word-level timing. Treat imported SRT/VTT/JSON timing as acceptable if it corresponds to the final audio.
+### Independent TTS calls require continuity mastering
+
+A reference sample identifies the speaker; it does not make separate requests
+share tempo, gain, or prosody. Keep every request below the provider's hard
+duration cap (MiMo projects default to 30 seconds and target 25), generate at
+least two candidates per bounded chunk, and measure rather than trust the style
+instruction.
+
+The voice producer blocks a chunk when:
+
+- returned duration exceeds the provider cap;
+- ASR coverage falls below the project threshold;
+- the chunk's final characters are missing from the transcript, meaning the take is cut short;
+- active speech rate falls outside the target tolerance;
+- its rate jumps too far from the preceding selected chunk;
+- `astats` reports a non-zero flat factor.
+
+Only selected takes are trimmed and normalized with a two-pass `loudnorm` pass.
+Trim points come from a 10 ms RMS scan of the take, never from a recogniser
+timestamp — the recogniser reports the end of the last token, which lands anywhere
+from 0.3 s early to 0.5 s late against the real edge, so trimming there clips final
+syllables on some chunks and leaves dead air on others. See "Trim to energy,
+never to the recogniser" in [reference/VOICE_PIPELINE.md](reference/VOICE_PIPELINE.md). Default delivery is `-16 LUFS`, `-1.5 dBTP`, with
+adjacent pace delta capped at 15%; each project may override these values.
+Large pace errors are regenerated, not repaired with aggressive `atempo`.
+
+### Exact pauses are structured delivery data
+
+`SCRIPT.md` contains spoken words only. Never put pseudo tags such as `<#1#>`, `[pause]`, or SSML-like text into narration and hope a provider interprets them. A provider may read the token aloud, ignore it, or change behaviour between models.
+
+Declare a deliberate pause in `script/voice-plan.json`:
+
+```json
+{
+  "schema_version": "1.0",
+  "pauses": [
+    {
+      "id": "P01",
+      "chapter": "S01",
+      "after_unit": "S01.2",
+      "after_text": "如何把一份简单的计划，变成一套能自动跑起来的习惯系统。",
+      "seconds": 1.0,
+      "source": "user",
+      "reason": "标题句后的理解时间",
+      "enabled": true
+    }
+  ]
+}
+```
+
+The user does not need to edit JSON. Accept natural-language direction such as “在‘……习惯系统。’后停 1 秒”, resolve it to the unique narration unit, and show the resolved pause in the narration review. Direct file editing is an advanced option.
+
+Automatic and manual pauses coexist:
+
+- punctuation prosody is left to TTS and has no exact duration;
+- scene/segment gaps come from `project-config.json` (default 0.8 seconds);
+- semantic emphasis pauses may be proposed automatically but must be visible in the voice plan;
+- explicit user pauses override automatic suggestions at the same anchor.
+
+For an exact intra-segment pause, synthesize clean text first, align that unpaused take, then run:
+
+```bash
+python3 scripts/apply_voice_plan.py \
+  --project <project-dir> \
+  --chapter S01
+```
+
+The command may update the chapter WAV in place, writes `audio/voice-plan-application.json`, and refuses to apply the same plan twice. Run the final alignment after insertion. `check_sync.py` blocks rendering when the plan changed, the audio changed after application, or a planned pause was never applied.
+
+### Timing comes from measurement, never from character counts
+
+Estimating a cue by splitting a segment in proportion to its character count is the single largest source of desync in this pipeline, and it fails silently. Chinese TTS does not speak at a constant rate: it pauses at punctuation, stretches emphasis, and races through enumerations. On a 158-second chapter that estimate drifted **up to 3 seconds** from the real speech, which is enough to put a caption on the wrong sentence and a reveal on the wrong claim.
+
+The fix is forced alignment, not transcription. The script is already known and authoritative; the recogniser only has to say *when* each character was spoken. That distinction is what makes the approach robust — recognition errors are absorbed rather than propagated.
+
+```bash
+python3 scripts/align_audio.py --project <project-dir>
+python3 scripts/build_timing.py --project <project-dir>
+python3 scripts/apply_timing.py --project <project-dir>
+python3 scripts/check_sync.py  --project <project-dir>
+```
+
+The alignment runs in three layers, each correcting the one before it:
+
+1. **Recognition.** Word-level timestamps from Groq's hosted `whisper-large-v3`.
+2. **Edit-distance alignment.** The recognised character stream is matched against the authoritative script. Correctly recognised characters become anchors; the rest is interpolated between them. Both sides are case-folded and digit-folded first, so `Skill`/`skill` and `八点`/`8点` still anchor.
+3. **Energy refinement.** Recognition places a sentence boundary in the *middle* of a pause, which can sit half a second before the speaker actually opens up. Short-time energy pulls each boundary onto the real speech edge.
+
+Expect roughly ±0.2 s accuracy. Layer 3 owns boundary precision, so do not reach for a larger model to fix a sync complaint; check the match rate first. But do not dismiss the match rate as cosmetic either — an unmatched run of characters is interpolated instead of measured, which is exactly how a caption ends up 0.9 s late.
+
+Recognition is hosted on Groq and needs only `GROQ_API_KEY` and `SKILL_PROXY` in `.skill.env` — no model download, no local build. There is no local fallback on purpose: the pipeline already needs the network for TTS, so a machine that cannot reach Groq has no narration to align. Input may be any container ffmpeg can decode. See "Recognition runs on Groq" in [reference/VOICE_PIPELINE.md](reference/VOICE_PIPELINE.md).
+
+If recognition is unreachable, write the timing manifest with `status: needs_alignment` and say plainly that Phase 4 is incomplete.
+
+Treat imported SRT/VTT/JSON timing as acceptable only if it corresponds to the final audio.
 
 ### Inter-segment pauses are content, not dead air
 
@@ -430,9 +550,7 @@ Delegated does not mean unchecked. Keep verifying duration, peak and mean level,
 
 ### Timing granularity is a project decision, decided once
 
-Word-level timing is the target, but a project can ship on measured segment-level timing when no aligner is available and the user accepts the tradeoff. Treat this as a one-time decision, not a per-chapter question.
-
-Record it in `project-config.json`, for example `"timing": { "granularity": "segment", "accepted_by_user": true }`, and state plainly what it costs: captions break at segment boundaries rather than at readable cue lengths, and beats anchor to sentence starts instead of the exact word. Beats that need a position inside a segment get distributed across it — disclose those specific beats in `qa/report.md` as estimated rather than measured.
+Character-level alignment is the default and is available on any machine with a `GROQ_API_KEY`. Falling back to segment-level estimates is a last resort, not a convenience: record it in `project-config.json` as `"timing": { "granularity": "segment", "accepted_by_user": true }` together with the reason the aligner could not run, and state plainly what it costs — captions break at segment boundaries rather than at readable cue lengths, beats anchor to sentence starts instead of the spoken word, and any beat inside a segment is distributed across it. Disclose those beats in `qa/report.md` as estimated rather than measured.
 
 Once recorded, do not re-raise the question on later chapters. Revisit only if an aligner becomes available or the user asks for tighter sync.
 
@@ -497,7 +615,7 @@ HyperFrames rules:
 - GSAP timelines must use `{ paused: true }` and register on `window.__timelines` using the matching `data-composition-id`. This is the only shape HyperFrames drives: the runtime accepts the entry only if it exposes `duration()`, `time()`, `seek()`, `play()`, `pause()`. A `window.renderAt` or `{ duration, renderAt }` object is silently ignored — lint passes, the render succeeds, and every frame is the initial state. Verify by diffing two frames from different beats.
 - Vendor GSAP and fonts into `assets/`; never load them from a CDN. The render browser is often offline or proxy-isolated, and a failed script tag freezes the whole composition on frame one.
 - Treat `scripts/build_hyperframes.py` output as a starting point, never a deliverable. It gives every scene the same generic layout driven by `screen_text`; the art direction that carries the scene's actual claim is still yours to write. Grep any composition generated before this rule existed for `eyebrow`, `lede`, `footer`, and `stage-nav` and delete them — they leak layout names, director notes, and metadata onto the canvas.
-- Use absolute GSAP timeline positions for deterministic sync.
+- Use absolute GSAP timeline positions for deterministic sync, but write them as beat references, never as literal seconds. See "Anchor keyframes to beats" below.
 - Ensure each scene timeline extends to its actual duration.
 - Never manually play, pause, or seek audio/video in scripts.
 - Use variables for reusable templates and repeated visual patterns.
@@ -513,6 +631,26 @@ HyperFrames rules:
 - Use fast, decisive cue reveals and preserve the revealed state in a dormant style. Never let an element appear briefly and then disappear merely because the next cue started.
 - Keep meaningful motion a minority of total screen time. Do not let decorative movement consume the reading hold.
 
+### Anchor keyframes to beats, not to seconds
+
+A keyframe written as `12.27` records an answer without its question. Nobody can later tell which sentence it was meant to land on, so when the narration is re-recorded every number has to be re-derived by hand — and on a chapter with twenty keyframes that arithmetic is done four or five times before the project ships, silently drifting a little further each round.
+
+Write the intent instead. `scripts/apply_timing.py` injects a generated block into each composition holding the chapter duration and a `BEATS` table keyed by unit id, plus `B(id, offset)` and `BE(id, offset)` helpers:
+
+```js
+/* timing:start — generated by apply_timing.py, do not edit */
+const D = 30.080;
+const BEATS = {"S01.3": {"start": 10.92, "end": 14.84}, ...};
+/* timing:end */
+
+const LEAD = 0.08;                       // visual lands just after the voice starts
+tl.to("#pain-1", { opacity: 1, duration: 0.28 }, B("S01.3", LEAD));
+```
+
+The composition keeps its bespoke art direction and all of its motion logic; only the numbers are generated. Re-running the four Phase 4 commands after a re-record updates captions and motion together, with no manual arithmetic anywhere.
+
+Choosing which beat a visual belongs to is an authoring decision, so make it deliberately — never by snapping an existing number to whichever unit happens to be nearest. `check_sync.py` reports any keyframe still written as a literal second, because those are exactly the ones a re-record will not reach.
+
 Follow [reference/HYPERFRAMES_BUILD.md](reference/HYPERFRAMES_BUILD.md).
 
 Pass the review HTML, key-frame snapshots, known visual issues, and exact files changed directly into Phase 6. Do not request a separate visual approval; the chapter approval happens after the rendered chapter and QA are delivered.
@@ -525,7 +663,10 @@ Run:
 
 ```bash
 python scripts/validate_project.py <project-dir> --phase render
+python3 scripts/check_sync.py <project-dir>
 ```
+
+The sync gate blocks the render on Critical and High findings. It exists for a failure that no amount of watching catches reliably: a script line is edited, that one chapter is not re-recorded, and every downstream number stays plausible while the voice says something else. Alignment makes that measurable — a line whose characters the recogniser cannot find in the audio is either misrecognised or genuinely not spoken there. The gate prints both the script text and what was heard, which separates the two cases at a glance.
 
 Then, when HyperFrames is available:
 
@@ -641,6 +782,10 @@ After presenting the complete narration gate or a chapter gate, stop the respons
 - Never treat marketing copy as implementation proof without qualification.
 - Never let PPT/HTML become an independent content fork. Derive both from `scene-plan.json`.
 - Never finalize animation timing before final voice timing exists.
+- Never estimate a caption or beat time by splitting a segment in proportion to character count. Chinese TTS is not constant-rate; measure it.
+- Never encode delivery control in spoken narration with pseudo tags such as `<#1#>` or `[pause]`. Keep `SCRIPT.md` clean and use `script/voice-plan.json` for exact pauses.
+- Never leave a keyframe as a literal second once alignment exists. Anchor it to a beat id so a re-record reaches it.
+- Never conclude that forced alignment is unavailable because a model download timed out. Check what was actually downloaded before switching approaches.
 - Never regenerate all TTS when only one segment needs correction.
 - Never paste a whole replacement project into chat when direct file edits are possible.
 - Never expose API keys, tokens, private repository credentials, or hidden environment values.
@@ -655,6 +800,11 @@ After presenting the complete narration gate or a chapter gate, stop the respons
 - Never trim a TTS pause to make the visual timeline fit. The pause is deliberate reaction time (default **0.8 s** segment + scene gaps); re-derive the layout instead.
 - Never sign off a multi-scene video on per-scene review alone. Seam defects are invisible in isolation; measure across every boundary in the assembled render.
 - Never ship a TTS segment without checking `astats` flat factor. A clipped take reads as merely hot in `volumedetect`, and attenuation cannot undo it — regenerate.
+- Never score a Chinese recogniser's rendering of Latin words. Strip them before measuring coverage; they measure the recogniser, not the take.
+- Never let an adjacent-pace deadlock block a run. Backtrack, and generate more takes for the earlier chunk when it has no alternative to swap in.
+- Never abort a production run because a take failed loudness normalization. Record it as a rejection reason and generate another take.
+- Never cut a take at an ASR timestamp. Recogniser spans mark the last token, not the last audible sample; measure the energy edge and add a fixed release instead.
+- Never trust a shared reference voice or style prompt to make independent TTS requests continuous. Bound request duration, compare candidate pace and ASR coverage, normalize selected loudness, and block adjacent pace jumps before merge.
 - Never de-emphasise text into the middle opacity band. On a dark stage it is unreadable and fails WCAG at any colour; use dormant 0.32 or present 1.0.
 - Never trust a pixel-coverage number without checking the brightness threshold against that region's own background.
 - Never invent a project-directory or output-file name; use the scheme under "Naming".
@@ -680,4 +830,11 @@ After presenting the complete narration gate or a chapter gate, stop the respons
 - `scripts/project.py` — initialize and manage project state
 - `scripts/build_review.py` — generate the storyboard review HTML
 - `scripts/build_hyperframes.py` — scaffold a timed HyperFrames project
+- `scripts/align_audio.py` — force-align narration audio against the script
+- `scripts/apply_voice_plan.py` — insert structured exact pauses after preliminary alignment
+- `scripts/produce_voice.py` — plan bounded requests, select candidates, normalize, merge, pause, and align
+- `scripts/build_timing.py` — turn alignment into beats, cues, and subtitle artifacts
+- `scripts/apply_timing.py` — inject measured timing into compositions and chapter indexes
+- `scripts/check_sync.py` — gate audio, caption, and motion agreement before rendering
+- `scripts/check_timelines.js` — execute every composition timeline against a stubbed GSAP
 - `scripts/validate_project.py` — validate phase prerequisites and required artifacts

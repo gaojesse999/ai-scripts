@@ -30,6 +30,19 @@
     "voice": "auto",
     "sample_rate": 48000,
     "channels": 1,
+    "instruction": "ä¸­æ–‡çŸ¥è¯†åˆ†äº«å£æ’­ï¼Œå£°éŸ³è‡ªç„¶ã€æ¸…æ™°ï¼Œè¯­é€Ÿé€‚ä¸­ï¼Œé‡ç‚¹å¤„æœ‰è½»å¾®å¼ºè°ƒï¼Œä¸å¤¸å¼ ",
+    "consistency": {
+      "candidate_count": 2,
+      "max_attempts_per_chunk": 4,
+      "target_chars_per_second": 4.6,
+      "pace_tolerance_ratio": 0.18,
+      "max_adjacent_pace_ratio": 0.15,
+      "min_asr_coverage": 0.9,
+      "target_lufs": -16,
+      "lufs_tolerance": 0.6,
+      "true_peak_db": -1.5,
+      "target_lra": 7
+    },
     "fallback_policy": "only-if-mimo-unavailable"
   },
   "hyperframes": {
@@ -40,7 +53,12 @@
   "audio": {
     "segment_pause_seconds": 0.8,
     "scene_gap_seconds": 0.8,
-    "purpose": "¶Î¼äÓë³¡¼äÍ£¶ÙÊÇ»»Æø/·´Ó¦Ê±¼ä£¬ÊôÓÚÉè¼ÆÒâÍ¼£¬²»ÊÇ¿ÉÒÔÑ¹µôµÄ¾²Òô¡£",
-    "visual_rule": "³¡¾°¼äÍ£¶ÙÆÚ¼ä»­Ãæ±ØĞë±£³ÖÉÏÒ»³¡Ä©Ö¡£»scene host ÓëÕÂ½Ú±êÇ©°´ÏÂÒ»³¡ÆğµãÅÅ²¼£¬²»µÃÁô¿Õ¡£"
+    "exact_pause_plan": "script/voice-plan.json",
+    "tts_request_max_seconds": 30,
+    "tts_request_target_seconds": 25,
+    "tts_planning_min_chars_per_second": 3.2,
+    "tts_chunk_pause_seconds": 0.12,
+    "purpose": "æ®µé—´ä¸åœºé—´åœé¡¿æ˜¯æ¢æ°”/ååº”æ—¶é—´ï¼Œå±äºè®¾è®¡æ„å›¾ï¼Œä¸æ˜¯å¯ä»¥å‹æ‰çš„é™éŸ³ã€‚",
+    "visual_rule": "åœºæ™¯é—´åœé¡¿æœŸé—´ç”»é¢å¿…é¡»ä¿æŒä¸Šä¸€åœºæœ«å¸§ï¼›scene host ä¸ç« èŠ‚æ ‡ç­¾æŒ‰ä¸‹ä¸€åœºèµ·ç‚¹æ’å¸ƒï¼Œä¸å¾—ç•™ç©ºã€‚"
   }
 }

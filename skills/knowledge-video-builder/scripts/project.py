@@ -51,8 +51,17 @@ def artifact_requirements(project: Path, phase: str) -> list[Path]:
     m = {
         "analysis": [project/"analysis/evidence-map.json", project/"analysis/overview.md"],
         "brief": [project/"content/content-brief.md"],
-        "script": [project/"script/SCRIPT.md", project/"script/STORYBOARD.md", project/"script/scene-plan.json"],
-        "voice": [project/"audio/narration.wav", project/"timing/scenes.json"],
+        "script": [
+            project/"script/SCRIPT.md",
+            project/"script/STORYBOARD.md",
+            project/"script/scene-plan.json",
+            project/"script/voice-plan.json",
+        ],
+        "voice": [
+            project/"audio/narration.wav",
+            project/"audio/voice-production.json",
+            project/"timing/scenes.json",
+        ],
         "visual": [project/"review/storyboard.html", project/"hyperframes/index.html"],
         "render": [project/"qa/report.md"],
     }
@@ -81,6 +90,7 @@ def cmd_init(args):
         templates/"content-brief.md": project/"content/content-brief.md",
         templates/"scene-plan.json": project/"script/scene-plan.json",
         templates/"pronunciation.json": project/"script/pronunciation.json",
+        templates/"voice-plan.json": project/"script/voice-plan.json",
     }
     for src, dst in copies.items():
         if not dst.exists(): shutil.copy2(src, dst)

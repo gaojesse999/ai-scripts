@@ -8,8 +8,8 @@ PHASES=["analysis","brief","script","voice","visual","render"]
 REQ={
  "analysis":["analysis/overview.md","analysis/evidence-map.json"],
  "brief":["content/content-brief.md"],
- "script":["script/SCRIPT.md","script/STORYBOARD.md","script/scene-plan.json"],
- "voice":["audio/narration.wav","timing/scenes.json"],
+ "script":["script/SCRIPT.md","script/STORYBOARD.md","script/scene-plan.json","script/voice-plan.json"],
+ "voice":["audio/narration.wav","audio/voice-production.json","timing/scenes.json"],
  "visual":["review/storyboard.html","hyperframes/index.html"],
  "render":["qa/report.md"]}
 

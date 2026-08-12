@@ -23,13 +23,16 @@ create extra approval requests unless a blocking ambiguity requires one.
 python scripts/project.py init ./my-project --title "My Explainer" --source ./input.skill
 ```
 
-## Engineering-root network proxy
+## Engineering-root network proxy and keys
 
 Keep one `.skill.env` in the fixed engineering root—the directory containing `.cursor/skills/knowledge-video-builder`—rather than copying it into each video artifact directory. Set `SKILL_PROXY` before external source inspection, TTS, transcription, HyperFrames, or dependency downloads:
 
 ```text
 SKILL_PROXY=http://xxx.xxx.xxx.xxx:xxxx
+GROQ_API_KEY=your-groq-api-key
 ```
+
+`GROQ_API_KEY` is required: forced alignment and candidate scoring both recognise speech through Groq's hosted `whisper-large-v3`. There is no local recogniser to install.
 
 When this Skill is active, the proxy is required and direct fallback is disabled. Export `HTTP_PROXY`, `HTTPS_PROXY`, and `ALL_PROXY` for subprocesses such as `npx` and Playwright; those tools do not read `.skill.env` automatically. Keep the real `.skill.env` local-only and never copy it into generated video artifacts.
 
