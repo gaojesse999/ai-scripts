@@ -22,10 +22,13 @@ npx hyperframes render --fps 30 --quality high -o output.mp4
 
 `check` supersedes the older `lint` / `validate` pair. Always snapshot before rendering: it costs seconds and is the only cheap way to catch a frozen timeline, which `lint` cannot see.
 
-When the current agent runtime is already inside Docker, omit `--docker` and
-render with the local HyperFrames runtime instead. The Docker flag is for a
-host-side agent that needs a separate renderer; using it inside Docker creates
-an unnecessary nested image build and duplicates browser/FFmpeg dependencies.
+Render locally by default; `--docker` is opt-in and `project-config.json` ships
+`hyperframes.docker_render: false`. The flag exists for a host that genuinely
+cannot install the browser and FFmpeg dependencies, and it is never useful when
+the runtime is already inside a container, where it only builds a nested image
+and duplicates those same dependencies. Docker itself is not a prerequisite: a
+machine without it renders locally once the browser and both `ffmpeg` and
+`ffprobe` are on PATH, including from a user-owned prefix.
 
 ## Composition rules
 

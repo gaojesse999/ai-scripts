@@ -682,15 +682,22 @@ npx hyperframes render --fps 30 --quality high -o ../outputs/final-1080p.mp4
 
 ### Container-aware rendering
 
-First determine whether the current runtime is already inside a container. If it
-is, do not pass `--docker`: that creates a nested renderer, repeats the browser
-and FFmpeg dependency installation, and can fail independently of the current
-container's proxy and permissions. Prefer the local HyperFrames renderer inside
-the current container after its browser and FFmpeg dependencies are available.
+Render locally by default. `project-config.json` ships
+`hyperframes.docker_render: false`, and the local renderer suits both an agent on
+a plain host and an agent already inside a container: no nested image build, no
+second browser and FFmpeg installation, and no separate proxy configuration to
+keep in sync.
 
-Use `npx hyperframes render --docker` only when the agent is running on a host
-outside Docker and an isolated renderer is explicitly needed. Record the
-chosen renderer in `qa/report.md`.
+Pass `--docker` only when the user explicitly asks for an isolated renderer, or
+when the host genuinely cannot install the browser and FFmpeg dependencies and
+the runtime is not already inside a container. Inside a container the flag buys
+nothing: it creates a nested renderer that repeats the dependency installation
+and can fail independently of the current container's proxy and permissions.
+Record the chosen renderer in `qa/report.md`.
+
+Docker is not a prerequisite for this Skill. A machine without Docker, or a user
+without the rights to install it, is a supported environment; treat a missing
+`docker` binary as expected rather than as a blocked render.
 
 Optionally render 4K after the 1080p master passes QA.
 

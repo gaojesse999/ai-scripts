@@ -48,7 +48,7 @@
   "hyperframes": {
     "example": "blank",
     "resolution": "landscape",
-    "docker_render": true
+    "docker_render": false
   },
   "audio": {
     "segment_pause_seconds": 0.8,
