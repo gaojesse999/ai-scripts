@@ -111,6 +111,7 @@ Rendering speed is a production constraint, but it must not weaken timing or vis
 - Keep browser rendering and final muxing separate. Do not re-encode the entire series merely to concatenate chapters that are already delivery-compatible.
 - For projects that need more than real-time speed, evaluate an offline frame encoder such as WebCodecs or an equivalent deterministic renderer. Preserve exact frame timestamps, keep a stable fallback browser renderer, and transcode to the required H.264 delivery profile only after the offline output passes QA.
 - Parallelize independent chapter renders only within the machine's memory and GPU budget. Prefer two workers over unbounded browser processes.
+- Size `--workers` against *available* memory, not total. HyperFrames derives its own worker count from total RAM, so it asks for the same number of Chrome processes whether the host has 12 GB free or 1 GB. Run `scripts/plan_workers.py` before a render and pass the value it recommends.
 
 ## KME motion model
 
@@ -671,6 +672,8 @@ The sync gate blocks the render on Critical and High findings. It exists for a f
 Then, when HyperFrames is available:
 
 ```bash
+python3 scripts/plan_workers.py --project <project-dir>
+
 cd <project-dir>/hyperframes
 export HTTP_PROXY="$SKILL_PROXY"
 export HTTPS_PROXY="$SKILL_PROXY"
@@ -679,6 +682,23 @@ npx hyperframes lint --json
 npx hyperframes inspect --json
 npx hyperframes render --fps 30 --quality high -o ../outputs/final-1080p.mp4
 ```
+
+### Worker count comes from free memory, not total
+
+`plan_workers.py` prints a `--workers` value; append it to the render command
+unless the script says auto-sizing is already within budget. Skipping it is the
+common way a long render dies near the end on a busy machine, because
+HyperFrames sizes workers from *total* RAM — `floor(total_mb * 0.5 / 1536)` —
+and never looks at how much is actually free. A 16 GB host asks for five Chrome
+workers with 1 GB free just as readily as with 12 GB free.
+
+The script exits non-zero when not even one worker fits, so it can gate the
+render. In that case free memory, or fall back to `--low-memory-mode`, which
+pins to one worker and screenshot capture.
+
+Its per-worker figure is an estimate. After a render completes, record the
+observed peak in `render-env.sh` and pass it back through `--per-worker-mb` so
+later chapters size against a measured number rather than a default.
 
 ### Container-aware rendering
 
@@ -843,5 +863,6 @@ After presenting the complete narration gate or a chapter gate, stop the respons
 - `scripts/build_timing.py` — turn alignment into beats, cues, and subtitle artifacts
 - `scripts/apply_timing.py` — inject measured timing into compositions and chapter indexes
 - `scripts/check_sync.py` — gate audio, caption, and motion agreement before rendering
+- `scripts/plan_workers.py` — recommend `--workers` from available memory before a render
 - `scripts/check_timelines.js` — execute every composition timeline against a stubbed GSAP
 - `scripts/validate_project.py` — validate phase prerequisites and required artifacts

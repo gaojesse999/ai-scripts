@@ -30,6 +30,83 @@ and duplicates those same dependencies. Docker itself is not a prerequisite: a
 machine without it renders locally once the browser and both `ffmpeg` and
 `ffprobe` are on PATH, including from a user-owned prefix.
 
+## Verify the browser launches, not just that it resolves
+
+`doctor` prints a passing Chrome line whenever a file sits at the expected cache
+path; it never starts the browser. An interrupted install leaves the executable
+behind without the ANGLE and SwiftShader libraries that belong beside it, so
+`doctor` keeps passing while every render dies at browser launch — on Windows
+with `0xC000007B`, which reads as a corrupt binary rather than an incomplete
+download. Start it once before trusting the check:
+
+```bash
+"$(npx hyperframes browser path)" --version
+```
+
+A complete `chrome-headless-shell-win64` is roughly 290 files and includes
+`libEGL`, `libGLESv2`, `vk_swiftshader`, and `vulkan-1`; a handful of files with
+no libraries next to them is a partial extraction. Never kill an install while
+it runs — the next run can mistake the leftovers for a finished one and report
+success in seconds. Purge with `npx hyperframes browser ensure --force`.
+
+The bundled downloader ignores the proxy variables on some hosts and crawls at a
+fraction of the available bandwidth. When that happens, fetch the archive
+yourself and extract it into the cache. The build id is a hardcoded constant in
+hyperframes and the cache lookup matches it exactly, so take the version from
+the CLI's own download message instead of guessing:
+
+```bash
+curl --proxy "$SKILL_PROXY" -Lo /tmp/chs.zip \
+  https://storage.googleapis.com/chrome-for-testing-public/<version>/win64/chrome-headless-shell-win64.zip
+unzip -q /tmp/chs.zip -d ~/.cache/hyperframes/chrome/chrome-headless-shell/win64-<version>/
+```
+
+`HYPERFRAMES_BROWSER_PATH` aims the renderer at an existing Chrome and is the
+right escape hatch when no download is possible. Keep it temporary: a system
+Chrome updates itself, and a browser version change shifts font rasterization
+and GPU compositing, so chapters rendered weeks apart stop matching. The
+built-in system-Chrome search only covers Linux paths, so it never finds
+`chrome.exe` on Windows.
+
+## Worker count and memory
+
+HyperFrames picks its own worker count from four bounds and takes the smallest:
+
+```text
+cpuBased     = max(1, cpuCount - 2)
+memoryBased  = max(1, floor(totalMemoryMb * 0.5 / 1536))
+frameBased   = floor(totalFrames / 30)
+heapBased    = max(1, floor((nodeHeapLimitMb - 1024) / 640))
+```
+
+The trap is `memoryBased`: it reads **total** RAM, never free RAM. A 16 GB host
+resolves to five Chrome workers whether 12 GB or 1 GB is available, so a render
+launched on a busy machine oversubscribes memory and dies late, after most of
+the capture work is already done. Splitting the job does not help either —
+`frameBased` is large for anything longer than a couple of seconds, so a single
+short scene still resolves to the same five workers. `--workers` is the only
+lever that moves it.
+
+Run `scripts/plan_workers.py --project <project-dir>` before rendering. It
+reproduces the formula above, compares it against memory that is actually
+available, and prints either a capped `--workers` value or confirmation that
+auto-sizing already fits. It exits non-zero when not even one worker fits.
+
+Two published figures for the cost of one worker disagree, and the gap matters
+when budgeting: `render --help` documents roughly 256 MB per Chrome process,
+while the internal planner reserves 1536 MB per worker. The reservation is a
+safety margin for deciding how many workers to start, not a measurement of what
+they use. Treat any estimate in that range as provisional and replace it with an
+observed peak from a real render on the host.
+
+Two further behaviours are worth knowing before sizing a long render. The
+low-memory profile — one worker plus screenshot capture — only auto-engages at
+**8 GB total or less**, so a 16 GB host never gets it for free; force it with
+`--low-memory-mode`. And streaming encode is skipped once the output runs past
+**240 seconds**, so a feature-length render buffers its frames to disk instead
+of piping them to FFmpeg; budget a few GB of scratch space and relocate it with
+`--frames-cache-dir` when the system drive is tight.
+
 ## Composition rules
 
 - Composition HTML is the render source.

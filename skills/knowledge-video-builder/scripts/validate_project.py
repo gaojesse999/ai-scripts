@@ -5,6 +5,10 @@ import argparse, json, sys
 from pathlib import Path
 
 PHASES=["analysis","brief","script","voice","visual","render"]
+try:
+ from project import VALID_STATUS
+except Exception:
+ VALID_STATUS={"not_started","in_progress","pending_review","approved","needs_revision","blocked","invalidated"}
 REQ={
  "analysis":["analysis/overview.md","analysis/evidence-map.json"],
  "brief":["content/content-brief.md"],
@@ -24,7 +28,18 @@ def main():
  for phase in PHASES[:upto+1]:
   for rel in REQ[phase]:
    if not (project/rel).exists(): issues.append(("high",f"Missing required artifact for {phase}: {rel}"))
-  if state and phase!=args.phase and state["phases"][phase]["status"]!="approved": issues.append(("high",f"Upstream phase not approved: {phase}"))
+  if state:
+   entry=state.get("phases",{}).get(phase)
+   if entry is None: issues.append(("high",f"Missing state entry for phase: {phase}"))
+   else:
+    status=entry.get("status")
+    # A status outside VALID_STATUS is drift, not a gate failure. Reporting it as
+    # "not approved" sends the reader looking for a missing approval that happened.
+    if status not in VALID_STATUS: issues.append(("high",f"Invalid status {status!r} for phase {phase}; expected one of {sorted(VALID_STATUS)}"))
+    elif phase!=args.phase and status!="approved": issues.append(("high",f"Upstream phase not approved: {phase} (status: {status})"))
+ if state:
+  for key in state.get("phases",{}):
+   if key not in PHASES: issues.append(("info",f"Unknown phase key in state: {key}; project.py only tracks {PHASES}"))
  planp=project/"script/scene-plan.json"; timep=project/"timing/scenes.json"; evp=project/"analysis/evidence-map.json"
  if planp.exists():
   try:
