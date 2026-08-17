@@ -1,0 +1,52 @@
+{
+  "skill": "renzhi-juexing-eliminate-fuzziness",
+  "version": "0.1.0",
+  "source_book": "认知觉醒：开启自我改变的原动力 — 周岭",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "周末有空，既想整理房间又想学课又想社交，最后刷了一天视频。怎么破？",
+      "expected_behavior": "应激活 renzhi-juexing-eliminate-fuzziness，诊断行动模糊，写下来排序，只留一条单行道。",
+      "notes": "正面: 选项多逃向享乐"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "我知道要事第一，但脑子里只有『锻炼、读书』这种大概想法，早上还是不知道具体干什么。",
+      "expected_behavior": "应激活 renzhi-juexing-eliminate-fuzziness，要求写清地点、时长、材料、完成标准。",
+      "notes": "正面: 清晰力缺失"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "最近特别烦，说不清烦什么，就一直拖着一件还没开始的事。",
+      "expected_behavior": "应激活 renzhi-juexing-eliminate-fuzziness，用提问把情绪拆到边界清晰。",
+      "notes": "正面: 情绪模糊"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "今晚晚饭吃面还是吃饭？帮我随便选一个。",
+      "expected_behavior": "日常琐事，不应激活本 skill 去做工字日程。",
+      "notes": "诱饵: 过度规划"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "我已经写好了今天只写 Agent 的第一段，但还在收藏第 21 套提示词框架，想等最优的再动手。",
+      "expected_behavior": "不应激活本 skill，应激活 renzhi-juexing-justified-fool-action。目标已清，是寻优瘫痪。",
+      "notes": "跨 skill 混淆诱饵"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "同事在群里阴阳一句，我手指已经放在键盘上准备回击，要不要先把心情写下来列个清单？",
+      "expected_behavior": "节点冲动优先 renzhi-juexing-metacognition-meta-time（停几秒），不是先做完整清晰力日程。可承认写下来有帮助，但主 skill 不应抢调用。",
+      "notes": "边界: 与元时间抢场景"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "诱饵容错为 0。跨 skill 至少 1 条。"
+}

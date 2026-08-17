@@ -1,0 +1,52 @@
+{
+  "skill": "renzhi-juexing-deep-focus-active-rest",
+  "version": "0.1.0",
+  "source_book": "认知觉醒：开启自我改变的原动力 — 周岭",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "考研从早学到晚，前所未有地刻苦，一放松看小说就失控三天。别人玩两局还能回来。是不是休息方式错了？",
+      "expected_behavior": "应激活 renzhi-juexing-deep-focus-active-rest，诊断精力打穿，改短时 100% + 主动停。",
+      "notes": "正面: 太刻苦"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "我不敢休息，一歇就废，所以一直坐着，其实脑子走了还在翻书。怎样才能更专注？",
+      "expected_behavior": "应激活 renzhi-juexing-deep-focus-active-rest，感到分心就放下；休息不做被动耗注意的刷手机。",
+      "notes": "正面: 硬撑+做A想B"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "有人说我没成功是因为不够苦。我已经学到崩溃了。番茄钟是不是太娇气？",
+      "expected_behavior": "应激活 renzhi-juexing-deep-focus-active-rest，反转『不够苦』；番茄只有理解主动停之后才有用。",
+      "notes": "正面: 刻苦道德"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "番茄工作法是谁发明的？25 分钟这个数字有没有论文？",
+      "expected_behavior": "历史/文献查询，不应激活本 skill 开休息处方。",
+      "notes": "诱饵: 信息查询"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "零基础日语直接啃原版新闻，两句就崩溃。要不要再逼自己坐满四个番茄？",
+      "expected_behavior": "不应主激活本 skill，应激活 renzhi-juexing-stretch-zone-matching。内容在困难区，不是休息不够。",
+      "notes": "跨 skill 混淆诱饵"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "我用番茄钟当道德纪律：没完成 8 个番茄就骂自己废物，休息时也刷短视频补回来。这样对吗？",
+      "expected_behavior": "应纠正：计时器变成打卡道德棍；休息时刷手机抵消主动休息。可激活本 skill 做纠偏，而不是鼓励加番茄数。",
+      "notes": "边界: 工具被用歪"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "诱饵容错为 0。"
+}

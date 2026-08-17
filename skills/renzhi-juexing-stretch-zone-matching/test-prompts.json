@@ -1,0 +1,52 @@
+{
+  "skill": "renzhi-juexing-stretch-zone-matching",
+  "version": "0.1.0",
+  "source_book": "认知觉醒：开启自我改变的原动力 — 周岭",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "零基础想用 ChatGPT 学日语，朋友说直接啃朝日新闻才有用，我读两句就崩溃想放弃。要不要再逼自己一把？",
+      "expected_behavior": "应激活 renzhi-juexing-stretch-zone-matching，判定困难区，降到有点吃力但能读懂的材料。",
+      "notes": "正面: 能人标准加压"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "我给自己定了每天跑 10 公里，跑了三天腿伤了还觉得不够拼。怎样才算走出舒适区？",
+      "expected_behavior": "应激活 renzhi-juexing-stretch-zone-matching，指出走太远和没走是同一类失败，只改一档进拉伸区。",
+      "notes": "正面: 把痛苦当努力证据"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "裸辞后突然有大把时间，计划写书健身学英语，结果天天睡到中午刷手机。是不是我太懒？",
+      "expected_behavior": "应激活 renzhi-juexing-stretch-zone-matching（自由度失配）；可提示带宽，但主处方是把自由匹配到当前掌控力。",
+      "notes": "正面: 自由太多失控"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "Python 里 list 和 tuple 有什么区别？",
+      "expected_behavior": "纯知识查询，不应激活本 skill。",
+      "notes": "诱饵: 无关"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "我就是没毅力，每晚发誓少玩手机第二天照样刷，要不要加打卡团和多个闹钟监督我？",
+      "expected_behavior": "不应激活本 skill，应激活 renzhi-juexing-drive-not-against。",
+      "notes": "跨 skill 混淆诱饵: 姿态问题不是难度刻度"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "这本书难度刚好，我也能读懂，但就是不开始做练习。是不是再降一点难度？",
+      "expected_behavior": "应判定已匹配仍不动：不要再降难度；转到 renzhi-juexing-eliminate-fuzziness 或 renzhi-juexing-justified-fool-action。",
+      "notes": "边界: 匹配已完成后的知而不行"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "至少 3 条 should_trigger + 2 条 should_not_trigger + 1 条 edge_case。诱饵容错为 0。"
+}

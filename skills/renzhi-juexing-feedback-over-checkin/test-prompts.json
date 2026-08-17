@@ -1,0 +1,52 @@
+{
+  "skill": "renzhi-juexing-feedback-over-checkin",
+  "version": "0.1.0",
+  "source_book": "认知觉醒：开启自我改变的原动力 — 周岭",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "背单词 App 连续打卡 80 天，断了一天就想把整个计划扔掉，正常吗？",
+      "expected_behavior": "应激活 renzhi-juexing-feedback-over-checkin，诊断动机转到纪录完整；改私人记录+下限、用测试当反馈。",
+      "notes": "正面: 断档羞耻"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "听了很多课、做了很多导图，生活没什么变化。有没有 21 天学习打卡营推荐？",
+      "expected_behavior": "应激活 renzhi-juexing-feedback-over-checkin，反对打卡营当主引擎，改用改变量和作品/自测。",
+      "notes": "正面: 输入崇拜+打卡营"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "学生说课本翻开全会、合上全废。是不是还要再刷一遍输入？",
+      "expected_behavior": "应激活 renzhi-juexing-feedback-over-checkin，指向合上书自我测试，而不是再输入。",
+      "notes": "正面: 无反馈重复输入"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "手术室核对清单能不能取消？感觉打钩让人有任务心态。",
+      "expected_behavior": "不应激活本 skill 去拆安全勾检表。B 明确排除必须任务闭合的领域。",
+      "notes": "诱饵: 安全闭合是优点"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "我就是没毅力，想彻底戒游戏永远不准碰，再狠一点就能坚持吧？",
+      "expected_behavior": "不应激活本 skill，应激活 renzhi-juexing-drive-not-against。",
+      "notes": "跨 skill 混淆诱饵"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "我没有读者，也不敢把练习发网上。是不是这本书说的反馈对我无效？",
+      "expected_behavior": "应仍激活本 skill，但指向自我测试/给能力不及自己的人看，而不是强迫晒作品。",
+      "notes": "边界: 无受众"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "诱饵容错为 0。"
+}

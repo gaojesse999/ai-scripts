@@ -1,0 +1,52 @@
+{
+  "skill": "renzhi-juexing-touch-learning",
+  "version": "0.1.0",
+  "source_book": "认知觉醒：开启自我改变的原动力 — 周岭",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "读完一本 400 页的技术书，要不要先画完整思维导图再开始用？不然总觉得白读了。",
+      "expected_behavior": "应激活 renzhi-juexing-touch-learning，反对以形式完整当掌握，只取最触动、离需求最近的一块去讲清、提取、练习。",
+      "notes": "正面: 导图强迫"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "看的时候很震撼，划了很多线，一用就忘。怎样做读书笔记才不算白读？",
+      "expected_behavior": "应激活 renzhi-juexing-touch-learning，诊断伪触动，过三关而不是再收藏。",
+      "notes": "正面: 伪触动"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "大神给了一长串书单，我硬着头皮读，又痛又愧疚没读完。怎样才算读过一本书？",
+      "expected_behavior": "应激活 renzhi-juexing-touch-learning：有一点促成真实改变就超值；能人书单不当第一标准。若材料过难可转匹配。",
+      "notes": "正面: 书单崇拜"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "CPA 考试下周，考纲必须全覆盖，我能只挑触动的章节看吗？",
+      "expected_behavior": "不应把触动法当考纲替代；本 skill 的 B 明确排除资格考试范围。",
+      "notes": "诱饵: 必须系统覆盖"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "背单词 App 连续打卡 80 天，断了一天就想把整个计划扔掉。",
+      "expected_behavior": "不应激活本 skill，应激活 renzhi-juexing-feedback-over-checkin。",
+      "notes": "跨 skill 混淆诱饵"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "我已经工作五年了，还想靠『跟着感觉走、不看原理』把系统设计学到精通。可以吗？",
+      "expected_behavior": "应指出中高级仍要补系统；触动法不能当一辈子跳过原理的许可证。可轻触本 skill 的 B，而不是鼓励继续只跟感觉。",
+      "notes": "边界: 中高级拒绝补系统"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "诱饵容错为 0。"
+}

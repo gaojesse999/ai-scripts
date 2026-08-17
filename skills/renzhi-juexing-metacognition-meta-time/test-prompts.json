@@ -1,0 +1,52 @@
+{
+  "skill": "renzhi-juexing-metacognition-meta-time",
+  "version": "0.1.0",
+  "source_book": "认知觉醒：开启自我改变的原动力 — 周岭",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "同事在群里阴阳一句，手指已经放在键盘上准备回击，怎么办？",
+      "expected_behavior": "应激活 renzhi-juexing-metacognition-meta-time，停一两秒审视第一反应，想两遍再说。",
+      "notes": "正面: 冲动节点"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "短视频一个接一个，不知不觉又刷了半小时。有没有办法在停不下来之前插入一点理智？",
+      "expected_behavior": "应激活 renzhi-juexing-metacognition-meta-time，约定视频结束后暂停几秒。",
+      "notes": "正面: 无间隔连播"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "一醒来就拿手机，然后整天都散了。我日程排得很满，忙得感动自己但没方向。",
+      "expected_behavior": "应激活 renzhi-juexing-metacognition-meta-time，把醒来当元时间；饱和行动不是想清楚。",
+      "notes": "正面: 回路起点 + 用忙逃避思考"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "元认知这个词是谁提出来的？给我一个学术定义。",
+      "expected_behavior": "纯概念查询，不应激活本 skill 去做停留练习。",
+      "notes": "诱饵: 信息查询"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "收藏了 20 套提示词框架，还没开始写自己的第一个 Agent，要不要再找一套最优的？",
+      "expected_behavior": "不应激活本 skill，应激活 renzhi-juexing-justified-fool-action。这是寻优不是冲动。",
+      "notes": "跨 skill 混淆诱饵"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "我已经每天监控自己每一个念头，越监控越焦虑，是不是元时间不够，要不要改成四点起床黄金一小时？",
+      "expected_behavior": "应拒绝再加监控，并纠正元时间≠早起黄金一小时；对过度自我监控者不要开第三视角处方。",
+      "notes": "边界: 反刍 + 误解元时间"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "诱饵容错为 0。"
+}

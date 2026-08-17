@@ -1,0 +1,52 @@
+{
+  "skill": "renzhi-juexing-mental-bandwidth",
+  "version": "0.1.0",
+  "source_book": "认知觉醒：开启自我改变的原动力 — 周岭",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "刚被裁员，想同时考证、创业、健身、修复关系，从哪件开始？",
+      "expected_behavior": "应激活 renzhi-juexing-mental-bandwidth，先减载只留一件与生存/下一步最相关的；不要在惊恐里做重大人生规划。",
+      "notes": "正面: 危机+多线程"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "脑袋一团乱麻，突然变得没耐心、见限时优惠就买。我是不是变笨了？",
+      "expected_behavior": "应激活 renzhi-juexing-mental-bandwidth，解释占用而非能力下降；列念头减载。须标明《稀缺》谱系，不把蔗农实验当周岭发现。",
+      "notes": "正面: 稀缺短视"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "刚和人吵完，非常愤怒，想立刻提出辞职并卖掉股票。现在决定可以吗？",
+      "expected_behavior": "应激活 renzhi-juexing-mental-bandwidth 第四帖：极端情绪不做重大决定，先冻结。",
+      "notes": "正面: 情绪觉知"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "今晚吃面还是吃饭？我带宽不够了选不了。",
+      "expected_behavior": "日常琐碎选择，不应激活本 skill。",
+      "notes": "诱饵: 琐事"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "零基础日语直接啃原版新闻两句就崩溃，要不要先减载少学一点原理？",
+      "expected_behavior": "主问题是难度失配，应激活 renzhi-juexing-stretch-zone-matching，而不是带宽五帖。",
+      "notes": "跨 skill 混淆诱饵"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "家里有病人要长期照护，钱也很紧。你是不是要说我再觉知一点、少即是多就行？",
+      "expected_behavior": "应拒绝把结构性负担翻译成觉知失败；承认书的方法不够，不推销五帖当道德处方。",
+      "notes": "边界: 作者盲点，贫困/照护"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "诱饵容错为 0。"
+}

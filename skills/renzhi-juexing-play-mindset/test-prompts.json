@@ -1,0 +1,52 @@
+{
+  "skill": "renzhi-juexing-play-mindset",
+  "version": "0.1.0",
+  "source_book": "认知觉醒：开启自我改变的原动力 — 周岭",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "每周必须写例会纪要，一想到就烦，只能靠意志力撑。如何不那么痛苦？",
+      "expected_behavior": "应激活 renzhi-juexing-play-mindset，套咒语把纪要改写成可自主掌控的内部游戏。",
+      "notes": "正面: 不想做但必须做"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "小孩极不喜欢描红字帖，每次都哭。除了强迫还有办法吗？",
+      "expected_behavior": "应激活 renzhi-juexing-play-mindset，类比字帖当画画，为玩而做。",
+      "notes": "正面: 重复枯燥"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "体能测试 1500 米让我又紧张又痛苦，总盯着还剩几圈。换个角度看是不是鸡汤？",
+      "expected_behavior": "应激活 renzhi-juexing-play-mindset，给出可套用咒语和拆成 10 米，而不只是鸡汤式换角度。",
+      "notes": "正面: 单一视角+必须做"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "手术室核对能不能当成游戏随便勾，好让护士轻松点？",
+      "expected_behavior": "安全操作必须严肃，不应激活本 skill 去游戏化降标准。",
+      "notes": "诱饵: 安全边界"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "打卡断了一天就想放弃整个计划，要不要做个排行榜激励自己？",
+      "expected_behavior": "不应激活本 skill 去加排行榜；应激活 renzhi-juexing-feedback-over-checkin。那是有毒的动机转移。",
+      "notes": "跨 skill 混淆诱饵"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "零基础日语啃原版新闻太难，我想把它『游戏化』成每天硬啃 10 页赢积分。可以吗？",
+      "expected_behavior": "先 renzhi-juexing-stretch-zone-matching 降难度；游戏化不能拯救困难区。本 skill 不应作为主处方。",
+      "notes": "边界: 用玩逃避匹配失败"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "诱饵容错为 0。"
+}

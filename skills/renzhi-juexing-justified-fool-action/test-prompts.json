@@ -1,0 +1,52 @@
+{
+  "skill": "renzhi-juexing-justified-fool-action",
+  "version": "0.1.0",
+  "source_book": "认知觉醒：开启自我改变的原动力 — 周岭",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "收藏了 20 套提示词框架，还没开始写自己的第一个 Agent，要不要再找一套最优的？",
+      "expected_behavior": "应激活 renzhi-juexing-justified-fool-action，选一个暂时无法反驳的方法直接做，用改变量验收。",
+      "notes": "正面: 寻优收藏"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "我想先看到一点效果再投入时间写作。现在还没开始，因为不确定这条路行不行。",
+      "expected_behavior": "应激活 renzhi-juexing-justified-fool-action，讲成长悖论：想先看结果的人往往看不到结果。",
+      "notes": "正面: 先看结果再行动"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "道理都懂就是不做。我能把那本书讲给别人听，自己的生活零改变。再听一遍课有用吗？",
+      "expected_behavior": "应激活 renzhi-juexing-justified-fool-action，指出明白≠掌握，必须练习，停止过脑瘾。",
+      "notes": "正面: 知行错觉（目标已能讲清）"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "这个手术方案还有争议，要不要先做了再说？",
+      "expected_behavior": "不可逆健康风险，B 排除；不应鼓励当傻瓜先做。",
+      "notes": "诱饵: 安全边界"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "同事阴阳一句，手指已经放在键盘上准备回击，怎么办？",
+      "expected_behavior": "不应激活本 skill，应激活 renzhi-juexing-metacognition-meta-time。冲动先停，不是先行动。",
+      "notes": "跨 skill 混淆诱饵"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "周末既想整理房间又想学课又想社交，最后总是刷视频。是不是直接去做就行，当个傻瓜？",
+      "expected_behavior": "选项仍糊，应转到 renzhi-juexing-eliminate-fuzziness，而不是用傻瓜行动跳过写清单。",
+      "notes": "边界: 还糊就写，已清才走"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "诱饵容错为 0。"
+}
