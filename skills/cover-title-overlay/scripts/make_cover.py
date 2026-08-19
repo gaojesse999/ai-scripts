@@ -23,6 +23,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 BUNDLED_FONT = SKILL_DIR / "assets" / "NotoSerifSC-VF.ttf"
+COVER_DIR = SKILL_DIR / "cover"
 
 FILL = (0xE0, 0xCB, 0xA8, 255)  # #E0CBA8, within #D8C29C–#E6D3B0
 STROKE = (0x3A, 0x28, 0x1F, 255)  # #3A281F
@@ -33,9 +34,16 @@ SHADOW_OPACITY = 0.32
 SAFE_WIDTH_RATIO = 0.92
 SSAA = 2
 
-# Tried in order when --base is omitted, relative to the current directory.
-BASE_CANDIDATES = (Path("cover/封面.png"), Path("封面.png"))
 OUTPUT_STEM_FORMAT = "image-outputs-%y%m%d-%H%M%S"
+
+# Used when --base is omitted. Bundled with the skill, so the default works from
+# any working directory.
+BASE_BY_RATIO = {
+    "16:9": COVER_DIR / "封面16x9.png",
+    "21:9": COVER_DIR / "封面21x9.png",
+}
+DEFAULT_RATIO = "16:9"
+ASPECT_TOLERANCE = 0.02
 
 
 def load_font(font_path: Path, size: float) -> ImageFont.FreeTypeFont:
@@ -194,19 +202,36 @@ def verify(base_path: Path, out_path: Path) -> dict:
     }
 
 
-def resolve_base(base_arg: Path | None) -> Path:
+def resolve_base(base_arg: Path | None, ratio: str) -> Path:
     if base_arg is not None:
         if not base_arg.is_file():
             raise SystemExit(f"底图不存在: {base_arg}")
         return base_arg
-    for candidate in BASE_CANDIDATES:
-        if candidate.is_file():
-            return candidate
-    tried = "\n".join(f"  {c}" for c in BASE_CANDIDATES)
-    raise SystemExit(
-        f"没找到无文字底图，在当前目录下试过:\n{tried}\n"
-        "请用 --base 指定底图路径，例如 --base path/to/封面.png"
-    )
+    bundled = BASE_BY_RATIO[ratio]
+    if not bundled.is_file():
+        raise SystemExit(
+            f"skill 自带的 {ratio} 底图缺失: {bundled}\n"
+            "请恢复该文件，或用 --base 指定底图路径。"
+        )
+    return bundled
+
+
+def check_aspect(base_path: Path, ratio: str) -> None:
+    """Rendering is height-based and works at any aspect, so a mismatch is only a warning."""
+    with Image.open(base_path) as im:
+        actual = im.width / im.height
+    expected = eval_ratio(ratio)
+    if abs(actual - expected) / expected > ASPECT_TOLERANCE:
+        print(
+            f"提醒: 底图实际比例 {actual:.3f}，与 --ratio {ratio} ({expected:.3f}) 不符。"
+            f"排版按底图高度计算，出图不会失败，但请确认底图没放错。",
+            file=sys.stderr,
+        )
+
+
+def eval_ratio(ratio: str) -> float:
+    w, h = ratio.split(":")
+    return int(w) / int(h)
 
 
 def resolve_font(font_arg: Path | None) -> Path:
@@ -234,15 +259,22 @@ def main() -> None:
         help="输出 PNG 路径。省略时写到当前目录的 image-outputs-YYMMDD-HHMMSS.png",
     )
     parser.add_argument(
+        "--ratio",
+        choices=sorted(BASE_BY_RATIO),
+        default=DEFAULT_RATIO,
+        help=f"画面比例，决定省略 --base 时用哪张底图（默认 {DEFAULT_RATIO}）",
+    )
+    parser.add_argument(
         "--base",
         type=Path,
         default=None,
-        help="无文字封面底图。省略时在当前目录找 cover/封面.png 或 封面.png",
+        help="无文字封面底图。省略时用 skill 自带的对应比例底图，给了则以此为准",
     )
     parser.add_argument("--font", type=Path, default=None, help="覆盖字体（默认用 skill 自带的 Noto Serif SC）")
     args = parser.parse_args()
 
-    base_path = resolve_base(args.base)
+    base_path = resolve_base(args.base, args.ratio)
+    check_aspect(base_path, args.ratio)
     out_path = args.output or Path(f"{datetime.now():{OUTPUT_STEM_FORMAT}}.png")
     report = render(args.line1, args.line2, base_path, resolve_font(args.font), out_path)
     print(f"base: {base_path}")
