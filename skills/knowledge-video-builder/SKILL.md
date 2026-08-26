@@ -315,7 +315,7 @@ When a reference style profile exists, also lock the canvas, chapter/progress tr
 
 Follow [reference/CONTENT_STRATEGY.md](reference/CONTENT_STRATEGY.md). Produce `content/content-brief.md`.
 
-The default chapter framework is 解决什么问题 → 原理 → 怎么做 → 举例 → 总结. Treat those five as content stages, not as a slide count: allocate scenes by how much a stage actually carries, so an enumerating stage may span several scenes while a single-claim stage stays one. Record any deviation from the five stages in the brief.
+The default chapter framework is 解决什么问题 → 原理 → 怎么做 → 举例 → 总结. Treat those five as content stages, not as a slide count: allocate scenes by how much a stage actually carries, so an enumerating stage may span several scenes while a single-claim stage stays one. See [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) for what each stage must accomplish, the failure mode of each, and the two alternative skeletons for tool teardowns and tutorials. Record any deviation from the five stages in the brief.
 
 When the user asks for a knowledge-sharing video, YouTube-style explainer, viral breakdown, creator-style narration, or supplies a reference SRT/script with a high-retention educational tone, also read [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) before choosing the opening, chapter engine, examples, and ending.
 
@@ -328,7 +328,7 @@ Prerequisite: Phase 1 and Phase 2 artifacts are ready. Continue internally until
 For knowledge-sharing videos where the narration itself is the main retention driver, use a **voiceover-first pass** before constructing the storyboard:
 
 1. Draft `script/SCRIPT.md` as a complete spoken narration first, using the high-retention grammar from [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md).
-2. Make the narration sound like a human creator would actually say it: sharp opening, short spoken beats, failure-mode progression, concrete examples, and a reframing ending.
+2. Make the narration sound like a human creator would actually say it: sharp opening, short spoken beats, failure-mode progression, concrete examples, and a reframing ending. For 解决问题-type topics, close on one interaction line (开放式, 填空式, or 选择式) after the reframe.
 3. After the narration works on its own, derive `script/STORYBOARD.md`, `script/scene-plan.json`, and `script/pronunciation.json` from that narration. Do not let visual-structure requirements flatten the spoken draft into a production checklist.
 4. Preserve evidence discipline during the pass: keep only supported claims, mark inference, and remove unverified social proof.
 

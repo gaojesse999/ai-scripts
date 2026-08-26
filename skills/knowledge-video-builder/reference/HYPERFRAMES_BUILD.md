@@ -115,6 +115,43 @@ of piping them to FFmpeg; budget a few GB of scratch space and relocate it with
 - The framework owns audio/video playback and seeking.
 - Do not call `play()`, `pause()`, or assign `currentTime` manually.
 
+## Sub-composition CSS is only half scoped, and `#root` padding lands twice
+
+Compiling assembles every sub-composition into one document, and it does not treat all three inputs the same way:
+
+- an **inline `<style>`** inside the sub-composition is selector-scoped to that scene, so `#root {}` is rewritten to that scene's root and cannot reach anything else;
+- a **`<link rel="stylesheet">`** inside the sub-composition is hoisted **unscoped**. It becomes a document-wide rule;
+- the **host element loses `data-composition-src`** — the compiler renames it to `data-composition-file`.
+
+Two consequences combine into one of the most expensive defects in this pipeline. Because the attribute is renamed, a parent rule like `[data-composition-src]{position:absolute;inset:0}` matches nothing in the compiled document, so scene hosts lay out **in normal flow** inside the top-level root. And because the sub-composition's root element keeps its `id`, one unscoped `#root { padding: … }` matches both the page canvas and every scene root — it shifts the host in flow, then shifts the content again inside the scene:
+
+```text
+canvas #root padding-left: 100px   →   scene content starts at 200px
+```
+
+That is measured, not inferred: a probe project with the padding declared only once, in a stylesheet the sub-composition links, puts its content marker at x=200. Declared in the sub-composition's own inline `<style>`, the same rule puts it at x=100.
+
+So keep any shared stylesheet's `#root` rule to properties that cannot displace a box — `position`, `width`, `height`, `background`, `overflow` — and put the safe-area padding on an inner wrapper the scene owns:
+
+```css
+/* assets/scene-system.css — linked by every scene, therefore global */
+#root  { position: relative; width: 1920px; height: 1080px; overflow: hidden }
+.stage { height: 100%; padding: 108px 124px 170px }
+```
+
+Never style a scene host through `[data-composition-src]`. Give hosts an id, or match `[data-composition-file]` as well, and remember that hosts stack vertically rather than overlap — two simultaneously visible scenes cannot cross-fade while they sit in flow.
+
+The symptom is easy to misread as art direction: the whole film is pushed right and down, the opposite edges are clipped by `overflow: hidden`, and everything absolutely positioned — captions, chapter label, progress rail — stays exactly where it belongs, because absolute positioning resolves against the padding box and ignores the padding. Verify on a **rendered frame**, not a scene snapshot, and by measuring rather than by eye:
+
+```python
+a = np.array(Image.open("frame.png").convert("RGB")).astype(np.int16)
+on = (np.abs(a - np.array(BG)).sum(2) > 18).mean(0) > 0.008   # per-column content
+xs = np.where(on)[0]
+print(xs[0], a.shape[1] - 1 - xs[-1])                          # left / right margin
+```
+
+The two numbers should match the intended safe area on both sides. A left margin at the design value with a right margin of zero is this bug.
+
 ## GSAP rules
 
 Vendor GSAP into the project; do not load it from a CDN. The render browser is frequently offline or proxy-isolated, and a failed CDN script means `gsap is undefined`, the timeline never registers, and the render silently freezes on frame one.

@@ -8,7 +8,37 @@ A popular knowledge script should feel like a guided teardown, not a repository 
 
 When this reference is used inside Knowledge Video Builder, treat narration quality as the first draft target. Write the complete voiceover so it can stand alone as a good spoken script before turning it into storyboard, screen text, and scene-plan data. The production artifacts should preserve the voiceover's hook, rhythm, examples, and ending instead of making the narration serve a visual checklist.
 
-Default teardown structure:
+Three skeletons cover most knowledge videos. Pick by what the subject is: the five-stage frame for a mechanism or method, the teardown for a tool or repository, the ladder for a tutorial. All three are **content stages, not a slide count** — a stage that enumerates may span several scenes while a single-claim stage stays one.
+
+### Default five-stage frame: 解决什么问题 → 原理 → 怎么做 → 举例 → 总结
+
+This is the default in Knowledge Video Builder and the right choice whenever the viewer's own behaviour, not a product, is the subject: a cognitive trap, a habit, a mechanism, a working method.
+
+1. **解决什么问题** — Open on a situation the viewer recognizes in themselves, name what it costs, then state the route in one line.
+2. **原理** — Name the one mechanism that explains it, and mark its limits in the same breath.
+3. **怎么做** — Turn the principle into a small ordered set of steps that can be started today.
+4. **举例** — Replay those steps inside concrete scenes, ideally two mirrored cases where the same mechanism produces opposite failures.
+5. **总结** — Compress the method into one repeatable sentence, then close with exactly one interaction line in 开放式, 填空式, or 选择式 form. See [Closing Interaction](#closing-interaction).
+
+```text
+你有没有过这种情况：重要的事草草交差，不重要的事却死磕很久。
+其实这不是你分不清轻重，而是「想赶紧收尾」这件事在起作用。
+应对办法分三步：标记、设规则、回顾。
+放进两个场景看：年度报告结束得太早，游戏关卡结束得太晚。
+所以，不是所有任务都值得同一种完成方式。
+```
+
+What each stage is most likely to get wrong:
+
+- **解决什么问题** must be universal before it is specific. State the pattern in a form every viewer recognizes, *then* land it on one or two named examples. Opening on the example first makes the video look like it is about 年度报告 rather than about the mechanism.
+- **原理** carries the credibility risk. Introduce one concept, not a survey, and keep the honest boundary in the spoken line — "这个说法并不能解释所有的赶工和沉迷". A mechanism claimed too widely is the fastest way to lose the viewers most likely to share the video. When the concept comes from research, say what it does explain rather than restating the study.
+- **怎么做** should be the shortest chapter, and its steps must be sequential rather than a checklist of tips. Three is usually right; resist a fourth.
+- **举例** is where retention is won, so it must not degrade into a recap of 怎么做. Give each case its own stakes, show the wrong path first, then apply the rule. Two opposite cases prove the mechanism generalizes in a way one case never can.
+- **总结** repeats the rules from 怎么做 in compressed form and nothing new. If the ending introduces a fresh idea, that idea belonged in 原理. It ends on the interaction line, not on the reframe.
+
+### Teardown structure
+
+For tools, repositories, and frameworks:
 
 1. Open with social proof, current relevance, or a sharp contradiction.
 2. Name the central mystery: what does this tool reveal, solve, or control?
@@ -19,7 +49,9 @@ Default teardown structure:
 7. Escalate to the next problem created by the previous solution.
 8. End by reframing the subject into a larger lesson.
 
-For "from beginner to mastery" tutorials, use a learning ladder instead of a teardown:
+### Learning ladder
+
+For "from beginner to mastery" tutorials, use a ladder instead of a teardown:
 
 1. State who must care and the payoff of learning this now.
 2. Split the audience: beginners will learn the concept and first setup; advanced users will learn best practices and iteration.
@@ -171,6 +203,37 @@ Good endings:
 - "不要只给 AI 一个任务。给它一套工作方式。"
 - "不要把这份文件当成写完就封存的规格书。你的代码在变，模型在变，它也应该跟着变。"
 
+### Closing Interaction
+
+For 解决问题-type scripts (the five-stage frame), the reframe is not the last thing the viewer hears. Add exactly one interaction line after it. The reframe carries the meaning; the interaction line collects the reply. Never let the interaction line replace the reframe, and never stack two of them.
+
+Pick one of three forms:
+
+**开放式** — ask for the viewer's own instance. Use when the topic is common enough that everyone has one ready. Highest-quality replies, lowest volume, so keep the question narrow enough to answer in a single line.
+
+```text
+你最近一次「明明可以停，却还是硬做完」的事，是什么？
+```
+
+**填空式** — hand over a sentence with a blank. Lowest cost to answer and usually the highest comment volume, because the viewer does not have to compose anything. Use when the mechanism has a repeating shape that the blank can expose.
+
+```text
+评论区补一句：我最容易在＿＿＿＿上，忍不住把它做完。
+```
+
+**选择式** — force a pick between two named options. Use when 举例 already established two mirrored cases; reusing them here makes the choice concrete and mildly divisive, which is what drives replies. Label the options A and B so the viewer can answer with a single letter — ask the question first, then hand over the two labelled options separated by a semicolon.
+
+```text
+你更常是哪一种？A，该停的时候停不下来；B，该继续的时候草草收尾。
+```
+
+Rules for all three:
+
+- Ask about the mechanism just taught, so that answering rehearses the lesson instead of changing the subject.
+- The viewer must be able to answer from their own life without rewatching or expertise, at the lowest cost the form allows: a letter for 选择式, a phrase for 填空式, a sentence for 开放式.
+- Keep it to one spoken breath, and reuse the same wording as the end-card screen text.
+- Do not substitute 点赞、关注、收藏 requests, and do not settle for "你怎么看" — that is not a question, it is filler.
+
 ## Style Match Checklist
 
 Before presenting the narration gate, check:
@@ -178,10 +241,13 @@ Before presenting the narration gate, check:
 - Does the first 20 seconds give a clear reason to keep watching?
 - For GitHub projects, did you verify current project/author/social-proof signals online before using any numbers?
 - Is the video organized around a central mystery or thesis?
+- Did you pick the skeleton that matches the subject, and can you point to where each of its stages starts?
+- For the five-stage frame: does 解决什么问题 open on a universal pattern before naming examples, does 原理 state its own limits, does 怎么做 stay sequential and short, does 举例 add new scenes instead of recapping, and does 总结 introduce nothing new?
 - Does each chapter start from an AI failure mode, not a feature list?
 - Is every abstract concept explained with a concrete scene, analogy, or example?
 - Are sentences subtitle-friendly and mostly short?
 - Does the script escalate from one problem to the next instead of reading a catalog?
 - Does the ending reframe the subject into a larger lesson?
+- For 解决问题 scripts, does the script close on exactly one interaction line (开放式, 填空式, or 选择式) that is answerable at a glance from the viewer's own life, placed after the reframe rather than instead of it? If 选择式, are the two options labelled A and B?
 - Are all numeric/social-proof claims supported by evidence or removed?
 - For beginner-to-advanced tutorials, does the script serve both audiences: first-use clarity for beginners and pruning/maintenance judgment for advanced users?

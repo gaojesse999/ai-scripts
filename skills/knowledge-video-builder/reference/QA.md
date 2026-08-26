@@ -52,7 +52,7 @@ The failure this gate exists for is silent. A line gets edited, one chapter is n
 
 - No text overflow.
 - Mobile-readable type size.
-- Safe margins respected.
+- Safe margins respected. Measure the left and right content margins on a frame taken from the **assembled render**, not from a scene snapshot: an unscoped `#root` padding rule shifts the whole film sideways and clips the far edge while every absolutely positioned layer stays correct. See "Sub-composition CSS is only half scoped" in [HYPERFRAMES_BUILD.md](HYPERFRAMES_BUILD.md).
 - Scene duration allows comprehension.
 - Motion reinforces narration.
 - Active accents follow the current sentence or clause. In enumerated scenes, focus advances in spoken order and does not remain fixed on one item.
