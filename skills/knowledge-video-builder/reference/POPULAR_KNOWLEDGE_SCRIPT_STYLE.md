@@ -18,7 +18,7 @@ This is the default in Knowledge Video Builder and the right choice whenever the
 2. **原理** — Name the one mechanism that explains it, and mark its limits in the same breath.
 3. **怎么做** — Turn the principle into a small ordered set of steps that can be started today.
 4. **举例** — Replay those steps inside concrete scenes, ideally two mirrored cases where the same mechanism produces opposite failures.
-5. **总结** — Compress the method into one repeatable sentence, then close with exactly one interaction line in 开放式, 填空式, or 选择式 form. See [Closing Interaction](#closing-interaction).
+5. **总结** — Compress the method into one repeatable sentence, then close with exactly one interaction line, which must be a **two-option A/B multiple-choice question (选择题)**. See [Closing Interaction](#closing-interaction).
 
 ```text
 你有没有过这种情况：重要的事草草交差，不重要的事却死磕很久。
@@ -26,6 +26,7 @@ This is the default in Knowledge Video Builder and the right choice whenever the
 应对办法分三步：标记、设规则、回顾。
 放进两个场景看：年度报告结束得太早，游戏关卡结束得太晚。
 所以，不是所有任务都值得同一种完成方式。
+你更常是哪一种？A，该停的时候停不下来；B，该继续的时候草草收尾。
 ```
 
 What each stage is most likely to get wrong:
@@ -207,32 +208,58 @@ Good endings:
 
 For 解决问题-type scripts (the five-stage frame), the reframe is not the last thing the viewer hears. Add exactly one interaction line after it. The reframe carries the meaning; the interaction line collects the reply. Never let the interaction line replace the reframe, and never stack two of them.
 
-Pick one of three forms:
+**The interaction line is always a two-option A/B multiple-choice question (选择题). This is fixed — do not choose a form.**
 
-**开放式** — ask for the viewer's own instance. Use when the topic is common enough that everyone has one ready. Highest-quality replies, lowest volume, so keep the question narrow enough to answer in a single line.
+Rationale: a single-letter answer is the lowest-cost reply that still forces a commitment, and picking a side is an identity statement rather than a task, which is what actually produces replies. Open-ended prompts ("留下你的例子") ask the viewer to compose a sentence and expose personal detail for no return, and reliably produce the lowest reply volume.
 
-```text
-你最近一次「明明可以停，却还是硬做完」的事，是什么？
-```
+### Required shape
 
-**填空式** — hand over a sentence with a blank. Lowest cost to answer and usually the highest comment volume, because the viewer does not have to compose anything. Use when the mechanism has a repeating shape that the blank can expose.
-
-```text
-评论区补一句：我最容易在＿＿＿＿上，忍不住把它做完。
-```
-
-**选择式** — force a pick between two named options. Use when 举例 already established two mirrored cases; reusing them here makes the choice concrete and mildly divisive, which is what drives replies. Label the options A and B so the viewer can answer with a single letter — ask the question first, then hand over the two labelled options separated by a semicolon.
+Ask the question first, then hand over the two labelled options separated by a semicolon, all in one spoken breath.
 
 ```text
 你更常是哪一种？A，该停的时候停不下来；B，该继续的时候草草收尾。
 ```
 
-Rules for all three:
+More examples:
 
-- Ask about the mechanism just taught, so that answering rehearses the lesson instead of changing the subject.
-- The viewer must be able to answer from their own life without rewatching or expertise, at the lowest cost the form allows: a letter for 选择式, a phrase for 填空式, a sentence for 开放式.
-- Keep it to one spoken breath, and reuse the same wording as the end-card screen text.
+```text
+你是哪一种？A，任务太大不敢开始；B，明明很小还是拖着。
+你更像哪一种？A，环境一乱就写不出来；B，多乱都能照写。
+你卡在哪一头？A，想不清楚所以不动；B，想清楚了还是不动。
+```
+
+### Rules
+
+- **Exactly two options, labelled A and B.** Never three, never unlabelled, never open-ended.
+- **Both options must be equally respectable.** If one option is obviously the "right answer", the question becomes a quiz and nobody picks the other one — which kills the reply volume the format exists for. The viewer should be choosing an identity, not passing a test.
+- **The two options must be mutually exclusive and jointly cover the common cases**, so almost every viewer can find themselves in one of them.
+- **Prefer reusing the two mirrored cases from 举例.** If 举例 already showed the same mechanism producing opposite failures, those two failures are the ready-made A and B, and the choice lands with no extra setup.
+- **Ask about the mechanism just taught**, so answering rehearses the lesson instead of changing the subject.
+- **The viewer must be able to answer from their own life at a glance**, with a single letter, without rewatching or expertise.
+- **One spoken breath**, and reuse the exact same wording as the end-card screen text.
 - Do not substitute 点赞、关注、收藏 requests, and do not settle for "你怎么看" — that is not a question, it is filler.
+
+### Anti-patterns
+
+```text
+你觉得这个方法有用吗？A，有用；B，没用。
+```
+One option is the obvious right answer, so B is dead and nobody replies.
+
+```text
+你最近一次「明明可以停，却还是硬做完」的事，是什么？
+```
+Open-ended: requires composing a sentence and disclosing a real task. Lowest reply volume.
+
+```text
+你更倾向哪一种？A，拆解任务；B，降低难度；C，换个时间。
+```
+Three options, and they are methods rather than identities. The viewer has to evaluate instead of recognise.
+
+```text
+你是 A 还是 B？
+```
+Options were never named. The viewer cannot answer without rewatching.
 
 ## Style Match Checklist
 
@@ -248,6 +275,7 @@ Before presenting the narration gate, check:
 - Are sentences subtitle-friendly and mostly short?
 - Does the script escalate from one problem to the next instead of reading a catalog?
 - Does the ending reframe the subject into a larger lesson?
-- For 解决问题 scripts, does the script close on exactly one interaction line (开放式, 填空式, or 选择式) that is answerable at a glance from the viewer's own life, placed after the reframe rather than instead of it? If 选择式, are the two options labelled A and B?
+- For 解决问题 scripts, does the script close on exactly one interaction line, placed after the reframe rather than instead of it, and is it a two-option A/B 选择题 — question first, two labelled options separated by a semicolon, answerable at a glance with a single letter?
+- Are both A and B equally respectable identities rather than one obvious right answer, and do they reuse the two mirrored cases from 举例 where possible?
 - Are all numeric/social-proof claims supported by evidence or removed?
 - For beginner-to-advanced tutorials, does the script serve both audiences: first-use clarity for beginners and pruning/maintenance judgment for advanced users?

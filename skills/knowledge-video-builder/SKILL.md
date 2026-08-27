@@ -328,7 +328,7 @@ Prerequisite: Phase 1 and Phase 2 artifacts are ready. Continue internally until
 For knowledge-sharing videos where the narration itself is the main retention driver, use a **voiceover-first pass** before constructing the storyboard:
 
 1. Draft `script/SCRIPT.md` as a complete spoken narration first, using the high-retention grammar from [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md).
-2. Make the narration sound like a human creator would actually say it: sharp opening, short spoken beats, failure-mode progression, concrete examples, and a reframing ending. For 解决问题-type topics, close on one interaction line (开放式, 填空式, or 选择式) after the reframe.
+2. Make the narration sound like a human creator would actually say it: sharp opening, short spoken beats, failure-mode progression, concrete examples, and a reframing ending. For 解决问题-type topics, close on exactly one interaction line after the reframe, and it must be a two-option A/B 选择题 — question first, then the two labelled options separated by a semicolon.
 3. After the narration works on its own, derive `script/STORYBOARD.md`, `script/scene-plan.json`, and `script/pronunciation.json` from that narration. Do not let visual-structure requirements flatten the spoken draft into a production checklist.
 4. Preserve evidence discipline during the pass: keep only supported claims, mark inference, and remove unverified social proof.
 
