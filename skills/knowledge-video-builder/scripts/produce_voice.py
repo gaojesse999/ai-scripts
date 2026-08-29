@@ -218,6 +218,10 @@ def settings(project: Path) -> dict:
         ),
         "edge_lead": float(consistency.get("speech_lead_seconds", 0.06)),
         "edge_release": float(consistency.get("speech_release_seconds", 0.08)),
+        "edge_gap": float(consistency.get("speech_gap_seconds", 0.18)),
+        "max_tail_extra": int(consistency.get("max_tail_extra_characters", 1)),
+        "tail_trim_coverage": float(consistency.get("tail_trim_min_coverage", 0.8)),
+        "max_tail_trim": float(consistency.get("max_tail_trim_seconds", 1.2)),
         "target_lufs": float(consistency.get("target_lufs", -16)),
         "lufs_tolerance": float(consistency.get("lufs_tolerance", 0.6)),
         "true_peak": float(consistency.get("true_peak_db", -1.5)),
@@ -351,15 +355,22 @@ def tail_coverage(script: str, heard: str, characters: int) -> float:
     return min(matched / len(tail), 1.0)
 
 
-def speech_edges(
+def speech_clusters(
     pcm: Path,
     threshold_db: float,
+    min_gap: float,
     frame_seconds: float = 0.01,
-) -> tuple[float, float] | None:
-    """First and last frame carrying audible energy, in seconds.
+) -> list[tuple[float, float]]:
+    """Audible stretches, split wherever silence runs longer than `min_gap`.
+
+    A single first/last pair cannot tell a sentence apart from a sentence plus
+    whatever the model exhaled after it; both end at the same audible frame.
+    Clusters can, because the stray syllable arrives as its own island on the
+    far side of a pause.
 
     Recogniser timestamps land on the last *token*, which is routinely earlier
-    than the last audible sample, so they must never define a trim point.
+    than the last audible sample, so they must never define a trim point on
+    their own — they only pick which island to trim at.
     """
     with wave.open(str(pcm), "rb") as source:
         rate = source.getframerate()
@@ -370,18 +381,49 @@ def speech_edges(
         samples = samples[::channels]
     step = max(1, int(frame_seconds * rate))
     threshold = 32768.0 * (10 ** (threshold_db / 20))
-    first: float | None = None
-    last = 0.0
+    gap_frames = max(1, round(min_gap / frame_seconds))
+    clusters: list[list[float]] = []
+    silent = gap_frames
     for index in range(0, len(samples) - step + 1, step):
         window = samples[index:index + step]
         energy = math.sqrt(sum(value * value for value in window) / len(window))
-        if energy > threshold:
-            if first is None:
-                first = index / rate
-            last = (index + step) / rate
-    if first is None:
-        return None
-    return first, last
+        if energy <= threshold:
+            silent += 1
+            continue
+        if clusters and silent < gap_frames:
+            clusters[-1][1] = (index + step) / rate
+        else:
+            clusters.append([index / rate, (index + step) / rate])
+        silent = 0
+    return [(start, end) for start, end in clusters]
+
+
+def trailing_extra(script: str, heard: str, characters: int = 6) -> tuple[str, int]:
+    """What the recogniser heard after the script ran out, and where it ended.
+
+    `tail_coverage` asks whether the scripted ending survived into the take.
+    This asks the opposite question — whether the take carried on once that
+    ending was done. A model that voices a syllable past the final full stop
+    passes the first test and fails this one.
+
+    Returns the unscripted text and the `heard` index of the last scripted
+    character, which is an index into the recogniser's spans as well.
+
+    Latin endings are exempt: whisper renders `Skill` as 斯基尔, which at this
+    level is indistinguishable from a syllable nobody asked for.
+    """
+    expected = spoken_text(script)
+    actual = canon(heard)
+    if not expected or not actual:
+        return "", -1
+    if re.search(r"[A-Za-z]", expected[-characters:]):
+        return "", -1
+    matcher = difflib.SequenceMatcher(None, expected, actual, autojunk=False)
+    blocks = [block for block in matcher.get_matching_blocks() if block.size]
+    if not blocks:
+        return "", -1
+    end = blocks[-1].b + blocks[-1].size
+    return heard[end:], end - 1
 
 
 def assess_candidate(
@@ -394,7 +436,9 @@ def assess_candidate(
     with tempfile.TemporaryDirectory() as tmp:
         pcm = to_pcm16k(path, Path(tmp) / "16k.wav")
         tokens = asr.transcribe(pcm, "zh")
-        edges = speech_edges(pcm, cfg["edge_threshold_db"])
+        clusters = speech_clusters(
+            pcm, cfg["edge_threshold_db"], cfg["edge_gap"]
+        )
     heard, spans = explode(tokens)
     if not spans:
         return {
@@ -404,10 +448,25 @@ def assess_candidate(
             "heard": "",
             "error": "recogniser found no speech",
         }
-    if edges:
-        speech_start, speech_end = edges
+    if clusters:
+        speech_start, speech_end = clusters[0][0], clusters[-1][1]
     else:
         speech_start, speech_end = spans[0][0], spans[-1][1]
+    energy_end = clusters[-1][1] if clusters else None
+    tail = tail_coverage(text, heard, cfg["tail_characters"])
+    extra, last_scripted = trailing_extra(text, heard, cfg["tail_characters"])
+    trimmed = 0.0
+    if extra and clusters and tail >= cfg["tail_trim_coverage"]:
+        kept = [
+            item for item in clusters if item[0] <= spans[last_scripted][1]
+        ]
+        removed = speech_end - kept[-1][1] if kept else 0.0
+        # Cut only across a pause the script had already finished before, and
+        # only a short one: a stray breath is brief, so a long cut means the
+        # recogniser lost the ending rather than the model adding to it.
+        if kept and 0 < removed <= cfg["max_tail_trim"]:
+            speech_end = kept[-1][1]
+            trimmed = round(removed, 3)
     start = max(0.0, speech_start - cfg["edge_lead"])
     end = min(duration, speech_end + cfg["edge_release"])
     active = max(speech_end - speech_start, 0.001)
@@ -416,12 +475,14 @@ def assess_candidate(
         "audio": str(path),
         "duration": round(duration, 3),
         "coverage": round(coverage(text, heard), 4),
-        "tail_coverage": round(tail_coverage(text, heard, cfg["tail_characters"]), 4),
+        "tail_coverage": round(tail, 4),
+        "tail_extra": extra,
+        "tail_trimmed": trimmed,
         "heard": heard,
         "speech_start": round(start, 3),
         "speech_end": round(end, 3),
         "asr_end": round(spans[-1][1], 3),
-        "energy_end": round(edges[1], 3) if edges else None,
+        "energy_end": round(energy_end, 3) if energy_end is not None else None,
         "active_duration": round(active, 3),
         "chars_per_second": round(spoken_count(text) / active, 3),
         "input_lufs": float(stats["input_i"]),
@@ -450,6 +511,13 @@ def basic_reasons(candidate: dict, cfg: dict) -> list[str]:
         reasons.append(
             f"sentence tail only {tail:.0%} recognised, take is likely cut short"
         )
+    extra = candidate.get("tail_extra") or ""
+    if len(extra) > cfg["max_tail_extra"] and not candidate.get("tail_trimmed"):
+        # Trimmed takes are already clean, so only the unfixable case is fatal:
+        # the model ran on without leaving a pause to cut at.
+        reasons.append(
+            f"take says {extra} after the script ends, with no pause to trim at"
+        )
     if candidate.get("flat_factor", 1) != 0:
         reasons.append(f"flat factor {candidate.get('flat_factor')} indicates clipping")
     rate = candidate.get("chars_per_second", 0)
@@ -473,6 +541,10 @@ def candidate_score(candidate: dict, previous_rate: float | None, cfg: dict) -> 
     if previous_rate is not None:
         score += 0.8 * abs(math.log(rate / previous_rate))
     score += max(0, cfg["min_coverage"] + 0.05 - candidate["coverage"])
+    if candidate.get("tail_extra"):
+        # Trimming removed the stray syllable, but a take that never produced
+        # one needs no faith in the trim, so it is the better ship.
+        score += 0.25
     return score
 
 
@@ -980,6 +1052,10 @@ def generate(
                                 cfg["tail_characters"],
                             ), 4
                         )
+                        item["tail_extra"] = trailing_extra(
+                            request_text(chunk), item["heard"],
+                            cfg["tail_characters"],
+                        )[0]
                     item["rejection_reasons"] = basic_reasons(item, cfg)
             selected, alternatives, candidates = synthesize_until_choice(
                 engineering_root,

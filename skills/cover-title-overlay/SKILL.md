@@ -101,6 +101,18 @@ python .cursor/skills/cover-title-overlay/scripts/make_cover.py "自动习惯设
 python .cursor/skills/cover-title-overlay/scripts/make_cover.py "落地用 Skill" "系统｜02" -o "out/ep2.png"
 ```
 
+## 生成同风格底图时：一次最多 2 张
+
+用生图模型做「风格接近、构图不同」的新底图时，**同一轮最多并发生成 2 张**。4 张带参考图大约要 7 分钟，工具调用会被标成 interrupted：图其实已经写到 Cursor 的 `assets` 目录，但后续裁切、拷贝不会跑。
+
+同一轮 2 张生成完，立刻裁到 `1672x941` 并写入 `cover/`。用户要 4 张就分两轮。
+
+若仍然 interrupted，不要重做，先导入已生成的文件：
+
+```bash
+python .cursor/skills/cover-title-overlay/scripts/import_generated.py
+```
+
 ## 依赖与资源
 
 只需要 `Pillow`。缺失时装它：

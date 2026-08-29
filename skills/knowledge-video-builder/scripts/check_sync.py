@@ -39,6 +39,7 @@ from produce_voice import (  # noqa: E402
     reference_voice_sha256,
     settings as voice_settings,
     text_sha256,
+    trailing_extra,
 )
 
 BLOCK_RE = re.compile(r"/\* timing:start.*?/\* timing:end \*/", re.DOTALL)
@@ -340,6 +341,21 @@ def main() -> None:
             ))
 
         heard = heard_as(data["units"], data.get("asr_text", ""))
+        # Every rate above measures what the recogniser found; none of them
+        # measure what it found in addition. A syllable the model voiced after
+        # the last line leaves all of them at 100% and still ships.
+        recognised = "".join(
+            c for c in data.get("asr_text", "") if c not in DROP_CHARS
+        )
+        unscripted = trailing_extra(
+            "".join(unit["text"] for unit in data["units"]), recognised
+        )[0]
+        if len(unscripted) > 1:
+            issues.append((
+                HIGH,
+                f"{chapter_id}: the audio says {unscripted} after the script "
+                f"ends; re-take the final chunk",
+            ))
         for unit in data["units"]:
             spoken = sum(1 for c in unit["text"] if c not in DROP_CHARS)
             if spoken < 6:
