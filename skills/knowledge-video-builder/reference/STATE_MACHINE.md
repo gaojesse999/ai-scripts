@@ -22,10 +22,10 @@ The phase states remain useful for artifact bookkeeping, but they are not all us
 
 Use two default gates:
 
-1. **Full narration gate:** analysis, brief, and script are prepared internally and presented together as the complete narration plus chapter map. User approval unlocks production.
-2. **Chapter gate:** voice, visual, render, and QA are executed as one loop for the current chapter. User approval of that chapter unlocks the next chapter.
+1. **Narration gate:** analysis and brief are prepared internally, and `script/SCRIPT.md` is presented as a readable article with its chapter outline, duration estimate, and open pronunciations. User approval unlocks production. Nothing is derived from the narration before this point, so a revision round costs one file edit.
+2. **Chapter gate:** the visual derivation runs once, then voice, visual, render, and QA execute as one loop for the current chapter. User approval of that chapter unlocks the next chapter.
 
-If the user explicitly selects batch mode, run all chapter loops after the full narration gate and request one final review.
+If the user explicitly selects batch mode, run all chapter loops after the narration gate and request one final review.
 
 ## Normal transition
 
@@ -56,13 +56,18 @@ Rolling back to phase X:
 
 ## Dependency table
 
+Each artifact belongs to the phase that first needs it, not the phase that could
+produce it earliest. That is why the storyboard and scene plan sit under
+`visual`: requiring them at the script gate would force a visualisation pass
+through every narration revision.
+
 | Internal phase | Requires | Primary output | User gate |
 |---|---|---|---|
 | analysis | source files | `analysis/evidence-map.json` | — |
 | brief | source analysis | `content/content-brief.md` | — |
-| script | analysis + brief | `script/scene-plan.json` | full narration gate |
-| voice | approved narration, current chapter | `audio/narration.wav`, `timing/scenes.json` | — |
-| visual | current chapter voice/timing | `review/storyboard.html`, `hyperframes/index.html` | — |
+| script | analysis + brief | `script/SCRIPT.md`, `timing/chapters.json` | narration gate |
+| voice | approved narration, current chapter | `script/voice-plan.json`, `audio/narration.wav`, `timing/scenes.json` | — |
+| visual | current chapter voice/timing | `script/STORYBOARD.md`, `script/scene-plan.json`, `review/storyboard.html`, `hyperframes/index.html` | — |
 | render | current chapter visual | `qa/report.md`, chapter video | chapter gate |
 
 ## Resume behavior
@@ -72,4 +77,4 @@ When the user says “continue”, “resume”, or references a prior project:
 1. read `project-state.json`;
 2. report current phase and outstanding review;
 3. continue only the active phase;
-4. if status is `pending_review`, determine whether it is the full narration gate or a chapter gate; request approval/revision only for those gates, otherwise continue the current internal loop.
+4. if status is `pending_review`, determine whether it is the narration gate or a chapter gate; request approval/revision only for those gates, otherwise continue the current internal loop.

@@ -6,7 +6,7 @@
     "aspect_ratio": "16:9",
     "width": 1920,
     "height": 1080,
-    "fps": 60,
+    "fps": 30,
     "target_duration": 240,
     "style_profile": "editorial-technical-dark",
     "renderer": "hyperframes",
@@ -17,11 +17,12 @@
       "chapter_count": 6
     }
   },
+  "chapters": [],
   "scenes": [
     {
-      "id": "S01",
-      "chapter": "Hook",
-      "purpose": "Show the core transformation",
+      "id": "S11",
+      "chapter": "S01 · 开场",
+      "purpose": "展示核心转变",
       "narration": "",
       "evidence_ids": [],
       "screen_text": [],
@@ -31,7 +32,6 @@
       "layout": "hero",
       "visual_data": {},
       "motion": [],
-      "stage_labels": ["Script", "Assets", "Space", "Prompt", "Shot", "Deliver"],
       "caption": {"mode": "bottom-pill", "max_lines": 2},
       "assets": [],
       "estimated_duration": 8.0,

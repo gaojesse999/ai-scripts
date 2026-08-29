@@ -1,5 +1,20 @@
 # Script and Storyboard
 
+## Two passes, one gate
+
+Narration and storyboard are written in separate passes. Phase 3A produces
+`script/SCRIPT.md` alone and stops for the narration gate; Phase 3B derives the
+machine-readable artifacts and adds the visual direction. Writing both at once
+means every wording change drags a full visualisation pass behind it, and
+narration is the part that gets rewritten most.
+
+A paragraph boundary in `SCRIPT.md` is a scene boundary — scene ids come from
+segment ids, and both renderers match scenes to timing by id. So re-splitting
+paragraphs is free before audio exists and costs a re-record afterwards. Review
+the split as the first step of Phase 3B, not later. Do not invent sub-scene ids
+such as `S31a` to work around it; that forks scene ids from timing ids and
+breaks the matching both renderers rely on.
+
 ## Narration rules
 
 - Spoken, not written prose.
@@ -38,6 +53,12 @@ A single source archive enters from the left. It splits into six evidence cards.
 ```
 
 ## Scene plan minimum fields
+
+`id`, `chapter`, and `narration` are written by
+`scripts/derive_script_artifacts.py`. Everything else is hand-authored art
+direction, and the script never touches it. Change wording in `SCRIPT.md` and
+re-derive; editing `narration` here makes the scene plan disagree with what is
+actually spoken.
 
 ```json
 {

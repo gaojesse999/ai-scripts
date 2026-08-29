@@ -29,6 +29,11 @@ from align_audio import (  # noqa: E402
 )
 from apply_voice_plan import chapter_pauses, pause_digest  # noqa: E402
 from apply_timing import literal_times  # noqa: E402
+from derive_script_artifacts import (  # noqa: E402
+    build_chapters,
+    narration_line_error,
+    parse_script,
+)
 from produce_voice import (  # noqa: E402
     plan_digest,
     reference_voice_sha256,
@@ -104,6 +109,60 @@ def run_timelines(project: Path) -> list[tuple[str, str]]:
                        + detail.replace("\n", "\n      "))]
 
 
+def check_derivation(project: Path, config: dict, chapters: dict) -> list[tuple[str, str]]:
+    """Confirm timing/chapters.json is still what SCRIPT.md derives to.
+
+    SCRIPT.md is what the user reads and approves; chapters.json is what the
+    voice actually speaks. Nothing else notices when the two drift apart,
+    because every downstream number stays internally consistent.
+    """
+    script = project / "script/SCRIPT.md"
+    if not script.exists():
+        return [(HIGH, "script/SCRIPT.md is missing; the spoken text has no "
+                       "single source and timing/chapters.json cannot be verified")]
+
+    body = script.read_text(encoding="utf-8")
+    if not any(line.startswith("##") for line in body.splitlines()):
+        # Predates the chapter-heading contract, so there is nothing to derive
+        # from. Say so instead of blocking a project that already rendered.
+        return [(MEDIUM, "script/SCRIPT.md has no chapter headings, so it predates "
+                         "the derivation contract and timing/chapters.json cannot be "
+                         "verified against it; add `## S01 章节名` headings to bring "
+                         "this project under the gate")]
+
+    parsed, errors = parse_script(body, "script/SCRIPT.md")
+    if errors:
+        return [(HIGH, f"script/SCRIPT.md is not parseable: {problem}") for problem in errors]
+
+    gap = float((config.get("audio") or {}).get("scene_gap_seconds", 0.8))
+    expected = build_chapters(parsed, gap)["chapters"]
+    issues: list[tuple[str, str]] = []
+    for chapter_id in sorted(set(expected) | set(chapters)):
+        want, have = expected.get(chapter_id), chapters.get(chapter_id)
+        if want is None:
+            issues.append((HIGH, f"{chapter_id}: SCRIPT.md no longer has this chapter; "
+                                 "run derive_script_artifacts.py"))
+            continue
+        if have is None:
+            issues.append((HIGH, f"{chapter_id}: SCRIPT.md has this chapter but "
+                                 "timing/chapters.json does not; "
+                                 "run derive_script_artifacts.py"))
+            continue
+        wanted = {item["id"]: item["text"] for item in want["segments"]}
+        held = {item.get("id"): item.get("text", "") for item in have.get("segments", [])}
+        drifted = sorted(
+            set(wanted) ^ set(held)
+            | {sid for sid in set(wanted) & set(held) if wanted[sid] != held[sid]}
+        )
+        if drifted:
+            issues.append((
+                HIGH,
+                f"{chapter_id}: timing/chapters.json disagrees with SCRIPT.md at "
+                f"{', '.join(drifted)}; run derive_script_artifacts.py --write",
+            ))
+    return issues
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--project", required=True, type=Path)
@@ -125,6 +184,7 @@ def main() -> None:
     issues: list[tuple[str, str]] = []
 
     chapters = load(project / "timing/chapters.json")["chapters"]
+    issues.extend(check_derivation(project, config, chapters))
     align_dir = project / "timing/align"
     voice_plan_path = project / "script/voice-plan.json"
     voice_plan = load(voice_plan_path) if voice_plan_path.exists() else None
@@ -223,6 +283,11 @@ def main() -> None:
                     f"{chapter_id}: unsupported inline control marker {marker.group(0)}; "
                     "keep narration clean and use script/voice-plan.json",
                 ))
+            for line in filter(str.strip, segment.get("text", "").splitlines()):
+                problem = narration_line_error(line)
+                if problem:
+                    issues.append((HIGH, f"{segment.get('id', chapter_id)}: {problem}\n"
+                                         f"      {line}"))
 
         planned_pauses = []
         if voice_plan is not None:

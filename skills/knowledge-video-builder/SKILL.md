@@ -77,9 +77,9 @@ Do not trigger for:
 ## Core principles
 
 1. **Evidence before claims.** Analyze the source before writing the script. Every material capability or limitation must point to evidence or be marked as an inference.
-2. **One canonical content model.** `script/scene-plan.json` is the content-and-visual source of truth after Phase 3. PPT, review HTML, subtitles, and HyperFrames HTML derive from it.
+2. **One canonical source per kind of content.** `script/SCRIPT.md` is the only authority for spoken words; `timing/chapters.json` and the `narration` fields of `script/scene-plan.json` are derived from it and never hand-edited. `script/scene-plan.json` is the authority for visual structure, and PPT, review HTML, subtitles, and HyperFrames HTML derive from it.
 3. **Real audio controls final timing.** Do not finalize animation timing from word-count estimates. Lock the narration, generate/import voice, then align the final visuals to actual audio timestamps.
-4. **Approval is explicit at useful gates.** Do not ask the user to approve every internal artifact. The default user-facing gates are the complete narration/chapter map, then each completed chapter. Never approve either gate on the user's behalf.
+4. **Approval is explicit at useful gates.** Do not ask the user to approve every internal artifact. The default user-facing gates are the narration article, then each completed chapter. Never approve either gate on the user's behalf.
 5. **Local revision over regeneration.** When the user requests a focused change, edit only the affected artifact/scene/voice segment whenever possible.
 6. **No unsupported execution claims.** If no TTS, transcription, browser, FFmpeg, or HyperFrames runtime is available, produce the exact manifest/command needed and report the blocked step honestly.
 7. **The video teaches through transformation.** Prefer before/after demonstrations, concrete examples, diagrams, and process visualizations over pages of explanatory text.
@@ -174,9 +174,9 @@ Use this structure unless the user provides an existing project:
 ├── content/
 │   └── content-brief.md
 ├── script/
-│   ├── SCRIPT.md
+│   ├── SCRIPT.md                     # the only authority for spoken words
 │   ├── STORYBOARD.md
-│   ├── scene-plan.json
+│   ├── scene-plan.json               # narration derived; visual fields hand-authored
 │   ├── pronunciation.json
 │   └── voice-plan.json               # exact pauses; never inline TTS markers
 ├── audio/
@@ -187,6 +187,7 @@ Use this structure unless the user provides an existing project:
 │   ├── voice-plan-application.json
 │   └── narration.wav
 ├── timing/
+│   ├── chapters.json                # derived from SCRIPT.md; never hand-edited
 │   ├── align/                       # per-chapter forced-alignment output
 │   ├── cues/                        # per-chapter caption cues
 │   ├── beats.json                   # motion anchors, keyed by unit id
@@ -236,8 +237,8 @@ Read [reference/STATE_MACHINE.md](reference/STATE_MACHINE.md) before changing ph
 
 Keep the six phases as internal production bookkeeping, but do not expose every phase as a separate approval request. Use this default user-facing loop:
 
-1. **Source to complete narration.** Inspect the source, perform the evidence audit, choose the chapter structure, and draft the complete narration plus chapter map. Present them together and stop for one approval: the full narration is approved.
-2. **Chapter production.** After narration approval, produce one chapter through voice, timing, visual build, render, and QA as a single production loop. Deliver that chapter's preview or master and stop for confirmation.
+1. **Source to narration article.** Inspect the source, perform the evidence audit, choose the chapter structure, and write `script/SCRIPT.md` as a readable article. Present it and stop for one approval: the narration is approved. Nothing is derived from the narration until then, so a revision round costs one file edit.
+2. **Chapter production.** After narration approval, derive the storyboard and scene plan once, then produce one chapter through voice, timing, visual build, render, and QA as a single production loop. Deliver that chapter's preview or master and stop for confirmation.
 3. **Next chapter.** After the chapter is approved, produce the next chapter using the same loop. Carry forward the approved visual system and timing rules.
 4. **Explicit batch mode.** If the user explicitly asks to make all chapters at once, or says to skip chapter-by-chapter review, run the chapter loops consecutively and present one final review. Do not infer batch mode from a vague “继续”.
 
@@ -285,7 +286,7 @@ If the user supplies a reference video or asks for a similar effect, also inspec
 
 Produce all Phase 1 artifacts listed in [reference/SOURCE_ANALYSIS.md](reference/SOURCE_ANALYSIS.md). Every major claim must have an ID in `analysis/evidence-map.json`.
 
-Record internally and carry the result into Phase 2 without requesting a separate approval. Present the combined narration gate only after Phase 3 is complete. Include:
+Record internally and carry the result into Phase 2 without requesting a separate approval. Present the narration gate only after Phase 3A is complete. Include:
 
 - concise understanding of the source;
 - key capabilities and limitations;
@@ -303,7 +304,7 @@ Turn the approved analysis into an editorial plan, not a full narration. Determi
 - viewer problem and promised outcome;
 - one-sentence thesis;
 - opening hook;
-- chapter structure, defaulting to the five stages 解决什么问题 → 原理 → 怎么做 → 举例 → 总结;
+- chapter structure, defaulting to the five stages 问题 → 原理 → 解决方法 → 举例 → 总结;
 - what must be shown instead of merely said;
 - demonstration example;
 - material claims and source evidence;
@@ -315,29 +316,75 @@ When a reference style profile exists, also lock the canvas, chapter/progress tr
 
 Follow [reference/CONTENT_STRATEGY.md](reference/CONTENT_STRATEGY.md). Produce `content/content-brief.md`.
 
-The default chapter framework is 解决什么问题 → 原理 → 怎么做 → 举例 → 总结. Treat those five as content stages, not as a slide count: allocate scenes by how much a stage actually carries, so an enumerating stage may span several scenes while a single-claim stage stays one. See [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) for what each stage must accomplish, the failure mode of each, and the two alternative skeletons for tool teardowns and tutorials. Record any deviation from the five stages in the brief.
+The default chapter framework is 问题 → 原理 → 解决方法 → 举例 → 总结. Treat those five as content stages, not as a slide count: allocate scenes by how much a stage actually carries, so an enumerating stage may span several scenes while a single-claim stage stays one. See [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) for what each stage must accomplish, the failure mode of each, and the two alternative skeletons for tool teardowns and tutorials. Record any deviation from the five stages in the brief.
+
+Name the chapters after the stages themselves, so a heading reads `## S03 解决方法` rather than a clever title. The heading is what the chapter rail shows on screen, and a viewer who joins mid-video needs to know which stage they are in, not a second headline competing with the narration.
+
+Two rules keep 解决方法 and 举例 from collapsing into each other, which is the most common way the middle of a knowledge video stops teaching:
+
+- **解决方法 must present numbered sequential steps**, spoken as 第一步/第二步/第三步, followed by why each step works. A stage that only names a principle leaves the viewer with nothing to execute. Three steps is usually right; resist a fourth.
+- **举例 must walk exactly those steps, in the same order, on one concrete case.** Show the old path failing first, then run the numbered steps against the same situation so the transformation is visible. Do not introduce a step that 解决方法 never stated, and do not renumber.
+
+**Default to exactly one example.** Add a second only when the user explicitly asks for more, or when the subject genuinely needs two mirrored cases to prove the mechanism generalizes. One example walked all the way through the steps teaches more than two examples that each stop halfway, and a second case is the first thing to cut when the script runs long.
 
 When the user asks for a knowledge-sharing video, YouTube-style explainer, viral breakdown, creator-style narration, or supplies a reference SRT/script with a high-retention educational tone, also read [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) before choosing the opening, chapter engine, examples, and ending.
 
-Carry the strategy into Phase 3 without requesting a separate brief approval. Keep the proposed structure, demo, duration, and exclusions in the internal artifacts.
+Carry the strategy into Phase 3A without requesting a separate brief approval. Keep the proposed structure, demo, duration, and exclusions in the internal artifacts.
 
-## Phase 3 — Narration, storyboard, and canonical scene plan
+## Phase 3A — Narration article
 
-Prerequisite: Phase 1 and Phase 2 artifacts are ready. Continue internally until the combined full narration gate.
+Prerequisite: Phase 1 and Phase 2 artifacts are ready.
 
-For knowledge-sharing videos where the narration itself is the main retention driver, use a **voiceover-first pass** before constructing the storyboard:
+This phase produces exactly one artifact: `script/SCRIPT.md`. Narration is both the main retention driver and the part that gets rewritten most, so nothing is derived from it until the user approves it. Deriving a storyboard from a draft that is about to change spends a full visualisation pass per revision and leaves three copies of the same sentences to hand-sync.
 
-1. Draft `script/SCRIPT.md` as a complete spoken narration first, using the high-retention grammar from [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md).
-2. Make the narration sound like a human creator would actually say it: sharp opening, short spoken beats, failure-mode progression, concrete examples, and a reframing ending. For 解决问题-type topics, close on exactly one interaction line after the reframe, and it must be a two-option A/B 选择题 — question first, then the two labelled options separated by a semicolon.
-3. After the narration works on its own, derive `script/STORYBOARD.md`, `script/scene-plan.json`, and `script/pronunciation.json` from that narration. Do not let visual-structure requirements flatten the spoken draft into a production checklist.
-4. Preserve evidence discipline during the pass: keep only supported claims, mark inference, and remove unverified social proof.
+Draft the narration with the high-retention grammar in [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md). Make it sound like a human creator would actually say it: sharp opening, short spoken beats, failure-mode progression, concrete examples, and a reframing ending. For 解决问题-type topics, close on exactly one interaction line after the reframe, and it must be a two-option A/B 选择题 — question first, then the two labelled options separated by a semicolon.
 
-Generate these together:
+Rules:
 
-- `script/SCRIPT.md`: only words intended to be spoken;
+- Open with the value or transformation, not background history.
+- Explain what the subject can and cannot do early.
+- State the solution as numbered sequential steps, then say why each step works.
+- Use one concrete example, and walk the numbered steps through it in the same order. Add a second example only on explicit request.
+- Organize chapters around failure modes and control mechanisms rather than feature lists.
+- Keep only supported claims, clearly label inferences and editorial opinions, and remove unverified social proof.
+- Every material claim must rest on an approved evidence ID. Track the mapping in the brief and in Phase 3B, not in the article — `SCRIPT.md` holds spoken words only.
+
+### `SCRIPT.md` structure
+
+`SCRIPT.md` is the single authority for spoken text. Every line is one of exactly three kinds, and `derive_script_artifacts.py` rejects anything else with a line number and the offending text:
+
+| Line kind | Form | Where it goes |
+|---|---|---|
+| chapter heading | `## S01 章节名`, where 章节名 defaults to the stage name such as 问题 or 解决方法 | the `chapter` field in `scene-plan.json`, and the chapter rail label |
+| paragraph break | an empty line | a segment boundary, which is also a scene boundary |
+| narration | everything else | `segments[].text` in `timing/chapters.json`, spoken verbatim |
+
+A narration line must not start with `#`, `>`, `|`, a backtick, `-`, `*`, `+`, or an ordered-list marker, and must not contain `**`, backticks, HTML comments, markdown links, or pause tokens. Chapter numbers run `S01` through `S09`.
+
+Headings are safe to keep in this file only because nothing reads it as speech: TTS text comes solely from `timing/chapters.json`, and derivation routes the heading to the chapter rail instead. Treat that isolation as enforced rather than natural — it holds because of the parser above, the guard in `produce_voice.py`, and the consistency check in `check_sync.py`. The existing coverage and pace checks cannot catch a leaked heading, because a heading inside a chunk appears on both sides of the comparison.
+
+End by presenting the complete narration, the chapter outline, the duration estimated from measured pace, and unresolved pronunciations. This is the default **narration approval gate**. Revisions in this phase touch only `SCRIPT.md`; do not generate a storyboard, a scene plan, or any timing until the user approves.
+
+## Phase 3B — Visual derivation
+
+Prerequisite: the narration gate is approved. This phase has no separate approval gate — its artifacts are presented with the first finished chapter.
+
+First, review the paragraph breaks. Scene ids come from segment ids, so a paragraph boundary is a scene boundary. Re-splitting now moves blank lines only and costs nothing; the same change after audio exists costs a re-record.
+
+Then derive the machine-readable artifacts:
+
+```bash
+python3 scripts/derive_script_artifacts.py --project <project-dir>
+python3 scripts/derive_script_artifacts.py --project <project-dir> --write
+```
+
+The first form is a dry run. The write pass produces `timing/chapters.json` and fills `chapter` and `narration` in `script/scene-plan.json`, leaving hand-authored visual fields untouched. Run it again after every later narration edit, and read its unit-id shift report: inserting a line mid-paragraph renumbers the `Sxx.n` ids that `voice-plan.json` and `motion-plan.yaml` point at.
+
+Finally, author by hand:
+
 - `script/STORYBOARD.md`: scene-by-scene visual direction;
-- `script/scene-plan.json`: canonical structured content model;
-- `script/pronunciation.json`: display text versus spoken pronunciation.
+- the visual fields of `script/scene-plan.json`: the canonical structured content model;
+- `script/pronunciation.json`: display text versus spoken pronunciation;
 - `script/voice-plan.json`: structured exact pauses anchored to stable narration-unit IDs; create an empty plan when no exact pause is required.
 
 Each scene must include:
@@ -365,23 +412,17 @@ When using a reference style profile, also include:
 
 Rules:
 
-- Open with the value or transformation, not background history.
-- Explain what the subject can and cannot do early.
-- Use a concrete example to demonstrate the workflow.
-- For popular knowledge-share scripts, organize chapters around failure modes and control mechanisms rather than feature lists; preserve evidence discipline while using sharper hooks, concrete analogies, and subtitle-friendly spoken beats from [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md).
 - Keep screen text shorter than narration.
 - Never place full narration paragraphs on screen.
-- Every material claim must reference an approved evidence ID.
-- Clearly label inferences and editorial opinions.
+- Carry each scene's evidence IDs over from the brief so every material claim stays traceable.
 - Do not define final state timestamps until final audio exists.
+- Do not rewrite narration here. A wording change belongs in `SCRIPT.md` followed by a re-derive; editing `scene-plan.json` directly makes the two disagree and `check_sync.py` will block the render.
 
 Follow [reference/SCRIPT_STORYBOARD.md](reference/SCRIPT_STORYBOARD.md) and [reference/DATA_CONTRACTS.md](reference/DATA_CONTRACTS.md).
 
-End by presenting the complete narration, chapter map, visual structure, estimated duration, and unresolved pronunciations. This is the default **full narration approval gate**. Do not generate voice or chapter media until the user approves this combined gate.
-
 ## Phase 4 — Voice production and timing alignment
 
-Prerequisite: the complete narration approval gate is approved. Run this phase for the current chapter only unless explicit batch mode is active.
+Prerequisite: the narration gate is approved and Phase 3B has been derived. Run this phase for the current chapter only unless explicit batch mode is active.
 
 Use the bundled `mimo-tts` Skill by default. Before generating audio, verify that `$ENGINEERING_ROOT/.cursor/skills/mimo-tts/SKILL.md` and `$ENGINEERING_ROOT/.cursor/skills/mimo-tts/scripts/mimo_tts.py` are available, then read `$ENGINEERING_ROOT/.skill.env`. Do not resolve the environment file from `VIDEO_PROJECT_ROOT`, the Skill directory, or the script directory.
 
@@ -452,7 +493,7 @@ Large pace errors are regenerated, not repaired with aggressive `atempo`.
 
 ### Exact pauses are structured delivery data
 
-`SCRIPT.md` contains spoken words only. Never put pseudo tags such as `<#1#>`, `[pause]`, or SSML-like text into narration and hope a provider interprets them. A provider may read the token aloud, ignore it, or change behaviour between models.
+A narration line contains spoken words only. Never put pseudo tags such as `<#1#>`, `[pause]`, or SSML-like text into narration and hope a provider interprets them. A provider may read the token aloud, ignore it, or change behaviour between models.
 
 Declare a deliberate pause in `script/voice-plan.json`:
 
@@ -579,9 +620,9 @@ The review HTML must show, per scene:
 - evidence IDs;
 - assets and missing items.
 
-Before implementing HyperFrames, create `motion/motion-plan.yaml` from the approved scene plan and real audio timing. A motion plan must identify stable scenes, timestamped semantic states, persistent elements, focus changes, holds, and summary states. Do not describe motion only as `fade`, `slide`, or `zoom`; state what information is revealed, accumulated, compared, connected, transformed, or resolved.
+Before implementing HyperFrames, create `motion/motion-plan.yaml` from the approved scene plan and real audio timing. A motion plan must identify stable scenes, timestamped semantic states, persistent elements, focus changes, holds, and summary states. Do not describe motion only as `fade`, `slide`, or `zoom`; state what information is revealed, accumulated, compared, connected, transformed, or resolved. Follow [reference/KME_MOTION_ENGINE.md](reference/KME_MOTION_ENGINE.md) for the state lifecycle, motion grammar, attention levels, and timing constants.
 
-Use `motion/style-tokens.json` for the shared canvas, safe area, colors, typography, radii, borders, and motion constants. Use `motion/attention-plan.json` when a scene has more than one competing information group.
+Use `motion/style-tokens.json` for the shared canvas, safe area, colors, typography, radii, borders, and motion constants. Use `motion/attention-plan.json` when a scene has more than one competing information group. `project.py init` seeds all three files in `motion/`; edit them rather than inventing a parallel set of values.
 
 When a reference style profile exists, the review artifact must also expose the intended layout, visual data, caption mode, motion beats, and any style override. The initial HyperFrames scaffold should use the shared design system from [reference/REFERENCE_VIDEO_STYLE.md](reference/REFERENCE_VIDEO_STYLE.md), including the chapter rail, dark canvas, accent palette, reusable comparison/flow/code layouts, and caption layer.
 
@@ -664,7 +705,7 @@ Run:
 
 ```bash
 python scripts/validate_project.py <project-dir> --phase render
-python3 scripts/check_sync.py <project-dir>
+python3 scripts/check_sync.py --project <project-dir>
 ```
 
 The sync gate blocks the render on Critical and High findings. It exists for a failure that no amount of watching catches reliably: a script line is edited, that one chapter is not re-recorded, and every downstream number stays plausible while the voice says something else. Alignment makes that measurable — a line whose characters the recogniser cannot find in the audio is either misrecognised or genuinely not spoken there. The gate prints both the script text and what was heard, which separates the two cases at a glance.
@@ -754,7 +795,7 @@ Before every response in an existing project:
 2. Confirm the current phase, current version, and required prerequisites.
 3. Read the latest approved upstream artifacts.
 4. Never use an older draft when a newer approved version exists.
-5. Never start chapter production before the full narration gate is approved, and never start the next chapter before the current chapter gate is approved. Internal phase artifacts may proceed without separate user approval when their upstream files are ready.
+5. Never start chapter production before the narration gate is approved, and never start the next chapter before the current chapter gate is approved. Internal phase artifacts may proceed without separate user approval when their upstream files are ready.
 
 Use:
 
@@ -773,27 +814,28 @@ analysis, brief, script, voice, visual, render
 
 ## User-facing gate semantics
 
-- **Full narration gate:** approve the complete `SCRIPT.md`, chapter map, and unresolved pronunciation list together. This unlocks chapter production.
+- **Narration gate:** approve `script/SCRIPT.md` together with its chapter outline, estimated duration, and unresolved pronunciation list. What the user reads here is one article, not a stack of five artifacts. This unlocks chapter production.
 - **Chapter gate:** approve the rendered current chapter and its QA result together. This unlocks the next chapter.
-- Do not ask for separate approvals of the brief, voice, visual scaffold, review HTML, or motion plan unless the user requests inspection or a blocking ambiguity requires a decision.
-- When the user explicitly selects batch mode, record that choice and run all chapter loops consecutively after the full narration gate.
+- Do not ask for separate approvals of the brief, storyboard, scene plan, voice, visual scaffold, review HTML, or motion plan unless the user requests inspection or a blocking ambiguity requires a decision.
+- When the user explicitly selects batch mode, record that choice and run all chapter loops consecutively after the narration gate.
 
 Valid user actions:
 
-- **APPROVE**: approve the complete narration gate or the current chapter gate;
+- **APPROVE**: approve the narration gate or the current chapter gate;
 - **REVISE**: edit specified parts without discarding unaffected approved work;
 - **REGENERATE**: rebuild the current phase while preserving approved evidence and constraints;
 - **ROLLBACK**: return to an earlier phase and invalidate downstream artifacts.
 
 Approval phrases can include “批准”, “确认”, “通过”, “没问题，继续”, “approve”, or “looks good”. A vague “继续” counts only when the current review artifact has already been presented and no unresolved blocker remains.
 
-After presenting the complete narration gate or a chapter gate, stop the response. Do not perform the next gated loop in the same turn.
+After presenting the narration gate or a chapter gate, stop the response. Do not perform the next gated loop in the same turn.
 
 # Revision and invalidation rules
 
 - Changing source files invalidates analysis and every downstream phase.
 - Changing approved claims or audience positioning invalidates brief and every downstream phase.
-- Changing narration invalidates voice, timing, visual timing, and render.
+- Changing narration means editing `script/SCRIPT.md` and re-running `derive_script_artifacts.py --write`. Never hand-edit `timing/chapters.json` or a `narration` field to match; the derivation is what keeps them equal, and `check_sync.py` blocks the render when they drift.
+- Changing narration invalidates voice, timing, visual timing, and render for the affected chapters only. Chapters whose text did not change keep their measured timing across a re-derive.
 - Changing only pronunciation or voice delivery invalidates affected audio segments, timing, visual timing for those scenes, and render.
 - Changing only visual styling does not invalidate approved narration or voice.
 - Changing only motion timing invalidates the affected visual scene and render, not the approved narration or audio.
@@ -810,7 +852,8 @@ After presenting the complete narration gate or a chapter gate, stop the respons
 - Never let PPT/HTML become an independent content fork. Derive both from `scene-plan.json`.
 - Never finalize animation timing before final voice timing exists.
 - Never estimate a caption or beat time by splitting a segment in proportion to character count. Chinese TTS is not constant-rate; measure it.
-- Never encode delivery control in spoken narration with pseudo tags such as `<#1#>` or `[pause]`. Keep `SCRIPT.md` clean and use `script/voice-plan.json` for exact pauses.
+- Never put anything in `SCRIPT.md` beyond chapter headings, blank lines, and narration lines. In particular, never encode delivery control with pseudo tags such as `<#1#>` or `[pause]`; use `script/voice-plan.json` for exact pauses.
+- Never write `timing/chapters.json` or a scene's `narration` by hand. Derive both from `SCRIPT.md`.
 - Never leave a keyframe as a literal second once alignment exists. Anchor it to a beat id so a re-record reaches it.
 - Never conclude that forced alignment is unavailable because a model download timed out. Check what was actually downloaded before switching approaches.
 - Never regenerate all TTS when only one segment needs correction.
@@ -848,13 +891,13 @@ After presenting the complete narration gate or a chapter gate, stop the respons
 - `reference/VOICE_PIPELINE.md` — TTS, segmenting, merging, and alignment
 - `reference/HYPERFRAMES_BUILD.md` — current HyperFrames implementation rules
 - `reference/KME_MOTION_ENGINE.md` — scene, state, attention, semantic motion, and hold rules
-- `reference/VISUAL_SYSTEM.md` — editorial layout, containers, typography, and semantic color
 - `reference/ENCODING_COMPATIBILITY.md` — universal 1080p and 720p delivery settings
-- `reference/REFERENCE_VIDEO_STYLE.md` — reference-video inspection and editorial motion-explainer style system
+- `reference/REFERENCE_VIDEO_STYLE.md` — reference-video inspection plus the default visual system: tokens, containers, typography, and semantic color
 - `reference/QA.md` — production quality gates
 - `reference/DATA_CONTRACTS.md` — canonical JSON structures
-- `templates/` — project-state, config, evidence, scene-plan, and pronunciation starters
+- `templates/` — starters seeded by `project.py init`: `project-state.json`, `project-config.json`, `evidence-map.json`, `content-brief.md`, `SCRIPT.md`, `scene-plan.json`, `pronunciation.json`, `voice-plan.json`, `motion-plan.yaml`, `style-tokens.json`, `attention-plan.json`
 - `scripts/project.py` — initialize and manage project state
+- `scripts/derive_script_artifacts.py` — derive `timing/chapters.json` and scene narration from `script/SCRIPT.md`
 - `scripts/build_review.py` — generate the storyboard review HTML
 - `scripts/build_hyperframes.py` — scaffold a timed HyperFrames project
 - `scripts/align_audio.py` — force-align narration audio against the script

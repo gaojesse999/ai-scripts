@@ -47,25 +47,39 @@ def event(state: dict, action: str, phase: str, note: str = "") -> None:
     state.setdefault("history", []).append({"at": now(), "action": action, "phase": phase, "note": note})
 
 
+# Single source for the per-phase artifact gate. validate_project.py imports
+# this so a new required artifact cannot be added to one gate and forgotten in
+# the other.
+#
+# Each artifact sits in the phase that first needs it, not the phase that
+# happens to produce it early. The storyboard and the scene plan are visual
+# authoring, so demanding them at the script gate would force a full
+# visualisation pass through every narration revision.
+REQUIRED_ARTIFACTS = {
+    "analysis": ["analysis/overview.md", "analysis/evidence-map.json"],
+    "brief": ["content/content-brief.md"],
+    "script": [
+        "script/SCRIPT.md",
+        "timing/chapters.json",
+    ],
+    "voice": [
+        "script/voice-plan.json",
+        "audio/narration.wav",
+        "audio/voice-production.json",
+        "timing/scenes.json",
+    ],
+    "visual": [
+        "script/STORYBOARD.md",
+        "script/scene-plan.json",
+        "review/storyboard.html",
+        "hyperframes/index.html",
+    ],
+    "render": ["qa/report.md"],
+}
+
+
 def artifact_requirements(project: Path, phase: str) -> list[Path]:
-    m = {
-        "analysis": [project/"analysis/evidence-map.json", project/"analysis/overview.md"],
-        "brief": [project/"content/content-brief.md"],
-        "script": [
-            project/"script/SCRIPT.md",
-            project/"script/STORYBOARD.md",
-            project/"script/scene-plan.json",
-            project/"script/voice-plan.json",
-        ],
-        "voice": [
-            project/"audio/narration.wav",
-            project/"audio/voice-production.json",
-            project/"timing/scenes.json",
-        ],
-        "visual": [project/"review/storyboard.html", project/"hyperframes/index.html"],
-        "render": [project/"qa/report.md"],
-    }
-    return m[phase]
+    return [project / rel for rel in REQUIRED_ARTIFACTS[phase]]
 
 
 def require_previous_approved(state: dict, phase: str) -> None:
@@ -80,7 +94,7 @@ def require_previous_approved(state: dict, phase: str) -> None:
 def cmd_init(args):
     project = Path(args.project).resolve()
     project.mkdir(parents=True, exist_ok=True)
-    for d in ["inputs","analysis","content","script","audio/segments","timing","review","hyperframes/compositions","hyperframes/assets","qa","outputs"]:
+    for d in ["inputs","analysis","content","script","audio/segments","timing","motion","review","hyperframes/compositions","hyperframes/assets","qa","outputs"]:
         (project/d).mkdir(parents=True, exist_ok=True)
     skill_root = Path(__file__).resolve().parents[1]
     templates = skill_root/"templates"
@@ -88,20 +102,27 @@ def cmd_init(args):
         templates/"project-config.json": project/"project-config.json",
         templates/"evidence-map.json": project/"analysis/evidence-map.json",
         templates/"content-brief.md": project/"content/content-brief.md",
+        templates/"SCRIPT.md": project/"script/SCRIPT.md",
         templates/"scene-plan.json": project/"script/scene-plan.json",
         templates/"pronunciation.json": project/"script/pronunciation.json",
         templates/"voice-plan.json": project/"script/voice-plan.json",
+        templates/"motion-plan.yaml": project/"motion/motion-plan.yaml",
+        templates/"style-tokens.json": project/"motion/style-tokens.json",
+        templates/"attention-plan.json": project/"motion/attention-plan.json",
     }
     for src, dst in copies.items():
         if not dst.exists(): shutil.copy2(src, dst)
     source = Path(args.source).expanduser() if args.source else None
     source_info = {"path": str(source) if source else "", "sha256": sha256_path(source) if source else ""}
-    state = {
-        "schema_version":"1.0", "project_id":slugify(args.title), "title":args.title,
-        "current_phase":"analysis", "status":"active", "source":source_info,
-        "phases": {p:{"status":"in_progress" if p=="analysis" else "not_started", "version":1 if p=="analysis" else 0, "approved_at":None, "note":""} for p in PHASES},
-        "history":[{"at":now(),"action":"init","phase":"analysis","note":f"Source: {source_info['path']}"}]
-    }
+    # The state template is the schema of record; filling it here keeps the file
+    # in templates/ from becoming a second, silently diverging definition.
+    state = json.loads((templates/"project-state.json").read_text(encoding="utf-8"))
+    state.update({
+        "project_id": slugify(args.title),
+        "title": args.title,
+        "source": source_info,
+        "history": [{"at": now(), "action": "init", "phase": "analysis", "note": f"Source: {source_info['path']}"}],
+    })
     save_state(project, state)
     print(f"Initialized: {project}")
     print("Current phase: analysis")

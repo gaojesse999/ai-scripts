@@ -10,32 +10,40 @@ When this reference is used inside Knowledge Video Builder, treat narration qual
 
 Three skeletons cover most knowledge videos. Pick by what the subject is: the five-stage frame for a mechanism or method, the teardown for a tool or repository, the ladder for a tutorial. All three are **content stages, not a slide count** — a stage that enumerates may span several scenes while a single-claim stage stays one.
 
-### Default five-stage frame: 解决什么问题 → 原理 → 怎么做 → 举例 → 总结
+### Default five-stage frame: 问题 → 原理 → 解决方法 → 举例 → 总结
 
 This is the default in Knowledge Video Builder and the right choice whenever the viewer's own behaviour, not a product, is the subject: a cognitive trap, a habit, a mechanism, a working method.
 
-1. **解决什么问题** — Open on a situation the viewer recognizes in themselves, name what it costs, then state the route in one line.
+Name the chapters after the stages, so a heading reads `## S03 解决方法`. The chapter rail is on screen, and a viewer who joins mid-video needs to know which stage they are in rather than read a second headline competing with the narration.
+
+1. **问题** — Open on a situation the viewer recognizes in themselves, name what it costs, then state the route in one line.
 2. **原理** — Name the one mechanism that explains it, and mark its limits in the same breath.
-3. **怎么做** — Turn the principle into a small ordered set of steps that can be started today.
-4. **举例** — Replay those steps inside concrete scenes, ideally two mirrored cases where the same mechanism produces opposite failures.
+3. **解决方法** — Turn the principle into numbered sequential steps, spoken as 第一步/第二步/第三步, then say why each step works.
+4. **举例** — Walk those same numbered steps, in the same order, through one concrete case. Show the old path failing first, then run the steps against the same situation.
 5. **总结** — Compress the method into one repeatable sentence, then close with exactly one interaction line, which must be a **two-option A/B multiple-choice question (选择题)**. See [Closing Interaction](#closing-interaction).
 
 ```text
 你有没有过这种情况：重要的事草草交差，不重要的事却死磕很久。
 其实这不是你分不清轻重，而是「想赶紧收尾」这件事在起作用。
-应对办法分三步：标记、设规则、回顾。
-放进两个场景看：年度报告结束得太早，游戏关卡结束得太晚。
+应对办法分三步。第一步，标记；第二步，设规则；第三步，回顾。
+放进一个场景走一遍：年度报告写到一半就想交，按三步走完，它变成了周三前只交大纲。
 所以，不是所有任务都值得同一种完成方式。
 你更常是哪一种？A，该停的时候停不下来；B，该继续的时候草草收尾。
 ```
 
 What each stage is most likely to get wrong:
 
-- **解决什么问题** must be universal before it is specific. State the pattern in a form every viewer recognizes, *then* land it on one or two named examples. Opening on the example first makes the video look like it is about 年度报告 rather than about the mechanism.
+- **问题** must be universal before it is specific. State the pattern in a form every viewer recognizes, *then* land it on a named example. Opening on the example first makes the video look like it is about 年度报告 rather than about the mechanism.
 - **原理** carries the credibility risk. Introduce one concept, not a survey, and keep the honest boundary in the spoken line — "这个说法并不能解释所有的赶工和沉迷". A mechanism claimed too widely is the fastest way to lose the viewers most likely to share the video. When the concept comes from research, say what it does explain rather than restating the study.
-- **怎么做** should be the shortest chapter, and its steps must be sequential rather than a checklist of tips. Three is usually right; resist a fourth.
-- **举例** is where retention is won, so it must not degrade into a recap of 怎么做. Give each case its own stakes, show the wrong path first, then apply the rule. Two opposite cases prove the mechanism generalizes in a way one case never can.
-- **总结** repeats the rules from 怎么做 in compressed form and nothing new. If the ending introduces a fresh idea, that idea belonged in 原理. It ends on the interaction line, not on the reframe.
+- **解决方法** must hand over numbered steps, not a named principle. A stage that only says "把它写清楚" leaves nothing to execute tonight. Keep it short and sequential — three steps is usually right, resist a fourth — and attach one line per step on why it works, because a step whose purpose is invisible is the first one the viewer drops.
+- **举例** is where retention is won, so it must not degrade into a recap of 解决方法. The difference is that 解决方法 states the steps in the abstract while 举例 runs them against a situation with its own stakes, and the viewer watches one specific thing change. Use the same step numbers and the same order; never introduce a step the previous chapter did not state.
+- **总结** repeats the steps from 解决方法 in compressed form and nothing new. If the ending introduces a fresh idea, that idea belonged in 原理. It ends on the interaction line, not on the reframe.
+
+### One example is the default
+
+Use exactly one example in 举例. Add a second only when the user explicitly asks for more, or when the mechanism genuinely produces two opposite failures and the video's whole point is that it generalizes.
+
+One case walked all the way through every numbered step teaches more than two cases that each stop halfway, and the second case is almost always the weaker one because the writer has already spent the best situation on the first. When a script runs long, a second example is the first thing to cut.
 
 ### Teardown structure
 
@@ -233,7 +241,7 @@ More examples:
 - **Exactly two options, labelled A and B.** Never three, never unlabelled, never open-ended.
 - **Both options must be equally respectable.** If one option is obviously the "right answer", the question becomes a quiz and nobody picks the other one — which kills the reply volume the format exists for. The viewer should be choosing an identity, not passing a test.
 - **The two options must be mutually exclusive and jointly cover the common cases**, so almost every viewer can find themselves in one of them.
-- **Prefer reusing the two mirrored cases from 举例.** If 举例 already showed the same mechanism producing opposite failures, those two failures are the ready-made A and B, and the choice lands with no extra setup.
+- **Name two ways the mechanism shows up in the viewer's own life.** With the default single example, the A/B cannot be lifted from 举例, so derive it from the boundary drawn in 原理 instead — the two sides should be the two populations that chapter distinguished. If the script did use two mirrored cases, those two failures are the ready-made A and B.
 - **Ask about the mechanism just taught**, so answering rehearses the lesson instead of changing the subject.
 - **The viewer must be able to answer from their own life at a glance**, with a single letter, without rewatching or expertise.
 - **One spoken breath**, and reuse the exact same wording as the end-card screen text.
@@ -269,13 +277,14 @@ Before presenting the narration gate, check:
 - For GitHub projects, did you verify current project/author/social-proof signals online before using any numbers?
 - Is the video organized around a central mystery or thesis?
 - Did you pick the skeleton that matches the subject, and can you point to where each of its stages starts?
-- For the five-stage frame: does 解决什么问题 open on a universal pattern before naming examples, does 原理 state its own limits, does 怎么做 stay sequential and short, does 举例 add new scenes instead of recapping, and does 总结 introduce nothing new?
+- For the five-stage frame: are the chapters named after the stages, does 问题 open on a universal pattern before naming an example, does 原理 state its own limits, does 解决方法 hand over numbered steps plus why each works, does 举例 run those same numbered steps through one new scene instead of recapping, and does 总结 introduce nothing new?
+- Is there exactly one example, unless the user asked for more or the mechanism needs two mirrored failures?
 - Does each chapter start from an AI failure mode, not a feature list?
 - Is every abstract concept explained with a concrete scene, analogy, or example?
 - Are sentences subtitle-friendly and mostly short?
 - Does the script escalate from one problem to the next instead of reading a catalog?
 - Does the ending reframe the subject into a larger lesson?
 - For 解决问题 scripts, does the script close on exactly one interaction line, placed after the reframe rather than instead of it, and is it a two-option A/B 选择题 — question first, two labelled options separated by a semicolon, answerable at a glance with a single letter?
-- Are both A and B equally respectable identities rather than one obvious right answer, and do they reuse the two mirrored cases from 举例 where possible?
+- Are both A and B equally respectable identities rather than one obvious right answer, and do they name two ways the mechanism shows up in the viewer's own life?
 - Are all numeric/social-proof claims supported by evidence or removed?
 - For beginner-to-advanced tutorials, does the script serve both audiences: first-use clarity for beginners and pruning/maintenance judgment for advanced users?

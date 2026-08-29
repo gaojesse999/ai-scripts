@@ -229,6 +229,12 @@ Application order:
 }
 ```
 
+`produce_voice.py` applies these substitutions when it builds the plan, and only to the provider request. The plan keeps the original narration in `text` and records the substituted form as `tts_text`; the chunk hash covers `tts_text`, so editing an entry invalidates exactly the takes it affects and leaves the rest cached.
+
+Substituting the request rather than the script is what keeps a pronunciation fix from moving a caption. `timing/chapters.json` stays authoritative for alignment, beats, and captions, so `Skill` still occupies its original characters no matter how it is pronounced. The cost is confined to the recogniser: it hears the substituted form, so those characters arrive as unmatched insertions and the surrounding times are interpolated instead of anchored. That is the same tolerance the aligner already applies to a misrecognised Latin word.
+
+Keep substitutions short and local for that reason. Rewriting a whole clause moves the interpolated span from a few characters to a sentence, which is where a real timing error starts. If a line needs heavy rewriting to read well, change the narration itself and re-approve it.
+
 ## Merge target
 
 Normalize all segments before merge:

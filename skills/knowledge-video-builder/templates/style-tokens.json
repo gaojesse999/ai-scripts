@@ -1,39 +1,49 @@
 {
+  "schema_version": "1.0",
+  "preset": "editorial-technical-dark",
   "canvas": {
-    "background": "#0E0F12",
+    "background": "#171917",
+    "width": 1920,
+    "height": 1080,
     "safe_x": 96,
     "safe_y": 64
   },
   "color": {
-    "text_primary": "#F3F2EE",
-    "text_secondary": "#A3A3A3",
-    "text_dormant": "#66686D",
-    "accent": "#F28C28",
-    "success": "#58B978",
-    "danger": "#E06464",
-    "ai": "#9B7BE5",
-    "border": "#2A2C31",
-    "surface": "#15171B"
+    "surface": "#292b29",
+    "surface_2": "#343735",
+    "ink": "#f5f5f0",
+    "muted": "#8b9089",
+    "line": "#656963",
+    "accent": "#ff9f0a",
+    "danger": "#ff5362",
+    "success": "#39d98a",
+    "blue": "#5f8fff",
+    "purple": "#a875ff",
+    "teal": "#26c4aa"
   },
   "radius": {
-    "small": 6,
-    "medium": 10,
-    "large": 14
+    "small": 8,
+    "medium": 16,
+    "large": 22
   },
   "border": {
-    "thin": 1
+    "thin": 1,
+    "regular": 2
   },
   "typography": {
-    "cjk": "Noto Sans CJK SC",
-    "latin": "Inter",
-    "title_weight": 650,
-    "section_weight": 550,
-    "body_weight": 400,
+    "cjk": "ProjectSans",
+    "cjk_fallback": "Noto Sans CJK SC",
+    "mono": "JetBrains Mono",
+    "title_weight": 900,
+    "section_weight": 800,
+    "body_weight": 600,
     "subtitle_weight": 400
   },
   "motion": {
-    "reveal": 0.5,
-    "micro": 0.28,
+    "micro": 0.18,
+    "reveal": 0.28,
+    "scene_fade": 0.16,
+    "stagger": 0.1,
     "min_hold": 0.8,
     "summary_hold": 1.5,
     "focus_scale": 1.01,

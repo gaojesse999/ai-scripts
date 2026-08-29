@@ -1,44 +1,52 @@
-version: 2.0
-engine: KME
-mode: audio_subtitle_sync
-source:
-  audio: audio/narration.wav
-  subtitles: timing/captions.srt
-delivery:
-  width: 1920
-  height: 1080
-  fps: 30
-  profile: baseline
-  bframes: 0
+schema_version: "1.1"
+renderer: hyperframes
+timing_source: timing/sentences.json
+audio_duration_seconds: 0.00
+
+# 密度闸门：每个场景实现前先确认这五项。
+density:
+  dominant_focus: "当前口播对应的那一个对象"
+  supporting_group: "已介绍但退为 dormant 的上下文"
+  metadata_on_canvas: false
+  redundant_summary: false
+  decorative_connections: false
+
+# at / hold_until 为场景内本地时间，来自真实对齐结果，不是估算。
+# anchor 是 timing/beats.json 里的叙述单元 id；composition 里的关键帧用它写成 B(anchor)。
+# 已出现的对象退为 dormant(0.32)，当前对象为 present(1.0)，禁止中间透明度带。
 scenes:
-  - id: S01
-    start: 0.0
-    end: 10.0
+  - scene_id: S01
+    global_start: 0.00
+    duration: 0.00
     states:
-      - at: 0.20
+      - at: 0.00
         action: reveal
-        target: title
-        narration_anchor: core_topic
-        hold: 1.2
-      - at: 2.00
+        target: headline
+        anchor: S01.1
+        hold_until: 0.00
+        reason: "口播给出本章要解决的问题"
+      - at: 0.00
         action: accumulate
-        target: point_1
-        keep: [title]
-        hold: 1.0
-      - at: 4.00
-        action: accumulate
-        target: point_2
-        keep: [title, point_1]
-        hold: 1.0
-      - at: 6.00
+        target: point-1
+        anchor: S01.2
+        keep: [headline]
+        hold_until: 0.00
+        reason: "口播点出第一个失败模式"
+      - at: 0.00
         action: focus
-        target: point_2
-        dim: [point_1]
-        hold: 1.2
-      - at: 8.00
+        target: point-2
+        anchor: S01.3
+        keep: [headline, point-1]
+        hold_until: 0.00
+        reason: "口播转到第二个失败模式，重音随之移动"
+      - at: 0.00
         action: summarize
-        restore: [title, point_1, point_2]
-        hold: 1.5
+        target: complete-set
+        anchor: S01.4
+        restore: [point-1, point-2]
+        hold_until: 0.00
+        reason: "退出前给出完整结构的稳定停留"
+
 principles:
   - visuals_follow_spoken_claims
   - previous_information_persists

@@ -4,18 +4,11 @@ from __future__ import annotations
 import argparse, json, sys
 from pathlib import Path
 
-PHASES=["analysis","brief","script","voice","visual","render"]
-try:
- from project import VALID_STATUS
-except Exception:
- VALID_STATUS={"not_started","in_progress","pending_review","approved","needs_revision","blocked","invalidated"}
-REQ={
- "analysis":["analysis/overview.md","analysis/evidence-map.json"],
- "brief":["content/content-brief.md"],
- "script":["script/SCRIPT.md","script/STORYBOARD.md","script/scene-plan.json","script/voice-plan.json"],
- "voice":["audio/narration.wav","audio/voice-production.json","timing/scenes.json"],
- "visual":["review/storyboard.html","hyperframes/index.html"],
- "render":["qa/report.md"]}
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+# project.py owns the phase list, the status vocabulary, and the artifact gate.
+# Importing them keeps this validator from drifting into a second opinion about
+# what a phase requires.
+from project import PHASES, REQUIRED_ARTIFACTS as REQ, VALID_STATUS
 
 def load(p): return json.loads(p.read_text(encoding="utf-8"))
 

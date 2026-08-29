@@ -33,10 +33,10 @@ from align_audio import (
     to_pcm16k,
 )
 from apply_voice_plan import chapter_pauses
+from derive_script_artifacts import narration_line_error
 
 
 BREAK_CHARS = set("，、；：。！？!?;:")
-CONTROL_RE = re.compile(r"<#[^#>]+#>|\[pause(?::[^\]]+)?\]", re.IGNORECASE)
 
 
 def load_json(path: Path):
@@ -62,6 +62,40 @@ def text_sha256(text: str) -> str:
 def plan_digest(plan: dict) -> str:
     stable = {key: value for key, value in plan.items() if key != "generated_at"}
     return text_sha256(json.dumps(stable, ensure_ascii=False, sort_keys=True))
+
+
+def pronunciation_rules(project: Path) -> list[tuple[str, str]]:
+    """Display-to-spoken substitutions, longest display first.
+
+    Sorting by length keeps a short entry from eating part of a longer one:
+    with both `Skill` and `Skill.md` declared, an unsorted pass would rewrite
+    the `Skill` inside `Skill.md` and leave a dangling `.md`.
+    """
+    path = project / "script/pronunciation.json"
+    if not path.exists():
+        return []
+    entries = load_json(path).get("entries", [])
+    rules = [
+        (str(item["display"]), str(item["spoken"]))
+        for item in entries
+        if item.get("display") and item.get("spoken") is not None
+    ]
+    return sorted(rules, key=lambda pair: len(pair[0]), reverse=True)
+
+
+def apply_pronunciation(text: str, rules: list[tuple[str, str]]) -> str:
+    for display, spoken in rules:
+        text = text.replace(display, spoken)
+    return text
+
+
+def request_text(chunk: dict) -> str:
+    """What the provider is asked to say.
+
+    Only the request differs; `text` stays the authoritative narration so
+    alignment, captions, and beats never move because of a pronunciation fix.
+    """
+    return chunk.get("tts_text") or chunk["text"]
 
 
 def spoken_text(text: str) -> str:
@@ -101,16 +135,17 @@ def split_oversized(text: str, max_chars: int) -> list[str]:
 
 
 def bounded_chunks(text: str, max_chars: int) -> list[str]:
-    if CONTROL_RE.search(text):
-        raise ValueError(
-            "spoken narration contains an inline control token; "
-            "use script/voice-plan.json for exact pauses"
-        )
     pieces: list[str] = []
     for line in text.splitlines():
         line = line.strip()
         if not line:
             continue
+        # Last gate before the provider. Everything here is billed and spoken
+        # aloud, so a chapter heading or list marker that survived derivation
+        # must stop the run instead of being read out.
+        problem = narration_line_error(line)
+        if problem:
+            raise ValueError(f"{problem}\n    {line}")
         sentences = [
             item.strip()
             for item in re.split(r"(?<=[。！？!?；;])", line)
@@ -199,6 +234,7 @@ def settings(project: Path) -> dict:
 
 def build_plan(project: Path, chapters: list[str], cfg: dict) -> dict:
     timing = load_json(project / "timing/chapters.json")["chapters"]
+    rules = pronunciation_rules(project)
     max_chars = max(
         20,
         math.floor(cfg["target_seconds"] * cfg["planning_chars_per_second"]),
@@ -220,19 +256,25 @@ def build_plan(project: Path, chapters: list[str], cfg: dict) -> dict:
             parts = bounded_chunks(segment["text"], max_chars)
             for index, text in enumerate(parts, 1):
                 order += 1
-                count = spoken_count(text)
-                chunk_items.append({
+                spoken = apply_pronunciation(text, rules)
+                count = spoken_count(spoken)
+                item = {
                     "id": f"{segment['id']}-C{index:02d}",
                     "chapter": chapter,
                     "segment": segment["id"],
                     "order": order,
                     "text": text,
-                    "text_sha256": text_sha256(text),
+                    # The hash covers what will actually be spoken, so editing
+                    # pronunciation.json invalidates the cached take.
+                    "text_sha256": text_sha256(spoken),
                     "spoken_characters": count,
                     "planning_seconds": round(
                         count / cfg["planning_chars_per_second"], 2
                     ),
-                })
+                }
+                if spoken != text:
+                    item["tts_text"] = spoken
+                chunk_items.append(item)
         plan["chapters"][chapter] = {"chunks": chunk_items}
     return plan
 
@@ -473,7 +515,7 @@ def synthesize(
     command = [
         "python3",
         str(engineering_root / ".cursor/skills/mimo-tts/scripts/mimo_tts.py"),
-        "--text", chunk["text"],
+        "--text", request_text(chunk),
         "--title", f"{chunk['id']}-take-{attempt}",
         "--instruction", instruction,
         "--pause", "0",
@@ -704,7 +746,7 @@ def deepen_candidates(
             audio = synthesize(
                 engineering_root, project, chunk, attempt, cfg["instruction"]
             )
-            assessed = assess_candidate(audio, chunk["text"], asr, cfg)
+            assessed = assess_candidate(audio, request_text(chunk), asr, cfg)
         except (RuntimeError, subprocess.SubprocessError) as exc:
             assessed = {
                 "audio": "",
@@ -763,7 +805,7 @@ def synthesize_until_choice(
                 attempt,
                 cfg["instruction"],
             )
-            assessed = assess_candidate(audio, chunk["text"], asr, cfg)
+            assessed = assess_candidate(audio, request_text(chunk), asr, cfg)
         except (RuntimeError, subprocess.SubprocessError) as exc:
             assessed = {
                 "audio": "",
@@ -930,11 +972,12 @@ def generate(
                     # re-score from the transcript before judging it again.
                     if item.get("heard"):
                         item["coverage"] = round(
-                            coverage(chunk["text"], item["heard"]), 4
+                            coverage(request_text(chunk), item["heard"]), 4
                         )
                         item["tail_coverage"] = round(
                             tail_coverage(
-                                chunk["text"], item["heard"], cfg["tail_characters"]
+                                request_text(chunk), item["heard"],
+                                cfg["tail_characters"],
                             ), 4
                         )
                     item["rejection_reasons"] = basic_reasons(item, cfg)
@@ -1002,7 +1045,8 @@ def generate(
                             chapter,
                             {k: previous[k] for k in (
                                 "id", "chapter", "segment", "order", "text",
-                                "text_sha256", "spoken_characters", "planning_seconds",
+                                "tts_text", "text_sha256", "spoken_characters",
+                                "planning_seconds",
                             ) if k in previous},
                             replacement,
                             previous["candidates"],

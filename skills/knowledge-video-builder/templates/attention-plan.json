@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "chapter": "S01",
+  "rules": {
+    "dominant_focus": 1,
+    "supporting_groups_max": 1,
+    "dormant_opacity": 0.32,
+    "present_opacity": 1.0,
+    "middle_opacity_band_forbidden": true
+  },
+  "sequence": [
+    {
+      "anchor": "S01.1",
+      "focus": "headline",
+      "support": null
+    },
+    {
+      "anchor": "S01.2",
+      "focus": "point-1",
+      "support": "headline"
+    },
+    {
+      "anchor": "S01.3",
+      "focus": "point-2",
+      "support": "point-1"
+    }
+  ]
+}

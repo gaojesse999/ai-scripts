@@ -1,6 +1,8 @@
 # Reference Video Style
 
-Use this reference when the user supplies a video, subtitle file, storyboard, or frame samples and asks for a similar visual effect. The reference is a style source, never an evidence source.
+This file has two jobs. It is the inspection contract for a supplied reference video, and it is the project's default visual system when no reference exists — Phase 5 scaffolds from the preset below either way. The reference is a style source, never an evidence source.
+
+Use the inspection contract when the user supplies a video, subtitle file, storyboard, or frame samples and asks for a similar visual effect. Skip to the preset when there is nothing to measure.
 
 ## Inspection contract
 
@@ -33,6 +35,32 @@ teal:     #26c4aa
 ```
 
 Use a flat canvas, crisp 1-2px borders, restrained shadows, and generous negative space. Do not add gradients, grain, particle fields, bokeh, or decorative blobs.
+
+The same values live in `motion/style-tokens.json`, seeded by `project.py init` and repeated in `project-config.json`. Edit those files rather than introducing a competing palette in a composition's CSS.
+
+### Containers and controls
+
+Use few containers. Prefer alignment, hierarchy, local rules, number columns, chapter tracks, and accent rails; a container should earn its place by clarifying grouping. Controls stay restrained: thin low-contrast border, small surface difference from the canvas, low-to-moderate radius, one small local accent, and consistent component heights and spacing. No large neon glow, no thick active-card outline.
+
+### Typography
+
+- CJK: `ProjectSans`, falling back to Source Han Sans / Noto Sans CJK.
+- Monospace for code excerpts: `JetBrains Mono`.
+- Main title semibold-to-heavy; body, list, and caption text regular-to-medium. Do not set everything bold.
+
+Render text natively at delivery resolution, or supersample down. Preserve the original alpha antialiasing, and never use optical-flow interpolation to manufacture text motion.
+
+### Semantic color
+
+Keep the palette small and the meaning stable for the whole video:
+
+- `accent` orange: current emphasis or action;
+- `success` green: correct outcome;
+- `danger` red: error or risk;
+- `purple`: AI or model;
+- `muted` grays: hierarchy and dormant context.
+
+A color that means "current step" in one chapter cannot mean "warning" in the next.
 
 ### Persistent frame
 
