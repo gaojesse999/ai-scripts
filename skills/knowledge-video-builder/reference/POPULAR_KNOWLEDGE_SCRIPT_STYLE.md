@@ -8,25 +8,23 @@ A popular knowledge script should feel like a guided teardown, not a repository 
 
 When this reference is used inside Knowledge Video Builder, treat narration quality as the first draft target. Write the complete voiceover so it can stand alone as a good spoken script before turning it into storyboard, screen text, and scene-plan data. The production artifacts should preserve the voiceover's hook, rhythm, examples, and ending instead of making the narration serve a visual checklist.
 
-Three skeletons cover most knowledge videos. Pick by what the subject is: the five-stage frame for a mechanism or method, the teardown for a tool or repository, the ladder for a tutorial. All three are **content stages, not a slide count** — a stage that enumerates may span several scenes while a single-claim stage stays one.
+Three skeletons cover most knowledge videos. Pick by what the subject is: the four-stage frame for a mechanism or method, the teardown for a tool or repository, the ladder for a tutorial. All three are **content stages, not a slide count** — a stage that enumerates may span several scenes while a single-claim stage stays one.
 
-### Default five-stage frame: 问题 → 原理 → 解决方法 → 举例 → 总结
+### Default four-stage frame: 问题 → 原理 → 例子 → 总结
 
 This is the default in Knowledge Video Builder and the right choice whenever the viewer's own behaviour, not a product, is the subject: a cognitive trap, a habit, a mechanism, a working method.
 
-Name the chapters after the stages, so a heading reads `## S03 解决方法`. The chapter rail is on screen, and a viewer who joins mid-video needs to know which stage they are in rather than read a second headline competing with the narration.
+Name the chapters after the stages, so a heading reads `## S03 例子`. The chapter rail is on screen, and a viewer who joins mid-video needs to know which stage they are in rather than read a second headline competing with the narration.
 
 1. **问题** — Open on a situation the viewer recognizes in themselves, name what it costs, then state the route in one line.
 2. **原理** — Name the one mechanism that explains it, and mark its limits in the same breath.
-3. **解决方法** — Turn the principle into numbered sequential steps, spoken as 第一步/第二步/第三步, then say why each step works.
-4. **举例** — Walk those same numbered steps, in the same order, through one concrete case. Show the old path failing first, then run the steps against the same situation.
-5. **总结** — Compress the method into one repeatable sentence, then close with exactly one interaction line, which must be a **two-option A/B multiple-choice question (选择题)**. See [Closing Interaction](#closing-interaction).
+3. **例子** — Take one concrete case out of the problem in numbered steps, spoken as 第一步/第二步/第三步. Show the old path failing first, then run the steps against that same situation.
+4. **总结** — Lift the steps out of the case into one repeatable sentence, then close with exactly one interaction line, which must be a **two-option A/B multiple-choice question (选择题)**. See [Closing Interaction](#closing-interaction).
 
 ```text
 你有没有过这种情况：重要的事草草交差，不重要的事却死磕很久。
 其实这不是你分不清轻重，而是「想赶紧收尾」这件事在起作用。
-应对办法分三步。第一步，标记；第二步，设规则；第三步，回顾。
-放进一个场景走一遍：年度报告写到一半就想交，按三步走完，它变成了周三前只交大纲。
+年度报告写到一半就想交。第一步，标记；第二步，设规则；第三步，回顾。最后它变成了周三前只交大纲。
 所以，不是所有任务都值得同一种完成方式。
 你更常是哪一种？A，该停的时候停不下来；B，该继续的时候草草收尾。
 ```
@@ -35,15 +33,8 @@ What each stage is most likely to get wrong:
 
 - **问题** must be universal before it is specific. State the pattern in a form every viewer recognizes, *then* land it on a named example. Opening on the example first makes the video look like it is about 年度报告 rather than about the mechanism.
 - **原理** carries the credibility risk. Introduce one concept, not a survey, and keep the honest boundary in the spoken line — "这个说法并不能解释所有的赶工和沉迷". A mechanism claimed too widely is the fastest way to lose the viewers most likely to share the video. When the concept comes from research, say what it does explain rather than restating the study.
-- **解决方法** must hand over numbered steps, not a named principle. A stage that only says "把它写清楚" leaves nothing to execute tonight. Keep it short and sequential — three steps is usually right, resist a fourth — and attach one line per step on why it works, because a step whose purpose is invisible is the first one the viewer drops.
-- **举例** is where retention is won, so it must not degrade into a recap of 解决方法. The difference is that 解决方法 states the steps in the abstract while 举例 runs them against a situation with its own stakes, and the viewer watches one specific thing change. Use the same step numbers and the same order; never introduce a step the previous chapter did not state.
-- **总结** repeats the steps from 解决方法 in compressed form and nothing new. If the ending introduces a fresh idea, that idea belonged in 原理. It ends on the interaction line, not on the reframe.
-
-### One example is the default
-
-Use exactly one example in 举例. Add a second only when the user explicitly asks for more, or when the mechanism genuinely produces two opposite failures and the video's whole point is that it generalizes.
-
-One case walked all the way through every numbered step teaches more than two cases that each stop halfway, and the second case is almost always the weaker one because the writer has already spent the best situation on the first. When a script runs long, a second example is the first thing to cut.
+- **例子** carries the method, so it must not first announce the method in the abstract. There is deliberately no 解决方法 chapter: a stage that states the steps and a stage that demonstrates them say the same thing twice, and the abstract half is the one the viewer cannot act on. Keep the steps sequential and capped at four, usually three, with one line per step on why it works — a step whose purpose is invisible is the first one dropped. Use exactly one case, unless the user asks for more or the mechanism genuinely produces two opposite failures; the second case is almost always weaker, because the best situation was already spent on the first.
+- **总结** abstracts the steps just walked and adds nothing new. If the ending introduces a fresh idea, that idea belonged in 原理. It ends on the interaction line, not on the reframe.
 
 ### Teardown structure
 
@@ -155,14 +146,16 @@ This creates progression without needing artificial drama.
 
 ## Voice And Sentence Rhythm
 
-Write for subtitles and spoken delivery.
+Every line is spoken aloud, so write 口语, not 书面语. The test is whether you could say the line to one person across a table without it sounding read.
 
-- Use short clauses and frequent line breaks.
-- Prefer 1-3 second spoken units.
-- Mix quick questions, short turns, and longer explanatory beats.
-- Use "为什么？", "什么意思？", "你看懂差别了吗？", and "问题来了" sparingly to reset attention.
-- Avoid long paragraph blocks that read like an article.
-- Prefer the voiceover-writer posture: first make the judgment clear, then attach evidence and visuals. If a line sounds like a storyboard note, rewrite it as something a creator would say aloud.
+- Use short clauses and frequent line breaks; prefer 1-3 second spoken units.
+- Speak to 你, and speak as 我.
+- Swap written forms for spoken ones: 因此/从而 → 所以, 该/其/之 → 这个/它, 基于 → 因为, 对……进行分析 → 分析. Nominalized verbs are the clearest tell that a line was written rather than said.
+- Split a long pre-modifier instead of stacking it in front of a noun. A modifier chain is readable on a page and unspeakable in one breath.
+- Mix quick questions, short turns, and longer explanatory beats. Use "为什么？", "什么意思？", "问题来了" sparingly to reset attention.
+- First make the judgment clear, then attach evidence and visuals. If a line sounds like a storyboard note, rewrite it as something a creator would say aloud.
+
+**口语不等于病句。** Spoken Chinese omits what context already supplies, but it still parses. Keep every line a complete clause the listener resolves on first hearing: drop a subject only when the previous line's subject still holds, never leave a 把/被/对 construction unfinished, never let a sentence pick up a second subject halfway through, and cut 然后、其实、就是说 wherever they stopped carrying meaning. TTS reads a broken sentence exactly as written, and the viewer cannot re-read it.
 
 Use compact causal links:
 
@@ -214,7 +207,7 @@ Good endings:
 
 ### Closing Interaction
 
-For 解决问题-type scripts (the five-stage frame), the reframe is not the last thing the viewer hears. Add exactly one interaction line after it. The reframe carries the meaning; the interaction line collects the reply. Never let the interaction line replace the reframe, and never stack two of them.
+For 解决问题-type scripts (the four-stage frame), the reframe is not the last thing the viewer hears. Add exactly one interaction line after it. The reframe carries the meaning; the interaction line collects the reply. Never let the interaction line replace the reframe, and never stack two of them.
 
 **The interaction line is always a two-option A/B multiple-choice question (选择题). This is fixed — do not choose a form.**
 
@@ -241,7 +234,7 @@ More examples:
 - **Exactly two options, labelled A and B.** Never three, never unlabelled, never open-ended.
 - **Both options must be equally respectable.** If one option is obviously the "right answer", the question becomes a quiz and nobody picks the other one — which kills the reply volume the format exists for. The viewer should be choosing an identity, not passing a test.
 - **The two options must be mutually exclusive and jointly cover the common cases**, so almost every viewer can find themselves in one of them.
-- **Name two ways the mechanism shows up in the viewer's own life.** With the default single example, the A/B cannot be lifted from 举例, so derive it from the boundary drawn in 原理 instead — the two sides should be the two populations that chapter distinguished. If the script did use two mirrored cases, those two failures are the ready-made A and B.
+- **Name two ways the mechanism shows up in the viewer's own life.** With the default single example, the A/B cannot be lifted from 例子, so derive it from the boundary drawn in 原理 instead — the two sides should be the two populations that chapter distinguished. If the script did use two mirrored cases, those two failures are the ready-made A and B.
 - **Ask about the mechanism just taught**, so answering rehearses the lesson instead of changing the subject.
 - **The viewer must be able to answer from their own life at a glance**, with a single letter, without rewatching or expertise.
 - **One spoken breath**, and reuse the exact same wording as the end-card screen text.
@@ -277,11 +270,11 @@ Before presenting the narration gate, check:
 - For GitHub projects, did you verify current project/author/social-proof signals online before using any numbers?
 - Is the video organized around a central mystery or thesis?
 - Did you pick the skeleton that matches the subject, and can you point to where each of its stages starts?
-- For the five-stage frame: are the chapters named after the stages, does 问题 open on a universal pattern before naming an example, does 原理 state its own limits, does 解决方法 hand over numbered steps plus why each works, does 举例 run those same numbered steps through one new scene instead of recapping, and does 总结 introduce nothing new?
+- For the four-stage frame: are the chapters named after the stages, does 问题 open on a universal pattern before naming an example, does 原理 state its own limits, does 例子 deliver at most four numbered steps inside one concrete case rather than announcing them abstractly first, and does 总结 abstract those steps and nothing new?
 - Is there exactly one example, unless the user asked for more or the mechanism needs two mirrored failures?
 - Does each chapter start from an AI failure mode, not a feature list?
 - Is every abstract concept explained with a concrete scene, analogy, or example?
-- Are sentences subtitle-friendly and mostly short?
+- Can every line be said aloud as 口语 in one breath, and does each one still parse as a complete sentence?
 - Does the script escalate from one problem to the next instead of reading a catalog?
 - Does the ending reframe the subject into a larger lesson?
 - For 解决问题 scripts, does the script close on exactly one interaction line, placed after the reframe rather than instead of it, and is it a two-option A/B 选择题 — question first, two labelled options separated by a semicolon, answerable at a glance with a single letter?

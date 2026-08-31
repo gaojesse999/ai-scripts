@@ -17,9 +17,8 @@ breaks the matching both renderers rely on.
 
 ## Narration rules
 
-- Spoken, not written prose.
+- 口语, not written prose — short sentences, clear causal transitions, and grammar that still parses when heard once. See [Voice And Sentence Rhythm](POPULAR_KNOWLEDGE_SCRIPT_STYLE.md#voice-and-sentence-rhythm).
 - Lead with the concrete result.
-- Prefer short sentences and clear causal transitions.
 - Define technical terms at first meaningful use.
 - State boundaries early.
 - Do not read long field lists aloud; summarize and let the visual carry structure.

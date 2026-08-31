@@ -304,7 +304,7 @@ Turn the approved analysis into an editorial plan, not a full narration. Determi
 - viewer problem and promised outcome;
 - one-sentence thesis;
 - opening hook;
-- chapter structure, defaulting to the five stages 问题 → 原理 → 解决方法 → 举例 → 总结;
+- chapter structure, defaulting to the four stages 问题 → 原理 → 例子 → 总结;
 - what must be shown instead of merely said;
 - demonstration example;
 - material claims and source evidence;
@@ -316,16 +316,11 @@ When a reference style profile exists, also lock the canvas, chapter/progress tr
 
 Follow [reference/CONTENT_STRATEGY.md](reference/CONTENT_STRATEGY.md). Produce `content/content-brief.md`.
 
-The default chapter framework is 问题 → 原理 → 解决方法 → 举例 → 总结. Treat those five as content stages, not as a slide count: allocate scenes by how much a stage actually carries, so an enumerating stage may span several scenes while a single-claim stage stays one. See [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) for what each stage must accomplish, the failure mode of each, and the two alternative skeletons for tool teardowns and tutorials. Record any deviation from the five stages in the brief.
+The default chapter framework is 问题 → 原理 → 例子 → 总结: 问题 opens on something the viewer recognizes in themselves, 原理 explains the underlying cause, 例子 walks one concrete case out of that problem, and 总结 abstracts what the example did and closes. Treat the four as content stages, not as a slide count: allocate scenes by how much a stage actually carries. See [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) for each stage's failure mode and the two alternative skeletons for tool teardowns and tutorials. Record any deviation in the brief.
 
-Name the chapters after the stages themselves, so a heading reads `## S03 解决方法` rather than a clever title. The heading is what the chapter rail shows on screen, and a viewer who joins mid-video needs to know which stage they are in, not a second headline competing with the narration.
+Name the chapters after the stages themselves, so a heading reads `## S03 例子` rather than a clever title. The heading is what the chapter rail shows on screen, and a viewer who joins mid-video needs to know which stage they are in, not a second headline competing with the narration.
 
-Two rules keep 解决方法 and 举例 from collapsing into each other, which is the most common way the middle of a knowledge video stops teaching:
-
-- **解决方法 must present numbered sequential steps**, spoken as 第一步/第二步/第三步, followed by why each step works. A stage that only names a principle leaves the viewer with nothing to execute. Three steps is usually right; resist a fourth.
-- **举例 must walk exactly those steps, in the same order, on one concrete case.** Show the old path failing first, then run the numbered steps against the same situation so the transformation is visible. Do not introduce a step that 解决方法 never stated, and do not renumber.
-
-**Default to exactly one example.** Add a second only when the user explicitly asks for more, or when the subject genuinely needs two mirrored cases to prove the mechanism generalizes. One example walked all the way through the steps teaches more than two examples that each stop halfway, and a second case is the first thing to cut when the script runs long.
+**There is no separate 解决方法 chapter.** The method is delivered inside 例子 as numbered steps spoken 第一步/第二步/第三步, capped at four and usually three, then abstracted in 总结. Stating the method abstractly and demonstrating it afterwards says everything twice, which is the main reason these videos run long. Use exactly one example unless the user asks for more.
 
 When the user asks for a knowledge-sharing video, YouTube-style explainer, viral breakdown, creator-style narration, or supplies a reference SRT/script with a high-retention educational tone, also read [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) before choosing the opening, chapter engine, examples, and ending.
 
@@ -337,14 +332,13 @@ Prerequisite: Phase 1 and Phase 2 artifacts are ready.
 
 This phase produces exactly one artifact: `script/SCRIPT.md`. Narration is both the main retention driver and the part that gets rewritten most, so nothing is derived from it until the user approves it. Deriving a storyboard from a draft that is about to change spends a full visualisation pass per revision and leaves three copies of the same sentences to hand-sync.
 
-Draft the narration with the high-retention grammar in [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md). Make it sound like a human creator would actually say it: sharp opening, short spoken beats, failure-mode progression, concrete examples, and a reframing ending. For 解决问题-type topics, close on exactly one interaction line after the reframe, and it must be a two-option A/B 选择题 — question first, then the two labelled options separated by a semicolon.
+Draft the narration with the high-retention grammar in [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md). Write 口语 that a human creator would actually say aloud, never 书面语, and keep every line grammatical enough to parse on first hearing: sharp opening, short spoken beats, failure-mode progression, concrete examples, and a reframing ending. For 解决问题-type topics, close on exactly one interaction line after the reframe, and it must be a two-option A/B 选择题 — question first, then the two labelled options separated by a semicolon.
 
 Rules:
 
 - Open with the value or transformation, not background history.
 - Explain what the subject can and cannot do early.
-- State the solution as numbered sequential steps, then say why each step works.
-- Use one concrete example, and walk the numbered steps through it in the same order. Add a second example only on explicit request.
+- Solve the problem inside one concrete example, in three or four numbered steps, and abstract them only in 总结. Add a second example only on explicit request.
 - Organize chapters around failure modes and control mechanisms rather than feature lists.
 - Keep only supported claims, clearly label inferences and editorial opinions, and remove unverified social proof.
 - Every material claim must rest on an approved evidence ID. Track the mapping in the brief and in Phase 3B, not in the article — `SCRIPT.md` holds spoken words only.
@@ -355,7 +349,7 @@ Rules:
 
 | Line kind | Form | Where it goes |
 |---|---|---|
-| chapter heading | `## S01 章节名`, where 章节名 defaults to the stage name such as 问题 or 解决方法 | the `chapter` field in `scene-plan.json`, and the chapter rail label |
+| chapter heading | `## S01 章节名`, where 章节名 defaults to the stage name such as 问题 or 例子 | the `chapter` field in `scene-plan.json`, and the chapter rail label |
 | paragraph break | an empty line | a segment boundary, which is also a scene boundary |
 | narration | everything else | `segments[].text` in `timing/chapters.json`, spoken verbatim |
 

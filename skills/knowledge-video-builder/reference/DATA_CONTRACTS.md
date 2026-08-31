@@ -40,7 +40,7 @@ Every line is one of exactly three kinds:
 | narration | everything else | `segments[].text` in `timing/chapters.json` |
 
 ```markdown
-## S01 解决什么问题
+## S01 问题
 
 第一句。
 第二句。
