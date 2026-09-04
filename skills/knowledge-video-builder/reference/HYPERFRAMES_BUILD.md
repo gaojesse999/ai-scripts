@@ -8,7 +8,7 @@ This reference reflects the official HyperFrames CLI and composition model avail
 npx hyperframes init <project-name> --example blank --resolution landscape
 ```
 
-Use `portrait` for vertical video and `landscape-4k` only after a 1080p draft passes QA.
+The preset only seeds a starting canvas. `build_hyperframes.py` writes explicit `data-width` / `data-height` from `video.width` / `video.height`, so the rendered size comes from the composition — which is what allows 21:9 to work without a matching preset. Use `portrait` for vertical video and `landscape-4k` only after a 1080p draft passes QA.
 
 ## Development loop
 
@@ -134,7 +134,8 @@ That is measured, not inferred: a probe project with the padding declared only o
 So keep any shared stylesheet's `#root` rule to properties that cannot displace a box — `position`, `width`, `height`, `background`, `overflow` — and put the safe-area padding on an inner wrapper the scene owns:
 
 ```css
-/* assets/scene-system.css — linked by every scene, therefore global */
+/* assets/scene-system.css — linked by every scene, therefore global.
+   Width and side padding come from the project canvas; 21:9 is 2520px / 163px. */
 #root  { position: relative; width: 1920px; height: 1080px; overflow: hidden }
 .stage { height: 100%; padding: 108px 124px 170px }
 ```
@@ -242,7 +243,7 @@ A hard cut must also land on content that is already there. Give the incoming sc
 **Per-scene review cannot catch this.** The defect exists only in the assembly, and both scenes look perfect in isolation. Verify at the seam by measuring, not by eye: sample frames just inside and across the boundary and check that non-background pixel coverage never drops to zero.
 
 ```bash
-ffmpeg -v error -i frame.png -vf "crop=1920:700:0:150,format=gray" -f rawvideo - | \
+ffmpeg -v error -i frame.png -vf "crop=iw:700:0:150,format=gray" -f rawvideo - | \
   python3 -c "import sys;d=sys.stdin.buffer.read();print(sum(b>45 for b in d)/len(d)*100)"
 ```
 
@@ -323,7 +324,7 @@ So before writing a fallback, exhaust the environment fixes below. A missing sha
 
 If you do build the fallback:
 
-- author at the target canvas, normally 1920x1080;
+- author at the project canvas, 2520x1080 at the default 21:9 or 1920x1080 at 16:9;
 - expose `window.renderAt(seconds)` for deterministic frame capture by *your own* capture script, not by HyperFrames;
 - use deterministic frame capture rather than wall-clock playback or `captureStream`;
 - keep the same chapter rail, caption safe area, palette, and scene-plan motion beats;

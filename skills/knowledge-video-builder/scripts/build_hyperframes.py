@@ -30,8 +30,8 @@ FONT_CSS = f'''
 SCENE_CSS = r'''
 :root{--bg:#171917;--surface:#292b29;--surface2:#343735;--ink:#f5f5f0;--muted:#8b9089;--accent:#ff9f0a;--danger:#ff5362;--success:#39d98a;--blue:#5f8fff;--purple:#a875ff;--teal:#26c4aa;--line:#656963}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:"ProjectSans",sans-serif;color:var(--ink)}
-.frame{position:relative;width:1920px;height:1080px;padding:92px 124px 140px;background:var(--bg)}
-.content{height:100%;display:flex;flex-direction:column;justify-content:center;gap:34px}.headline{font-size:78px;line-height:1.06;max-width:1440px;margin:0;font-weight:900;letter-spacing:.01em}.accent-line{height:8px;width:138px;background:var(--accent);border-radius:8px;transform-origin:left center}
+.frame{position:relative;width:__W__px;height:__H__px;padding:92px __PADX__px 140px;background:var(--bg)}
+.content{height:100%;display:flex;flex-direction:column;justify-content:center;gap:34px}.headline{font-size:78px;line-height:1.06;max-width:__MEASURE__px;margin:0;font-weight:900;letter-spacing:.01em}.accent-line{height:8px;width:138px;background:var(--accent);border-radius:8px;transform-origin:left center}
 .visual{min-height:300px;display:flex;align-items:center;justify-content:center}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;width:100%}.card{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:28px 30px;min-height:120px;font-size:31px;font-weight:800}.card small{display:block;color:var(--muted);font-size:20px;margin-top:12px;font-weight:600}.card.accent{border-color:var(--accent)}.card.danger{border-color:var(--danger)}.card.success{border-color:var(--success)}.card.blue{border-color:var(--blue)}.card.purple{border-color:var(--purple)}.card.teal{border-color:var(--teal)}
 .columns{display:grid;grid-template-columns:1fr 1fr;gap:28px;width:100%}.column{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:26px 30px;min-height:240px}.column h3{margin:0 0 18px;color:var(--accent);font-size:28px}.column.danger{border-color:var(--danger)}.column.danger h3{color:var(--danger)}.column.success{border-color:var(--success)}.column.success h3{color:var(--success)}.column ul{list-style:none;margin:0;padding:0}.column li{font-size:28px;padding:11px 0;border-bottom:1px solid #444844}.column li:last-child{border-bottom:0}
 .flow{display:flex;align-items:center;justify-content:center;gap:14px;width:100%}.step{min-width:220px;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:28px 22px;text-align:center;font-size:28px;font-weight:800}.step.active{border-color:var(--accent);color:var(--accent)}.arrow{color:var(--accent);font-size:40px;font-weight:900}
@@ -100,12 +100,35 @@ ROOT_JS = r'''
 
 # A fixed-width label slot keeps the track from shifting sideways when a longer
 # chapter name swaps in at a scene boundary.
+LABEL_SLOT = 420
 ROOT_RAIL_CSS = r'''
-.chapter-label{position:absolute;left:124px;top:30px;height:30px;width:420px;display:flex;align-items:center;gap:14px;white-space:nowrap;color:#8b9089;font:700 20px/1.2 "ProjectSans",sans-serif;z-index:25}
+.chapter-label{position:absolute;left:__PADX__px;top:30px;height:30px;width:__SLOT__px;display:flex;align-items:center;gap:14px;white-space:nowrap;color:#8b9089;font:700 20px/1.2 "ProjectSans",sans-serif;z-index:25}
 .chapter-index{color:#ff9f0a;font-variant-numeric:tabular-nums}
-#rail-track{position:absolute;left:544px;right:124px;top:42px;height:5px;background:#343735;border-radius:5px;overflow:hidden;z-index:25}
+#rail-track{position:absolute;left:__RAILX__px;right:__PADX__px;top:42px;height:5px;background:#343735;border-radius:5px;overflow:hidden;z-index:25}
 #rail-fill{height:100%;width:100%;background:#ff9f0a;transform-origin:left center}
 '''
+
+
+# The canvas may be 16:9 or 21:9, so every horizontal constant is derived from the
+# configured width rather than written for 1920. Side padding scales with the canvas
+# to keep the optical margin constant, but the text measure does not: the extra width
+# of an ultrawide canvas is horizontal room for the layout, never a longer line.
+def geometry(width, height, measure_cap):
+    pad_x = round(width * 124 / 1920)
+    return {
+        "__W__": str(width),
+        "__H__": str(height),
+        "__PADX__": str(pad_x),
+        "__SLOT__": str(LABEL_SLOT),
+        "__RAILX__": str(pad_x + LABEL_SLOT),
+        "__MEASURE__": str(min(measure_cap, width - 2 * pad_x)),
+    }
+
+
+def fill(text, geo):
+    for token, value in geo.items():
+        text = text.replace(token, value)
+    return text
 
 
 def load(path: Path, default=None):
@@ -223,11 +246,12 @@ def render_captions(path: Path):
     )
 
 
-def scene_html(scene, duration, width, height):
+def scene_html(scene, duration, geo):
     sid = safe_id(scene["id"])
+    width, height = geo["__W__"], geo["__H__"]
     title = scene.get("title") or (scene.get("screen_text") or [scene.get("purpose") or scene.get("chapter") or sid])[0]
     timeline = SCENE_JS.replace("__DURATION__", f"{duration:.6f}").replace("__SID__", js(sid))
-    return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><script src="{GSAP_VENDOR_REL}"></script><style>{FONT_CSS}{SCENE_CSS}</style></head><body>
+    return f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><script src="{GSAP_VENDOR_REL}"></script><style>{FONT_CSS}{fill(SCENE_CSS, geo)}</style></head><body>
 <div class="frame" data-composition-id="{sid}" data-width="{width}" data-height="{height}"><div class="content"><div class="accent-line"></div><h1 class="headline">{esc(title)}</h1><div class="visual">{render_visual(scene)}</div></div></div>
 <script>{timeline}</script></body></html>'''
 
@@ -250,8 +274,10 @@ def main():
     assets = hf / "assets"
     (assets / "vendor").mkdir(parents=True, exist_ok=True)
     cfg = plan.get("project", {})
-    width = int(cfg.get("width", 1920))
+    width = int(cfg.get("width", 2520))
     height = int(cfg.get("height", 1080))
+    canvas = (load(project / "motion/style-tokens.json", {}) or {}).get("canvas") or {}
+    geo = geometry(width, height, int(canvas.get("max_measure", 1440)))
     scenes = plan.get("scenes", [])
     chapter_names = []
     for scene in scenes:
@@ -280,7 +306,7 @@ def main():
         nxt = tmap.get(scenes[index + 1]["id"]) if index + 1 < len(scenes) else None
         covered = float(nxt["start"]) - start if nxt else duration
         chapter_index = chapter_indexes.get(scene.get("chapter", ""), 1)
-        (comps / f"{safe_id(sid)}.html").write_text(scene_html(scene, duration, width, height), encoding="utf-8")
+        (comps / f"{safe_id(sid)}.html").write_text(scene_html(scene, duration, geo), encoding="utf-8")
         hosts.append(f'<div data-composition-id="host-{safe_id(sid)}" data-composition-src="compositions/{safe_id(sid)}.html" data-start="{start:.6f}" data-duration="{covered:.6f}" data-track-index="1"></div>')
         labels.append(f'<div id="chapter-label-{safe_id(sid)}" class="chapter-label clip" data-start="{start:.6f}" data-duration="{covered:.6f}" data-track-index="3"><span class="chapter-index">{chapter_index:02d} / {chapter_count:02d}</span><span class="chapter-name">{esc(scene.get("chapter", ""))}</span></div>')
         total = max(total, float(timed["end"]))
@@ -297,7 +323,7 @@ def main():
     captions = render_captions(project / "timing/captions.srt")
     rootid = "knowledge-video"
     root_timeline = ROOT_JS.replace("__TOTAL__", f"{total:.6f}").replace("__SID__", js(rootid))
-    index = f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><style>{FONT_CSS}*{{box-sizing:border-box}}html,body{{margin:0;width:100%;height:100%;overflow:hidden;background:#171917}}.caption{{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);max-width:78%;padding:18px 28px;border-radius:10px;background:rgba(0,0,0,.94);color:#fff;text-align:center;font:800 30px/1.35 "ProjectSans",sans-serif;z-index:20}}{ROOT_RAIL_CSS}</style><script src="{GSAP_VENDOR_REL}"></script></head><body><main data-composition-id="{rootid}" data-start="0" data-duration="{total:.6f}" data-width="{width}" data-height="{height}">{audio}{''.join(hosts)}<div id="rail-track"><div id="rail-fill"></div></div>{''.join(labels)}{captions}</main>
+    index = f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><style>{FONT_CSS}*{{box-sizing:border-box}}html,body{{margin:0;width:100%;height:100%;overflow:hidden;background:#171917}}.caption{{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);max-width:min(78%,{geo["__MEASURE__"]}px);padding:18px 28px;border-radius:10px;background:rgba(0,0,0,.94);color:#fff;text-align:center;font:800 30px/1.35 "ProjectSans",sans-serif;z-index:20}}{fill(ROOT_RAIL_CSS, geo)}</style><script src="{GSAP_VENDOR_REL}"></script></head><body><main data-composition-id="{rootid}" data-start="0" data-duration="{total:.6f}" data-width="{width}" data-height="{height}">{audio}{''.join(hosts)}<div id="rail-track"><div id="rail-fill"></div></div>{''.join(labels)}{captions}</main>
 <script>{root_timeline}</script></body></html>'''
     (hf / "index.html").write_text(index, encoding="utf-8")
     config = {"$schema": "https://hyperframes.heygen.com/schema/hyperframes.json", "registry": "https://raw.githubusercontent.com/heygen-com/hyperframes/main/registry", "paths": {"blocks": "compositions", "components": "compositions/components", "assets": "assets"}}

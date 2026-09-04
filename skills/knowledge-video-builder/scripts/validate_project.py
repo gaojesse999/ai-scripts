@@ -48,6 +48,18 @@ def main():
     for sid in ids:
      if sid not in tids: issues.append(("high",f"Missing timing for scene {sid}"))
   except Exception as e: issues.append(("critical",f"Invalid project JSON: {e}"))
+ # The canvas is declared in three files. When they disagree the project renders at
+ # one size and lays out for another, which stays invisible until a frame comes back
+ # with the content off-centre or clipped.
+ canvases={}
+ for rel,key in (("project-config.json","video"),("script/scene-plan.json","project"),("motion/style-tokens.json","canvas")):
+  p=project/rel
+  if not p.exists(): continue
+  try: block=load(p).get(key) or {}
+  except Exception as e: issues.append(("critical",f"Invalid JSON in {rel}: {e}")); continue
+  if block.get("width") and block.get("height"): canvases[rel]=(int(block["width"]),int(block["height"]))
+ if len(set(canvases.values()))>1:
+  issues.append(("high","Canvas size disagrees between files: "+"; ".join(f"{r}={w}x{h}" for r,(w,h) in canvases.items())))
  if issues:
   for sev,msg in issues: print(f"[{sev.upper()}] {msg}")
   if any(s in {"critical","high"} for s,_ in issues): sys.exit(1)

@@ -3,10 +3,12 @@
   "preset": "editorial-technical-dark",
   "canvas": {
     "background": "#171917",
-    "width": 1920,
+    "aspect_ratio": "21:9",
+    "width": 2520,
     "height": 1080,
     "safe_x": 96,
-    "safe_y": 64
+    "safe_y": 64,
+    "max_measure": 1440
   },
   "color": {
     "surface": "#292b29",

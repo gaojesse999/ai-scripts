@@ -2,7 +2,7 @@
 
 Default universal delivery:
 
-- 1920×1080
+- 2520×1080 for the default 21:9 canvas, or 1920×1080 for 16:9
 - 30 fps constant frame rate
 - H.264 Baseline-compatible / Constrained Baseline
 - no B-frames
@@ -21,4 +21,6 @@ ffmpeg -i input.mp4 \
   final-1080p-universal.mp4
 ```
 
-Also produce a lightweight 720p preview when in-app/browser preview compatibility matters. A High/Main Profile master may be included separately, but should not be the only deliverable unless verified.
+Do not pass `-s`/`-vf scale`: the master already carries the canvas size from the composition, and rescaling here is how an aspect gets silently changed during the compatibility pass.
+
+Also produce a lightweight 720p preview when in-app/browser preview compatibility matters — `1680x720` at 21:9, `1280x720` at 16:9, both an exact two-thirds of the master. A High/Main Profile master may be included separately, but should not be the only deliverable unless verified.

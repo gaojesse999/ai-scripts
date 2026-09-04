@@ -228,10 +228,25 @@ Use the output filenames above verbatim. `final-*` is reserved for the assembled
 Initialize with:
 
 ```bash
-python scripts/project.py init <project-dir> --title "<title>" --source "<source>"
+python scripts/project.py init <project-dir> --title "<title>" --source "<source>" [--aspect 21:9|16:9]
 ```
 
 Read [reference/STATE_MACHINE.md](reference/STATE_MACHINE.md) before changing phases.
+
+## Canvas
+
+Two canvases are supported, and `--aspect` is the only place either is chosen:
+
+| Aspect | Master | 720 preview |
+|---|---|---|
+| `21:9` (default) | 2520×1080 | 1680×720 |
+| `16:9` | 1920×1080 | 1280×720 |
+
+Height is 1080 in both on purpose. The type scale, safe area, caption size, and chapter rail are all vertical measurements, so they carry over between ratios untouched and only the horizontal budget changes. That is also why the `final-1080p` / `final-720p-preview` filenames stay accurate at either aspect, and why 2520 is preferred over the 2560 an ultrawide monitor would use: it is exactly 21:9 and divides by three, so the preview lands on whole pixels.
+
+`init` writes the chosen canvas into `project-config.json`, `script/scene-plan.json`, and `motion/style-tokens.json` together. Change it in all three or in none; a project whose scene plan and style tokens disagree renders at one size and lays out for another. `build_hyperframes.py` derives every horizontal constant — side padding, rail geometry, text measure — from that width, so a composition must never hardcode 1920 or 2520.
+
+The extra width of 21:9 is horizontal room for the layout, never a longer line of text. The measure stays capped at `canvas.max_measure` (1440px) at both aspects; spend the additional space on wider comparisons, more separation between groups, or a flow that no longer has to wrap.
 
 ## Default collaboration loop
 
@@ -308,7 +323,7 @@ Turn the approved analysis into an editorial plan, not a full narration. Determi
 - what must be shown instead of merely said;
 - demonstration example;
 - material claims and source evidence;
-- target duration and platform/aspect ratio;
+- target duration, and the platform aspect ratio when it differs from the project default;
 - what to omit;
 - dangerous exaggerations or unsupported claims to avoid.
 
@@ -759,7 +774,7 @@ Optionally render 4K after the 1080p master passes QA.
 The default universal delivery target is:
 
 ```text
-1920×1080, 30 fps constant frame rate, H.264 Baseline-compatible or Constrained Baseline, no B-frames, Level 4.0, yuv420p, AAC 48 kHz at 128 kbps or higher, MP4 fast start.
+2520×1080 for 21:9 or 1920×1080 for 16:9, 30 fps constant frame rate, H.264 Baseline-compatible or Constrained Baseline, no B-frames, Level 4.0, yuv420p, AAC 48 kHz at 128 kbps or higher, MP4 fast start.
 ```
 
 When compatibility matters, also provide a 720p preview. A Main/High Profile master may be included separately, but must not be the only deliverable unless playback compatibility has been verified. See [reference/ENCODING_COMPATIBILITY.md](reference/ENCODING_COMPATIBILITY.md).
@@ -872,6 +887,7 @@ After presenting the narration gate or a chapter gate, stop the response. Do not
 - Never de-emphasise text into the middle opacity band. On a dark stage it is unreadable and fails WCAG at any colour; use dormant 0.32 or present 1.0.
 - Never trust a pixel-coverage number without checking the brightness threshold against that region's own background.
 - Never invent a project-directory or output-file name; use the scheme under "Naming".
+- Never hardcode a canvas width in a composition or stylesheet, and never change the aspect in one of the three canvas files alone. Both make the project render at one size and lay out for another.
 - Never escalate to a Canvas fallback, a nested container, or cloud rendering before checking whether the missing dependency installs without root.
 - Never re-ask a question that `project-config.json` already answers.
 

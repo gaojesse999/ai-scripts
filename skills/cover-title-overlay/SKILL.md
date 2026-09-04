@@ -105,12 +105,13 @@ python .cursor/skills/cover-title-overlay/scripts/make_cover.py "落地用 Skill
 
 用生图模型做「风格接近、构图不同」的新底图时，**同一轮最多并发生成 2 张**。4 张带参考图大约要 7 分钟，工具调用会被标成 interrupted：图其实已经写到 Cursor 的 `assets` 目录，但后续裁切、拷贝不会跑。
 
-同一轮 2 张生成完，立刻裁到 `1672x941` 并写入 `cover/`。用户要 4 张就分两轮。
+同一轮 2 张生成完，立刻裁到对应底图尺寸并写入 `cover/`：16:9 为 `1672x941`，21:9 为 `1915x821`。用户要 4 张就分两轮。生图工具没有 21:9 选项时，先出 16:9，再居中裁成 21:9。
 
 若仍然 interrupted，不要重做，先导入已生成的文件：
 
 ```bash
 python .cursor/skills/cover-title-overlay/scripts/import_generated.py
+python .cursor/skills/cover-title-overlay/scripts/import_generated.py --ratio 21:9
 ```
 
 ## 依赖与资源

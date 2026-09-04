@@ -91,6 +91,34 @@ def require_previous_approved(state: dict, phase: str) -> None:
         raise SystemExit(f"Cannot operate on '{phase}': prerequisite '{prev}' is not approved.")
 
 
+# Height is 1080 in both presets on purpose. Everything vertical — the type scale,
+# safe_y, caption size, rail geometry — then carries over untouched between ratios,
+# and only the horizontal budget changes. 2520 is exactly 21:9 and divides by three,
+# so the 720-tall preview stays a whole number of pixels (1680x720).
+ASPECTS = {"21:9": (2520, 1080), "16:9": (1920, 1080)}
+
+# The canvas is declared in three files that must agree; init writes all three from
+# one flag so they cannot drift apart at the point where a project is created.
+CANVAS_FILES = (("project-config.json", "video"),
+                ("script/scene-plan.json", "project"),
+                ("motion/style-tokens.json", "canvas"))
+
+
+def patch_canvas(project, created, aspect):
+    width, height = ASPECTS[aspect]
+    for rel, key in CANVAS_FILES:
+        path = project/rel
+        if path not in created:
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        block = data.get(key)
+        if not isinstance(block, dict):
+            continue
+        block["aspect_ratio"], block["width"], block["height"] = aspect, width, height
+        path.write_text(json.dumps(data, indent=2, ensure_ascii=False)+"\n", encoding="utf-8")
+    return width, height
+
+
 def cmd_init(args):
     project = Path(args.project).resolve()
     project.mkdir(parents=True, exist_ok=True)
@@ -110,8 +138,11 @@ def cmd_init(args):
         templates/"style-tokens.json": project/"motion/style-tokens.json",
         templates/"attention-plan.json": project/"motion/attention-plan.json",
     }
+    created = set()
     for src, dst in copies.items():
-        if not dst.exists(): shutil.copy2(src, dst)
+        if not dst.exists():
+            shutil.copy2(src, dst); created.add(dst)
+    width, height = patch_canvas(project, created, args.aspect)
     source = Path(args.source).expanduser() if args.source else None
     source_info = {"path": str(source) if source else "", "sha256": sha256_path(source) if source else ""}
     # The state template is the schema of record; filling it here keeps the file
@@ -125,6 +156,7 @@ def cmd_init(args):
     })
     save_state(project, state)
     print(f"Initialized: {project}")
+    print(f"Canvas: {args.aspect} {width}x{height}")
     print("Current phase: analysis")
 
 
@@ -197,7 +229,7 @@ def cmd_rollback(args):
 
 def parser():
     p=argparse.ArgumentParser(); sub=p.add_subparsers(dest="cmd",required=True)
-    s=sub.add_parser("init"); s.add_argument("project"); s.add_argument("--title",required=True); s.add_argument("--source",default=""); s.set_defaults(func=cmd_init)
+    s=sub.add_parser("init"); s.add_argument("project"); s.add_argument("--title",required=True); s.add_argument("--source",default=""); s.add_argument("--aspect",choices=sorted(ASPECTS),default="21:9"); s.set_defaults(func=cmd_init)
     s=sub.add_parser("status"); s.add_argument("project"); s.set_defaults(func=cmd_status)
     for name,func in [("approve",cmd_approve),("revise",cmd_revise),("rollback",cmd_rollback)]:
         s=sub.add_parser(name); s.add_argument("project"); s.add_argument("phase",choices=PHASES); s.add_argument("--note",default="")

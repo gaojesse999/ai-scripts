@@ -76,8 +76,8 @@ routes the heading to the chapter rail instead.
   "project": {
     "title": "",
     "language": "zh-CN",
-    "aspect_ratio": "16:9",
-    "width": 1920,
+    "aspect_ratio": "21:9",
+    "width": 2520,
     "height": 1080,
     "fps": 30,
     "target_duration": 240,

@@ -64,7 +64,8 @@ The failure this gate exists for is silent. A line gets edited, one chapter is n
 - All paths resolve.
 - HyperFrames lint and inspect pass or exceptions are documented.
 - Audio and video duration match within tolerance.
-- Correct resolution and aspect ratio.
+- Resolution and aspect ratio match `video.width` / `video.height`, and `script/scene-plan.json` plus `motion/style-tokens.json` still agree with them.
+- No content sits outside the safe area at the project aspect, and no text line runs past the 1440px measure.
 - Final output opens and seeks correctly.
 
 ## QA report structure

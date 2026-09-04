@@ -1,8 +1,8 @@
 {
   "language": "zh-CN",
   "video": {
-    "aspect_ratio": "16:9",
-    "width": 1920,
+    "aspect_ratio": "21:9",
+    "width": 2520,
     "height": 1080,
     "fps": 30,
     "target_duration": 240
@@ -47,7 +47,6 @@
   },
   "hyperframes": {
     "example": "blank",
-    "resolution": "landscape",
     "docker_render": false
   },
   "audio": {

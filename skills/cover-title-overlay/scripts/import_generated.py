@@ -19,8 +19,10 @@ from PIL import Image
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
 COVER_DIR = SKILL_DIR / "cover"
-SIZE_REF = COVER_DIR / "封面16x9.png"
-NAME_PREFIX = "封面16x9-生成-"
+RATIO_DEFAULTS = {
+    "16:9": ("封面16x9.png", "封面16x9-生成-"),
+    "21:9": ("封面21x9.png", "封面21x9-生成-"),
+}
 
 
 def fit_to(im: Image.Image, target_w: int, target_h: int) -> Image.Image:
@@ -50,13 +52,16 @@ def default_asset_dirs() -> list[Path]:
     )
 
 
-def collect_sources(explicit: Path | None) -> list[Path]:
+def collect_sources(explicit: Path | None, prefix: str, only: list[str] | None) -> list[Path]:
     dirs = [explicit] if explicit else default_asset_dirs()
+    wanted = set(only) if only else None
     found: dict[str, Path] = {}
     for folder in dirs:
         if folder is None or not folder.is_dir():
             continue
-        for path in folder.glob(f"{NAME_PREFIX}*.png"):
+        for path in folder.glob(f"{prefix}*.png"):
+            if wanted is not None and path.name not in wanted:
+                continue
             found.setdefault(path.name, path)
     return sorted(found.values(), key=lambda p: p.name)
 
@@ -64,17 +69,21 @@ def collect_sources(explicit: Path | None) -> list[Path]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="把 Cursor 临时目录里已生成的封面图导入 skill/cover")
     parser.add_argument("--src", type=Path, default=None, help="Cursor assets 目录；省略则自动扫描")
+    parser.add_argument("--ratio", choices=sorted(RATIO_DEFAULTS), default="16:9", help="按对应底图尺寸裁切")
+    parser.add_argument("--only", nargs="*", default=None, help="只导入这些文件名")
     args = parser.parse_args()
 
-    if not SIZE_REF.is_file():
-        raise SystemExit(f"找不到尺寸参照: {SIZE_REF}")
-    target_w, target_h = Image.open(SIZE_REF).size
+    size_name, prefix = RATIO_DEFAULTS[args.ratio]
+    size_ref = COVER_DIR / size_name
+    if not size_ref.is_file():
+        raise SystemExit(f"找不到尺寸参照: {size_ref}")
+    target_w, target_h = Image.open(size_ref).size
 
-    sources = collect_sources(args.src)
+    sources = collect_sources(args.src, prefix, args.only)
     if not sources:
         raise SystemExit(
             "没有找到已生成的封面图。\n"
-            f"文件名应以 {NAME_PREFIX} 开头。可用 --src 指定 Cursor 的 assets 目录。"
+            f"文件名应以 {prefix} 开头。可用 --src 指定 Cursor 的 assets 目录。"
         )
 
     COVER_DIR.mkdir(parents=True, exist_ok=True)

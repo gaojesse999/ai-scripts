@@ -64,7 +64,8 @@ A color that means "current step" in one chapter cannot mean "warning" in the ne
 
 ### Persistent frame
 
-- 16:9 landscape; author at 1920x1080 and render a 1280x720 preview when appropriate.
+- Landscape at the project canvas: 2520x1080 for the default 21:9, or 1920x1080 for 16:9. Preview at two-thirds when appropriate.
+- Keep text lines within a 1440px measure at either aspect. A 21:9 canvas is wider, not roomier for prose: give the extra width to the layout.
 - Reserve the top 8-12% for a small chapter label and a thin progress rail.
 - Reserve the bottom 12-16% for one shared caption layer.
 - Keep explanatory content inside a 8-10% safe margin.
