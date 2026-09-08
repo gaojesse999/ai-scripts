@@ -210,6 +210,9 @@ def settings(project: Path) -> dict:
         "adjacent_tolerance": float(
             consistency.get("max_adjacent_pace_ratio", 0.15)
         ),
+        "max_internal_gap": float(
+            consistency.get("max_internal_gap_seconds", 1.0)
+        ),
         "min_coverage": float(consistency.get("min_asr_coverage", 0.90)),
         "min_tail_coverage": float(consistency.get("min_tail_coverage", 0.5)),
         "tail_characters": int(consistency.get("tail_characters", 6)),
@@ -467,9 +470,22 @@ def assess_candidate(
         if kept and 0 < removed <= cfg["max_tail_trim"]:
             speech_end = kept[-1][1]
             trimmed = round(removed, 3)
+    # Gaps between chunks and between scenes are configured and deterministic.
+    # Gaps *inside* a take are whatever the provider felt like, and nothing
+    # downstream shortens them, so they are measured here or not at all.
+    inside = [
+        item for item in clusters
+        if item[0] >= speech_start - 1e-6 and item[1] <= speech_end + 1e-6
+    ]
+    gaps = [
+        round(later[0] - earlier[1], 3)
+        for earlier, later in zip(inside, inside[1:])
+    ]
+    internal_silence = round(sum(gaps), 3)
     start = max(0.0, speech_start - cfg["edge_lead"])
     end = min(duration, speech_end + cfg["edge_release"])
     active = max(speech_end - speech_start, 0.001)
+    voiced = max(active - internal_silence, 0.001)
     stats = loudness(path, start, end)
     return {
         "audio": str(path),
@@ -485,6 +501,15 @@ def assess_candidate(
         "energy_end": round(energy_end, 3) if energy_end is not None else None,
         "active_duration": round(active, 3),
         "chars_per_second": round(spoken_count(text) / active, 3),
+        "max_internal_gap": round(max(gaps), 3) if gaps else 0.0,
+        "internal_silence": internal_silence,
+        "long_gaps": [item for item in gaps if item > cfg["max_internal_gap"]],
+        "voiced_duration": round(voiced, 3),
+        # Reported, not gated. `chars_per_second` counts internal silence as
+        # speech, so the pair separates a genuinely slow take from a
+        # normally-paced one that breathes too long between sentences.
+        # Moving the pace gate onto this needs its own target rate.
+        "voiced_chars_per_second": round(spoken_count(text) / voiced, 3),
         "input_lufs": float(stats["input_i"]),
         "input_true_peak": float(stats["input_tp"]),
         "input_lra": float(stats["input_lra"]),
@@ -525,6 +550,15 @@ def basic_reasons(candidate: dict, cfg: dict) -> list[str]:
     high = cfg["target_rate"] * (1 + cfg["rate_tolerance"])
     if not low <= rate <= high:
         reasons.append(f"pace {rate:.2f} chars/s outside {low:.2f}-{high:.2f}")
+    gap = candidate.get("max_internal_gap")
+    # The pace gate cannot catch this on its own: a take that articulates
+    # normally but stops for a second between sentences measures as merely
+    # slow, and "merely slow" is inside tolerance.
+    if gap is not None and gap > cfg["max_internal_gap"] + 0.01:
+        reasons.append(
+            f"{gap:.2f}s silence inside the take exceeds "
+            f"{cfg['max_internal_gap']:.2f}s"
+        )
     return reasons
 
 
@@ -541,6 +575,12 @@ def candidate_score(candidate: dict, previous_rate: float | None, cfg: dict) -> 
     if previous_rate is not None:
         score += 0.8 * abs(math.log(rate / previous_rate))
     score += max(0, cfg["min_coverage"] + 0.05 - candidate["coverage"])
+    # Among takes that clear the gap gate, prefer the one that breathes least.
+    # Measured silence ratios run 0.14–0.42, so half the ratio lands in the
+    # same range as the pace terms: it breaks ties without overriding pace.
+    active = candidate.get("active_duration") or 0
+    if active:
+        score += 0.5 * candidate.get("internal_silence", 0) / active
     if candidate.get("tail_extra"):
         # Trimming removed the stray syllable, but a take that never produced
         # one needs no faith in the trim, so it is the better ship.
@@ -790,6 +830,9 @@ def commit_selection(
         "selected_metrics": {
             "coverage": selected["coverage"],
             "chars_per_second": selected["chars_per_second"],
+            "voiced_chars_per_second": selected.get("voiced_chars_per_second"),
+            "max_internal_gap": selected.get("max_internal_gap"),
+            "internal_silence": selected.get("internal_silence"),
             "normalized_lufs": normalized["lufs"],
             "normalized_true_peak": normalized["true_peak"],
             "normalized_audio": str(normalized_path),
@@ -1038,6 +1081,12 @@ def generate(
                 seed = [
                     item for item in prior_chunk["candidates"]
                     if item.get("audio") and Path(item["audio"]).exists()
+                    # Silence is measured from the waveform, not the
+                    # transcript, so a record written before that measurement
+                    # existed cannot be re-judged the way the fields below
+                    # can. Reusing it would score an unmeasured take above a
+                    # measured one; regenerate instead.
+                    and "max_internal_gap" in item
                 ]
                 for item in seed:
                     # Scoring rules may have changed since the take was stored;
@@ -1250,7 +1299,8 @@ def generate(
             write_json(project / "audio/voice-production.json", production)
             print(
                 f"{chapter}: selected {chunk['id']} "
-                f"take {selected['attempt']} ({selected['chars_per_second']:.2f} chars/s)"
+                f"take {selected['attempt']} ({selected['chars_per_second']:.2f} chars/s, "
+                f"longest inner pause {selected.get('max_internal_gap', 0):.2f}s)"
             )
             index += 1
 

@@ -224,12 +224,17 @@ Written incrementally by `scripts/produce_voice.py`:
               "duration": 24.3,
               "coverage": 0.96,
               "chars_per_second": 4.72,
+              "voiced_chars_per_second": 5.31,
+              "max_internal_gap": 0.34,
+              "internal_silence": 2.71,
+              "long_gaps": [],
               "flat_factor": 0,
               "rejection_reasons": []
             }
           ],
           "selected_attempt": 1,
           "selected_metrics": {
+            "max_internal_gap": 0.34,
             "normalized_lufs": -16,
             "normalized_true_peak": -1.5
           }
@@ -244,6 +249,13 @@ Written incrementally by `scripts/produce_voice.py`:
 
 Every rejected candidate keeps explicit reasons. Selection is invalid when the
 plan hash, chunk text hash, reference voice, or consistency settings change.
+
+The two rates mean different things. `chars_per_second` divides by the whole
+first-to-last-sample span, so internal silence counts as speech;
+`voiced_chars_per_second` divides by that span minus the measured gaps. Only
+the first is gated, and the pair is what separates a genuinely slow take from a
+normally-paced one that stops too long between sentences. `long_gaps` lists
+only the gaps that broke the limit, so an empty array is the normal case.
 
 ## `script/voice-plan.json`
 

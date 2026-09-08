@@ -260,6 +260,19 @@ def main() -> None:
                             "the preceding chunk",
                         ))
                     previous_rate = rate
+                    gap = metrics.get("max_internal_gap")
+                    if gap is None:
+                        issues.append((
+                            HIGH,
+                            f"{chunk['id']}: no in-chunk silence measurement; "
+                            "regenerate the chapter with the current producer",
+                        ))
+                    elif float(gap) > current_settings["max_internal_gap"] + 0.01:
+                        issues.append((
+                            HIGH,
+                            f"{chunk['id']}: {float(gap):.2f}s silence inside the "
+                            "selected take exceeds the configured limit",
+                        ))
                     lufs = float(metrics.get("normalized_lufs", -999))
                     if abs(lufs - current_settings["target_lufs"]) > (
                         current_settings["lufs_tolerance"] + 0.01

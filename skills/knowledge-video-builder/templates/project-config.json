@@ -37,6 +37,7 @@
       "target_chars_per_second": 4.6,
       "pace_tolerance_ratio": 0.18,
       "max_adjacent_pace_ratio": 0.15,
+      "max_internal_gap_seconds": 1.0,
       "min_asr_coverage": 0.9,
       "target_lufs": -16,
       "lufs_tolerance": 0.6,

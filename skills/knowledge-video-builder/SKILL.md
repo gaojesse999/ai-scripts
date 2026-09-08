@@ -489,7 +489,18 @@ The voice producer blocks a chunk when:
 - the chunk's final characters are missing from the transcript, meaning the take is cut short;
 - active speech rate falls outside the target tolerance;
 - its rate jumps too far from the preceding selected chunk;
+- a silence between sentences inside the take exceeds `max_internal_gap_seconds` (default 1.0);
 - `astats` reports a non-zero flat factor.
+
+The inner-silence gate is not redundant with the pace gate. `chars_per_second`
+divides by the whole first-to-last-sample span, so silence counts as speech and
+a take that stops for a second between sentences reads as merely slow — inside
+tolerance. For the same reason, `voice.instruction` may carry a global rate
+descriptor consistent with `target_chars_per_second`, but never pause-shaping
+wording such as `不要赶` or `每句之间留白`: that lengthens silence rather than
+articulation, applies to every chunk at once, and nothing gates it. Slow a
+specific line with an exact pause in `script/voice-plan.json`, or the whole
+project with `target_chars_per_second`.
 
 Only selected takes are trimmed and normalized with a two-pass `loudnorm` pass.
 Trim points come from a 10 ms RMS scan of the take, never from a recogniser
@@ -883,6 +894,8 @@ After presenting the narration gate or a chapter gate, stop the response. Do not
 - Never let an adjacent-pace deadlock block a run. Backtrack, and generate more takes for the earlier chunk when it has no alternative to swap in.
 - Never abort a production run because a take failed loudness normalization. Record it as a rejection reason and generate another take.
 - Never cut a take at an ASR timestamp. Recogniser spans mark the last token, not the last audible sample; measure the energy edge and add a fixed release instead.
+- Never put pause-shaping wording in `voice.instruction`. `不要赶` or `每句之间留白` lengthens silence rather than articulation, applies to every chunk at once, and no gate can see it; plan the slowdown in `script/voice-plan.json` or `target_chars_per_second` instead. A single global rate descriptor is fine.
+- Never judge pacing by `chars_per_second` alone. It counts internal silence as speech, so a take with second-long gaps between sentences measures as merely slow; check `max_internal_gap` too.
 - Never trust a shared reference voice or style prompt to make independent TTS requests continuous. Bound request duration, compare candidate pace and ASR coverage, normalize selected loudness, and block adjacent pace jumps before merge.
 - Never de-emphasise text into the middle opacity band. On a dark stage it is unreadable and fails WCAG at any colour; use dormant 0.32 or present 1.0.
 - Never trust a pixel-coverage number without checking the brightness threshold against that region's own background.

@@ -80,7 +80,8 @@ For each chunk, the orchestrator:
    `voice.consistency.candidate_count` times;
 2. transcribes each take, only to measure coverage and active speech span;
 3. rejects takes beyond the duration cap, below ASR coverage, outside the pace
-   band, discontinuous with the preceding selected take, or clipped;
+   band, discontinuous with the preceding selected take, clipped, or holding a
+   silence longer than `max_internal_gap_seconds` between sentences;
 4. selects the lowest-drift valid take;
 5. trims to the energy edges of the take, never to a recogniser timestamp;
 6. applies two-pass loudness normalization;
@@ -99,10 +100,74 @@ Recommended defaults:
 - two candidates, up to four attempts;
 - project-selected active speech rate ±18%;
 - adjacent selected pace delta ≤15%; if the next chunk is stranded by adjacency alone, backtrack to an alternate earlier take before more provider calls;
+- longest silence *inside* a take ≤1.0 s (`max_internal_gap_seconds`);
 - interrupted runs resume from `audio/voice-production.json` when plan, settings, and reference-voice hashes still match;
 - ASR coverage ≥90% (review proper-noun noise separately);
 - final `tail_characters` of the chunk recognised at `min_tail_coverage` or better, so a take the provider cut short is rejected instead of merged;
 - selected output `-16 LUFS`, `-1.5 dBTP`, flat factor `0.000`.
+
+### Silence inside a chunk is measured, not hoped for
+
+Every other pause in the narration is deliberate: chunk joins use
+`tts_chunk_pause_seconds` (0.12 s), segment and scene joins use 0.8 s. The
+pauses *inside* a chunk were the exception — the provider chose them and
+nothing measured them. On one 150-second video that produced 1.27 s and 1.36 s
+between consecutive short sentences, ten times the designed join, in the one
+chunk a viewer was most likely to notice.
+
+The pace gate cannot catch this, because `chars_per_second` divides by the
+whole first-to-last-sample span and therefore counts silence as speech. A take
+that articulates normally and stops for a second between sentences measures as
+*merely slow*, and merely slow is inside an ±18% band: the offending chunk
+scored 3.90 against a 4.6 target and was accepted. The same blindness disables
+the adjacent-pace rule, which compares two numbers that do not mean what their
+name says.
+
+`assess_candidate()` therefore reads the gaps between the energy clusters it
+already computes for edge trimming — the data was there and was being thrown
+away — and records four fields per take: `max_internal_gap`,
+`internal_silence`, `long_gaps`, and `voiced_chars_per_second` (characters
+divided by the span *minus* the gaps). A take whose longest inner gap exceeds
+`max_internal_gap_seconds` is rejected like any other failure, and among takes
+that pass, `candidate_score()` adds the silence ratio so the tighter take wins.
+
+The 1.0 s default is calibrated, not guessed. Replaying the measurement over
+the eleven selected takes of that project gave worst-gap values of 0.28, 0.41,
+0.49, 0.74, 0.79, 0.86, 0.90, 0.92, 1.12, 1.37 and 1.82 seconds. A 0.6 s gate
+would have rejected eight of eleven and spent the attempt budget on takes
+nobody had complained about; 1.0 s rejects the three real outliers, including
+the 1.37 s chunk that prompted the gate, and leaves sub-second breathing to the
+soft preference in the scorer. Raise the limit for a deliberately slow, spacious
+register; lower it for dense explanatory narration.
+
+Two consequences worth knowing. `voiced_chars_per_second` is recorded but not
+gated, and the gap between the two rates is wide: on those same takes the gated
+rate ran 3.77–5.31 while the voiced rate ran 5.89–7.40. Moving the pace gate
+onto the voiced rate therefore needs `target_chars_per_second` re-standardised
+from 4.6 to roughly 6.5, not a small adjustment — do it as its own change, with
+an old project re-measured for reference. And silence is measured from the
+waveform rather than the transcript, so a candidate stored before this existed
+cannot be re-judged on resume the way `coverage` can; those records are dropped
+from the seed instead of being ranked above measured takes.
+
+### The style instruction shapes rate, never pauses
+
+`voice.instruction` may carry one global rate descriptor, and it should agree
+with `target_chars_per_second` — dropping the descriptor entirely is not an
+improvement, because the provider's unguided pace can sit far enough from the
+target that every take is rejected and the run burns its attempt budget.
+
+What the instruction must never contain is pause-shaping wording: `不要赶`,
+`停顿明显`, `慢慢说`, `每句之间留白`. Those lengthen silence rather than slow
+articulation, which is the one thing no downstream stage can repair and, until
+the gate above existed, the one thing nothing measured. The project that
+produced the 1.3-second gaps had overridden the default to `语速偏慢，不要赶`:
+`语速偏慢` was legitimate and gated, `不要赶` was neither, and it applied to
+all 28 chunks at once.
+
+Slow a specific line by planning it — an exact pause in
+`script/voice-plan.json`. Slow the whole project by lowering
+`target_chars_per_second`. Both are inspectable and both are gated.
 
 ### Do not score a Chinese recogniser on Latin words
 

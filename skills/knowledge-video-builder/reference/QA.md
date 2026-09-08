@@ -31,6 +31,7 @@ Final render is blocked by unresolved Critical or High issues.
 - Every selected take passes the configured ASR-coverage, tail-coverage, and active-speech-rate thresholds.
 - Every merged chunk ends the configured release after its last audible sample; a chunk trimmed inside its final syllable is a defect even when ASR coverage passed.
 - Adjacent selected chunks remain within the configured pace delta; style instructions alone are not evidence of continuity.
+- No selected take holds a silence longer than `max_internal_gap_seconds` between sentences, and `voice.instruction` contains no pause-shaping wording such as `不要赶`; deliberate slowdowns belong in `script/voice-plan.json` or `target_chars_per_second`.
 - Every normalized chunk is within the LUFS tolerance, below the true-peak ceiling, and has flat factor `0.000`.
 
 ## Sync gate
