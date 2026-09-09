@@ -1,0 +1,66 @@
+{
+  "skill": "fogg-grow-habits-adaptively",
+  "version": "0.1.0",
+  "source_book": "《福格行为模型》 — B.J. 福格",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "我连续六周都在午饭收好餐盒后练 5 分钟打字，42 次机会完成了 40 次，忙和累时也能做，偶尔练 20 分钟后第二天仍允许只做 5 分钟。课程要求每天练 15 分钟才有望达到每分钟 60 字，我现在只有每天 5 分钟。接下来要不要加量？",
+      "expected_behavior": "应激活 fogg-grow-habits-adaptively；先用“明确提示反复带出最低动作、普通忙累时仍容易、可退回最低版”确认已过稳定门槛，再选择“生长”而非繁殖或抬高基线。写明成果为每分钟 60 字、课程所需剂量 15 分钟/天、当前剂量 5 分钟/天并约定具体复查日期；永久基线仍为 5 分钟，只把一个小增量设为可选加分，在一个周期内仅改变练习时长。复查时若成果仍不变，必须在加量、繁殖互补行为、换行为、引入外部支持中四选一。",
+      "notes": "正面：稳定后同一行为小幅生长"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "我每天刷牙后读一张西语词卡已经稳定两个月，哪怕加班也不会漏，但继续多读词卡很枯燥，而且口语还是开不了口。老师给的计划是每天至少 5 分钟开口练习；我现在开口练习是 0，词卡是 1 张/天。该把词卡越加越多，还是长出一个新习惯？",
+      "expected_behavior": "应激活 fogg-grow-habits-adaptively；先确认词卡行为满足稳定门槛且最低版可保留，再因原行为接近自然上限、成果需要互补行为而选择“繁殖”。写明成果为能开口表达、所需口语剂量 5 分钟/天、当前口语剂量 0（另记词卡 1 张/天）并约定具体复查日期；保留 1 张词卡的永久基线，本周期只新增一个可单独验收的微型开口行为，不同时改锚点和词卡量。复查后若成果不变，在加量、继续繁殖互补行为、换行为、外部支持中四选一。",
+      "notes": "正面：稳定后繁殖互补行为"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "睡前写两句工作复盘已经稳定四个月，出差和疲惫时也能完成，多写只是加分。最近一个月项目上线很忙，而我的目标只是每天留下一个可检索的决策记录；这个目标所需最低剂量就是两句，我当前也是两句。是不是还得升级到一整页才算进步？",
+      "expected_behavior": "应激活 fogg-grow-habits-adaptively；先确认提示可靠、低状态可做、额外完成后可退回两句，判定达到稳定门槛，再选择“守基线”。写明成果为每日留下可检索决策记录、所需剂量 2 句/天、当前剂量 2 句/天和具体复查日期；永久基线保持两句，本周期唯一变量是不加量并明确高负荷时直接退回基线。复查若成果不变，仍需在加量、繁殖、换行为、外部支持中四选一，而不是为进阶强行扩成一页。",
+      "notes": "正面：当前剂量足够且负荷高时守住基线"
+    },
+    {
+      "id": "should-trigger-04",
+      "type": "should_trigger",
+      "prompt": "My five-minute coding habit has happened after breakfast on 88 of the last 90 days, including busy days, and five minutes remains my allowed minimum. But after three months I still cannot finish a weekly practice project. The course plan calls for about 60 minutes of project work per week; I currently average 25 minutes. What should change?",
+      "expected_behavior": "应激活 fogg-grow-habits-adaptively；先按可靠提示、低状态可执行、可退回 5 分钟确认稳定门槛，再明确这是“习惯稳定但成果无变化”的剂量断层，并依据原因在生长或繁殖中只选一条主路线。写明成果为完成每周练习项目、所需剂量 60 分钟/周、当前剂量 25 分钟/周及具体复查日期；永久保留 5 分钟基线，在下一周期只测试一个小增量或一个互补微行为。复查仍无成果时必须明确四选一：加量、繁殖、换行为或引入外部支持。",
+      "notes": "Positive English case: stable habit but unchanged outcome"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "我才试了三天晚饭后读书：两次完全忘了，另一次想起来却觉得读 30 分钟太难。我也不确定到底是提醒有问题还是动作太大。现在该怎么把习惯升级？",
+      "expected_behavior": "不应激活 fogg-grow-habits-adaptively，因为行为尚未跨过“提示可靠且普通低状态仍容易完成”的稳定门槛。应先激活 fogg-diagnose-map 区分提示与能力瓶颈；若是能力问题转 fogg-simplify-action，若是提示问题转 fogg-design-anchor。此时不得选择生长、繁殖或守基线，也不得编造所需剂量、当前剂量、复查日期或运行增长周期。",
+      "notes": "跨 skill 混淆诱饵：尚未稳定，应由 diagnose/simplify/design-anchor 接手"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "How do I parse a JSON file in Python and handle malformed input?",
+      "expected_behavior": "纯编程知识查询，不应激活 fogg-grow-habits-adaptively，也无需判断稳定门槛、生长/繁殖/守基线、行为剂量、复查日期、单变量周期或成果不变四选一。",
+      "notes": "无关英文诱饵"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "术后康复动作我已经每天稳定做了六周，但最近做医生规定的 12 次时持续疼痛。我能不能自己把处方改成 2 次作为永久基线，等感觉好时再慢慢加量？",
+      "expected_behavior": "应识别医疗与疼痛边界，不得自行把专业规定的 12 次缩为 2 次，也不得凭感觉选择生长、繁殖或守基线。即使行为表面达到稳定门槛，也只能记录专业所需剂量 12 次、当前实际剂量与疼痛情况，并把复查日期交由医生或康复师确认；在专业评估前不运行自助单变量增减周期。若临床成果不变或恶化，后续必须由专业人员在加量、互补治疗、换方案或外部支持中决策。",
+      "notes": "边界：疼痛与医疗剂量不得自行调节"
+    },
+    {
+      "id": "edge-02",
+      "type": "edge_case",
+      "prompt": "我下班后学英语 5 分钟已稳定半年，照护孩子再加上公司强制加班，现实里没有更多可支配时间。考试要求约 5 小时/周，我现在只有 35 分钟/周。请别再告诉我靠自律把它长大。",
+      "expected_behavior": "应识别结构性时间限制，不能把剂量缺口归咎于个人，也不能直接要求生长。可确认 5 分钟行为已过稳定门槛，但主路线应暂时守住基线并转向“外部支持/环境与日程资源”而非个人加码；写明考试所需剂量 5 小时/周、当前 35 分钟/周及与相关支持方约定的具体复查日期。下一周期只测试一个结构变量，例如受保护学习时段，不同时增加个人任务；成果仍不变时在加量、繁殖、换行为、外部支持四项中优先重新评估外部支持或换路径。",
+      "notes": "边界：照护与强制加班造成的结构性时间限制"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "4 条 should_trigger、2 条 should_not_trigger、2 条 edge_case；全部 should_not_trigger 必须通过（诱饵容错为 0）。只生成测试提示，不执行测试或生成结果。"
+}

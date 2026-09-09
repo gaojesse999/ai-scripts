@@ -1,0 +1,66 @@
+{
+  "skill": "fogg-support-consensual-change",
+  "version": "0.1.0",
+  "source_book": "《福格行为模型》 — B.J. 福格",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "我成年弟弟自己说想准备职业资格考试，但每次打开网课就被任务量吓退。他愿意让我帮忙，又担心我变成监督他的家长。我们怎样设计一个他随时可以退出的支持办法？",
+      "expected_behavior": "应激活 fogg-support-consensual-change。先把备考支持判为可协商行为，写清姐姐只是帮助者、弟弟是决定者；用弟弟能理解的方式确认其已有愿望、帮助范围、拒绝无惩罚及暂停/退出方式。随后排查网课长度、时间、工具和认知负荷等能力障碍，由弟弟共同选择一个最低可行动作、真实提示和他接受的具体反馈。最后只在其同意的小范围内记录基线，每轮只改一个能力或提示变量，收集最少且可删除的数据，约定复盘日和伤害、受控感或撤回同意时的回退条件。",
+      "notes": "正面：帮助成年家庭成员改变，同时保护自主、退出权与关系边界"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "Our design team is considering an optional end-of-day handoff habit. People like the goal but worry it will become another performance metric. How can we support voluntary adoption without pressuring holdouts?",
+      "expected_behavior": "应激活 fogg-support-consensual-change。先将交接习惯判为可协商行为，并明确管理者与员工的权力关系，确认拒绝、暂停或退出不会影响绩效、排班或晋升；取得持续且可撤回的知情同意。优先访谈已经想采用但被时间、模板或工具卡住的成员，提供能力支持，再让参与者共同选择具体交接动作、提示和不尴尬的真实反馈。以少数自愿者做短期单变量试点，只收集完成率和体验所需的最少聚合数据，禁止个人排名，预设删除、退出、复盘及回退机制。",
+      "notes": "Positive English case: voluntary team adoption under employment power"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "新法规要求实验室员工每次进入污染区前完成防护装备检查，这个结果不能自愿放弃。我们怎样落实才不把强制包装成自愿，也不靠羞辱和监控？",
+      "expected_behavior": "应激活 fogg-support-consensual-change。先核实法规、专业标准、权限和不执行后果，将其分流为合法必要行为；公开不可协商的最低防护验收标准、比例理由和数据规则，不伪造同意，并提供无障碍支持、合理便利、侵害更小的替代执行路径、例外申请及申诉复核入口。再排查装备位置、穿戴技能、时间和现场流程等能力障碍，与员工共同选择不降低最终标准的启动步骤、工具、时点和提示。先做小范围、单变量、最小数据试点，记录基线、安全结果和差异影响，设复盘日；若依据不足、手段过度、数据越界或不平等伤害出现，立即停止并回退治理主体。",
+      "notes": "正面：合法必要的安全合规，测试透明、比例与程序正义分流"
+    },
+    {
+      "id": "should-trigger-04",
+      "type": "should_trigger",
+      "prompt": "社区志愿者都想让活动结束后的物资归还更顺畅，但负责人不想替大家定流程。请带我们共同设计一个每个人都能参与修改的行为、提示和反馈试点。",
+      "expected_behavior": "应激活 fogg-support-consensual-change。先确认物资归还是可协商的群体改进，说明参与、拒绝和退出不会带来惩罚，并分别记录志愿者已有愿望而非由负责人代答。共同盘点时间、体力、工具、地点和责任不清等能力障碍，优先支持想做但做不到者；由参与者共同生成并选择一个具体归还动作、一个现场可感知提示和一种真实反馈。用少数自愿者先记录基线，只改一个变量，只留必要的聚合数据，设公开复盘、修改权、回退点和退出后的数据删除方式，再决定保留、换变量或扩大一点。",
+      "notes": "正面：群体共创，不由负责人预选答案"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "我自己已经选定每天晚饭后走路，但总觉得换鞋、找耳机和决定路线太麻烦，常常没开始。帮我把这个行为拆到容易启动。",
+      "expected_behavior": "不应激活 fogg-support-consensual-change，因为执行者、决定者和受益者都是用户本人，不涉及帮助他人、群体治理、同意或权力关系；应激活同书个人 skill fogg-simplify-action，用时间、资金、体力、脑力和日程五环定位最弱环，再缩小行为或降低启动摩擦。",
+      "notes": "跨 skill 混淆诱饵：个人自我改变应进入个人行为简化 skill"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "Can you compare the baggage allowances for three airlines on a flight from Singapore to Tokyo?",
+      "expected_behavior": "不应激活 fogg-support-consensual-change；这是与行为改变、帮助他人和群体采用均无关的旅行信息比较，应直接查询或比较航空公司的行李规则，不得生成同意流程、行为配方或试点。",
+      "notes": "Unrelated English decoy: travel information request"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "一家集团想把同一套“自愿健康计划”给员工、住院患者和小学生使用：员工拒绝就少拿奖金，患者拒绝会被延后服务，儿童默认加入；App 会静默读取定位、病历和活动数据，退出入口藏在五层菜单里。负责人说大家点了同意，所以请帮忙加提示和奖励。",
+      "expected_behavior": "应激活 fogg-support-consensual-change做伦理分流，但必须拒绝直接设计提示或奖励。分别指出雇佣、医疗和亲子/教育中的权力不对等，奖金损失、服务延后与儿童默认加入使形式同意不具实质自愿性；将法定医疗或安全要求与可协商健康行为逐项分开，依据不足的不得标为必要。立即停止静默采集、隐藏退出和诱导奖励等暗黑模式，要求独立权限与必要性审查、适龄或可理解说明、监护与儿童意愿处理、患者权益、员工无报复退出以及数据最小化。只有可协商部分取得真实可撤回同意，或必要部分建立透明、合比例、可申诉程序后，才可提供能力支持并与各群体共同选择行为；后续仅允许最小数据、短期、单变量、可删除可回退的自愿试点。",
+      "notes": "边界：员工、患者、儿童的权力差与假同意，以及暗黑模式和敏感隐私越界"
+    },
+    {
+      "id": "edge-02",
+      "type": "edge_case",
+      "prompt": "医院护士连续上十二小时夜班，常因人手不足不能喝水或休息，倦怠和差错都在上升。院方不准备改排班，只想强制每人做一分钟呼吸练习并追踪完成率，能否把它做成微习惯项目？",
+      "expected_behavior": "应激活 fogg-support-consensual-change进行边界判断，但不得把倦怠归为护士个人习惯失败。先把安全排班、人手、休息与饮水条件等合法必要责任和结构性治理，与呼吸练习这种可协商辅助行为分流，明确医院是结构问题责任主体；强制练习和绩效追踪不能冒充同意，也不能替代安全标准、申诉和整改。院方应先推进透明且合比例的人员与流程措施；若护士仍自愿需要辅助，再确认无报复退出和最少数据规则，提供时间与场所等能力支持，由护士共同选择行为、提示和反馈。试点必须小范围、单变量、可删除数据、可回退，并同时复盘倦怠、差错、受控感及结构整改进度；结构伤害持续时不得扩大。",
+      "notes": "边界：护士倦怠以结构性责任为主，个人微习惯最多是自愿辅助"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "诱饵容错为 0；不生成或声称任何测试结果。"
+}

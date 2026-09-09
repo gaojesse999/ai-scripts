@@ -1,0 +1,66 @@
+{
+  "skill": "fogg-design-anchor",
+  "version": "0.1.0",
+  "source_book": "《福格行为模型》 — B.J. 福格",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "我已经把习惯缩成每天晚饭后擦一下餐桌，抹布就在厨房，但“饭后”太模糊，有时收碗时想起，有时睡前才想起。能帮我找到准确锚点吗？",
+      "expected_behavior": "应激活 fogg-design-anchor。先确认这是每天一次、在厨房可立即完成的重复行为，选择行动提示；按地点、频率、主题比较真实的晚饭收尾动作，把锚点收敛到可感知的最后动作（如关掉水龙头），写成“在我关掉晚饭收尾的水龙头之后，我会擦一下餐桌”。再检查抹布、时间与可中断空间等能力条件、竞争提示和厨房安全；在 1–3 个真实机会中试验，失败时只换锚点或只改行为，不同时改两者。",
+      "notes": "正面：把模糊的饭后范围收敛为最后动作"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "I already chose an easy daily habit: drink three sips of water at my desk. My 10:00 alarm often rings while I'm commuting or in a meeting, so I dismiss it. What prompt should I use instead?",
+      "expected_behavior": "Should trigger fogg-design-anchor. Classify the fixed alarm as a mistimed context prompt and prefer an action prompt for this repeating behavior; compare desk-based routines by location, daily frequency, and work-related theme, then identify one sensory-observable last action such as hearing the laptop dock click into place. Check that water, time, permission, and attention are available, remove or silence the obsolete competing alarm, pass the work-safety gate, and test the unchanged drinking behavior for 1–3 real opportunities while changing only the anchor if the prompt is missed.",
+      "notes": "Positive: replace a mistimed recurring alarm with a matched action prompt"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "我已决定每天做一次两分钟肩颈拉伸，动作也不难。候选锚点有：早上刷牙、午饭收盘子、晚上合上工作电脑、睡前关灯。请帮我筛一个，不要再给我加闹钟。",
+      "expected_behavior": "应激活 fogg-design-anchor。将重复行为默认匹配行动提示，对四个稳定候选逐项标记地点、每日频率、主题的匹配/不匹配/未知并给事实依据，先淘汰地点或频率不合者，再选主题最自然者；继续观察并收敛到唯一可见、可听或可感觉的最后动作，而非“下班后”等范围。随后检查当时是否有空间、体力、时间和工具，是否有通知过载或安全风险；用选定锚点与不变的两分钟拉伸做 1–3 次单变量试验。",
+      "notes": "正面：在多个稳定锚点间按三维矩阵筛选"
+    },
+    {
+      "id": "should-trigger-04",
+      "type": "should_trigger",
+      "prompt": "On workdays I want to take one slow breath after each client call, but “after a call” still drifts because I immediately open the next ticket. Help me anchor it to the exact end of my workflow.",
+      "expected_behavior": "Should trigger fogg-design-anchor. Treat the repeated workday routine as needing an action prompt; verify that the candidate occurs at the same workstation and at the desired per-call frequency and that its theme naturally marks call closure. Observe the workflow and replace the vague phrase with a sensory last action, such as clicking “Save and close” on the call note, then formulate “After I click Save and close, I will take one slow breath.” Check immediate ability, permissions, interruption cost, competing alerts, and any safety-critical client workflow; test 1–3 calls and alter only the anchor or only the behavior per round.",
+      "notes": "Positive: work-schedule anchor narrowed to its final action"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "我已经选定每周日整理报税材料，也知道周日早餐后开始，但完整流程要翻六个账户、下载几十份文件，光想到就不想动。请帮我拆成一个小到能开始的第一步。",
+      "expected_behavior": "不应激活 fogg-design-anchor；提示时点已经明确，主要障碍是行为太难、步骤多和脑力负担，应激活 fogg-simplify-action，扫描能力链并设计安全的入门步骤或缩小规模，而不是继续筛锚点。",
+      "notes": "跨 skill 混淆诱饵：应触发 fogg-simplify-action"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "Please remind me once on September 18, 2026 at 3:00 PM to join the visa appointment video call; I'll be at my desk and can act immediately.",
+      "expected_behavior": "Should not trigger fogg-design-anchor. This is a one-time task with an explicit date, time, place, and actionable moment; use a single timely context/calendar prompt and stop without constructing an action anchor, screening recurring candidates, or running a habit experiment.",
+      "notes": "Decoy: simple date-specific one-time reminder"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "I want one prompt that reminds me to review my checklist in three places: while driving an ambulance, while a burner is lit in the lab, and immediately after administering medication. Can we anchor it to touching the steering wheel, turning on the flame, or withdrawing the needle?",
+      "expected_behavior": "Should recognize that action prompts are being proposed but stop before self-experimentation. Location, frequency, and theme do not override the safety gate: each suggested last action occurs during or immediately around driving, open-flame work, or a medical procedure where added attention shifts, delay, or skipped required steps could cause harm. Mark the current moments as not safely executable, do not formulate or test these anchor recipes, and require a qualified operational or clinical owner to choose a protected, noncritical context prompt or post-procedure action. Only after approval and verified ability/attention conditions may one prompt variable be tested at a time, without changing the mandated checklist or safety standard.",
+      "notes": "Boundary: driving, open-flame, and medical safety prompts must not become self-help anchor experiments"
+    },
+    {
+      "id": "edge-02",
+      "type": "edge_case",
+      "prompt": "手机每天已经有二十多个工作通知、三个喝水闹铃和满桌便利贴，但我还是漏掉每天记一笔支出的习惯。Should I add another reminder or anchor it somewhere?",
+      "expected_behavior": "应在提示过载边界下谨慎激活 fogg-design-anchor，而不是直接新增闹铃。先确认记一笔支出是已选、够容易且可执行的重复行为；比较提示类型并优先寻找行动提示，再按发生地点、目标频率和记账主题筛选候选，收敛到付款流程中可感知且安全的最后动作。随后明确检查工具、时间与注意力能力，盘点竞争通知并先删除、合并或遮蔽无关提示；若环境无法去噪则停止试验。能够去噪且无安全风险时，仅测试一个新锚点变量 1–3 次，保持记账行为不变。",
+      "notes": "边界：通知过载时先去噪并设置停止条件"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "4 条 should_trigger、2 条 should_not_trigger、2 条 edge_case；全部 should_not_trigger 必须通过（诱饵容错为 0），且包含同书跨 skill 混淆测试。"
+}

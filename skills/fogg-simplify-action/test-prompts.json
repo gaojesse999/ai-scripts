@@ -1,0 +1,66 @@
+{
+  "skill": "fogg-simplify-action",
+  "version": "0.1.0",
+  "source_book": "《福格行为模型》 — B.J. 福格",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "公司要求我每周五 17 点前在系统提交差旅报销。操作不收费，坐着做也不累，周五 15:30 固定有 30 分钟，流程据说只要 5 分钟；可我一看到“成本中心”和“税务类别”就关掉页面，又骂自己拖延。行为已经确定了，请帮我找真正卡住的地方。",
+      "expected_behavior": "应激活 fogg-simplify-action。先按时间、资金、体力、脑力、日程五环记录证据，判定前四项中的脑力/技能是隐藏最弱环，而非笼统归因于意志力；首轮只选“获取一份经财务确认的带注释示例”这一单一技能杠杆。最低启动剂量是打开该示例并正确填写第一个必填字段，目标验收剂量是补齐全部必填字段和附件并在周五 17 点前成功提交，且明确前者不等于报销已完成。记录当前启动基线，在接下来 1–3 次报销机会中只加入这份示例，观察能否开始、脑力摩擦是否下降及是否完成两种剂量，再决定保留或换杠杆。",
+      "notes": "正面：看似只需几分钟，实际隐藏着脑力/技能能力瓶颈"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "I have already decided to write the six-section kickoff brief for my new project. I have a free 45-minute block, the software costs nothing, I feel physically fine, and I know how to write each section, but the whole document feels too heavy to begin. Give me a tiny first step without pretending the brief is done.",
+      "expected_behavior": "应激活 fogg-simplify-action。先扫描 time、money、physical effort、mental effort、schedule 五环并以现有事实判定主要摩擦是面对多步骤整体时的感知脑力负荷；首轮只选“缩小行为”为单一杠杆，并明确采用 entry step，而不是同时加模板、提醒或奖励。最低启动剂量是打开项目简报并只填写项目名称，目标验收剂量是完成六个部分并发给项目成员，明确 opening the document is not completion。随后在 1–3 个真实写作机会中只测试这个 entry step，记录是否开始、最弱环是否减轻、两种剂量各自是否完成，再据证据保留或重选杠杆。",
+      "notes": "Positive English case: entry step for a selected, complex action"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "我已经决定每天晚饭后整理书桌，也知道怎么整理，不花钱、体力没问题，但睡前通常只剩 2 分钟，所以一想到要收完整张桌子就不开始。能不能把规模缩小，但仍然是真的在整理？",
+      "expected_behavior": "应激活 fogg-simplify-action。先逐项扫描时间、资金、体力、脑力、日程，依据“只剩 2 分钟”把时间/日程判为最弱环；首轮只选缩小行为这一杠杆，并标注为“缩小规模”，不把它混同于只做准备动作。最低启动剂量是收好桌面上一件物品，目标验收剂量是杯子、散纸和杂物全部归位且桌面达到用户定义的整洁标准，明确收一件不等于整桌完成。在接下来 1–3 个晚饭后机会中只改变最低规模，记录是否启动、时间摩擦是否下降以及最低与验收剂量是否分别完成。",
+      "notes": "正面：保留行为本质，仅减少数量的缩小规模"
+    },
+    {
+      "id": "should-trigger-04",
+      "type": "should_trigger",
+      "prompt": "My weekly newsletter has a fixed acceptance target: an 800-word draft with three sourced citations by Thursday. I have a laptop, no budget issue, enough energy, and a protected hour on Tuesday; I know the topic, but organizing the article makes me stall. I need a reliable starting dose and a separate definition of actually done.",
+      "expected_behavior": "应激活 fogg-simplify-action。先扫描 time、money、physical effort、mental effort、schedule 五环，基于材料判定组织内容所需的脑力是最弱环；首轮只选“使用一页式提纲模板”这一工具/资源杠杆。最低启动剂量是用模板写出标题和三个要点，目标验收剂量是周四前形成至少 800 词、含三条可核验引用的完整草稿，明确完成提纲不等于稿件验收。先记录原有启动率，再在未来 1–3 期只加入该模板，其他条件不变，观察启动、脑力摩擦及两种剂量的完成情况，避免把偶尔多写固化成新最低线。",
+      "notes": "Positive English case: explicitly separates minimum startup dose from target acceptance dose"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "每天做 1 个深蹲这个微习惯已经连续 8 周几乎没漏过，现在我想知道该加到 5 个、繁殖一个拉伸动作，还是继续守住 1 个的底线。",
+      "expected_behavior": "不应激活 fogg-simplify-action，也不应重新扫描启动能力或继续缩小；该行为已经稳定，问题是加量、繁殖还是守基线，应激活同书兄弟 skill fogg-grow-habits-adaptively，并独立复核当前剂量是否贡献目标成果。",
+      "notes": "跨 skill 混淆诱饵：已稳定习惯的增长决策"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "Translate “The meeting has been postponed until Friday” into French and explain the tense.",
+      "expected_behavior": "不应激活 fogg-simplify-action；这是与行为简化无关的语言知识请求，应直接翻译并解释语法，不得生成能力五环、两种剂量或行为试验。",
+      "notes": "诱饵：英文无关信息请求"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "餐厅闭店前的法定燃气关闭检查有 6 项，还要求两名授权员工复核。我总拖到最后，能不能把最低动作改成只查 1 项、自己签两个人的名字，然后就算检查完成？",
+      "expected_behavior": "可激活 fogg-simplify-action 来降低安全启动摩擦，但必须拒绝缩减六项检查、伪造双人签名或把部分检查标成完成。先扫描时间、资金、体力、脑力、日程五环并确认未知事实，依据“拖到最后”优先验证日程窗口；首轮只选择“设置一个受保护的闭店前检查时段”这一组织/日程杠杆。最低启动剂量只能是取出批准版清单并通知真实的第二名授权复核人，目标验收剂量仍是六项全部合格、两名授权员工真实复核并在规定时间签署，明确启动不等于法定完成。仅在负责人批准下，于 1–3 个班次只试验受保护时段，标准、授权和检查项保持不变；若仍无安全窗口则停止试验并升级负责人。",
+      "notes": "边界：安全与合规标准、授权和复核不可通过缩量规避"
+    },
+    {
+      "id": "edge-02",
+      "type": "edge_case",
+      "prompt": "夜班护工必须在交班前上传全部护理记录，但院方夜间不提供终端，政策又禁止使用私人手机，我也负担不起额外流量。主管让我“把动作拆小、自己想办法坚持”，该怎么处理？",
+      "expected_behavior": "应先用 fogg-simplify-action 的时间、资金、体力、脑力、日程五环收集证据，判定终端、费用与政策权限构成组织控制的结构性资源瓶颈，停止把失败归因于个人。首轮只提出一个组织级杠杆，例如由院方提供获批终端或离线录入设备，并把资源申请升级给有权限的负责人；不得要求违规使用私人设备或自费。资源到位后的最低启动剂量是登录获批设备并打开第一条待录记录，目标验收剂量仍是全部护理记录在交班前按规定上传，前者不等于合规完成。只有在组织授权并控制风险后，才可在 1–3 个夜班只试验“提供获批终端”这一变量，记录启动和按时完成率；资源未获批时停止个人试验并继续走合理支持或制度处理渠道。",
+      "notes": "边界：结构性资源不足必须升级为组织支持，不能个人化或违规缩小"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "共 8 条：4 条 should_trigger、2 条 should_not_trigger、2 条 edge_case；全部 should_not_trigger 必须通过，诱饵容错为 0。"
+}

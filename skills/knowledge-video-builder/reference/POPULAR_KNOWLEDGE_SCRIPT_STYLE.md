@@ -16,7 +16,7 @@ This is the default in Knowledge Video Builder and the right choice whenever the
 
 Name the chapters after the stages, so a heading reads `## S03 例子`. The chapter rail is on screen, and a viewer who joins mid-video needs to know which stage they are in rather than read a second headline competing with the narration.
 
-1. **问题** — Open on a situation the viewer recognizes in themselves, name what it costs, then state the route in one line.
+1. **问题** — Open with one of the three hooks in [Hook Selection](#hook-selection), name what the pattern costs, then state the route in one line.
 2. **原理** — Name the one mechanism that explains it, and mark its limits in the same breath.
 3. **例子** — Take one concrete case out of the problem in numbered steps, spoken as 第一步/第二步/第三步. Show the old path failing first, then run the steps against that same situation.
 4. **总结** — Lift the steps out of the case into one repeatable sentence, then close with exactly one interaction line, which must be a **two-option A/B multiple-choice question (选择题)**. See [Closing Interaction](#closing-interaction).
@@ -31,7 +31,7 @@ Name the chapters after the stages, so a heading reads `## S03 例子`. The chap
 
 What each stage is most likely to get wrong:
 
-- **问题** must be universal before it is specific. State the pattern in a form every viewer recognizes, *then* land it on a named example. Opening on the example first makes the video look like it is about 年度报告 rather than about the mechanism.
+- **问题** must be universal before it is specific. State the pattern in a form every viewer recognizes, *then* land it on a named example. Opening on the example first makes the video look like it is about 年度报告 rather than about the mechanism. This holds for all three hooks: 反常识断言 and 反建议 spend their first line elsewhere, so the pattern has to arrive by the second.
 - **原理** carries the credibility risk. Introduce one concept, not a survey, and keep the honest boundary in the spoken line — "这个说法并不能解释所有的赶工和沉迷". A mechanism claimed too widely is the fastest way to lose the viewers most likely to share the video. When the concept comes from research, say what it does explain rather than restating the study.
 - **例子** carries the method, so it must not first announce the method in the abstract. There is deliberately no 解决方法 chapter: a stage that states the steps and a stage that demonstrates them say the same thing twice, and the abstract half is the one the viewer cannot act on. Keep the steps sequential and capped at four, usually three, with one line per step on why it works — a step whose purpose is invisible is the first one dropped. Use exactly one case, unless the user asks for more or the mechanism genuinely produces two opposite failures; the second case is almost always weaker, because the best situation was already spent on the first.
 - **总结** abstracts the steps just walked and adds nothing new. If the ending introduces a fresh idea, that idea belonged in 原理. It ends on the interaction line, not on the reframe.
@@ -87,6 +87,88 @@ Avoid this pattern:
 ## Opening
 
 Open with the most clickable, counterintuitive, or consequential claim that is supported by evidence.
+
+### Hook selection
+
+In the four-stage frame, the first two spoken lines of 问题 are the hook, and there are exactly three of them. Pick by fit with the subject, never by rotation — a hook applied to a topic that does not support it is worse than the plainest correct opening, because the viewer hears a promise the rest of the video never pays off.
+
+Check the preconditions in this order and take the first that passes:
+
+| Hook | Precondition | Entry feeling |
+|---|---|---|
+| 反建议 | A piece of advice is already in wide circulation, and following it is what produces or sustains the failure this video explains | 那句话我听过，原来还有下文 |
+| 反常识断言 | The mechanism yields a conclusion that sounds backwards but the video can actually support | 这话反着来，我先不服 |
+| 对号入座 | none — always available | 这说的是我 |
+
+反建议 is checked first because its precondition is the hardest and the most verifiable: either a well-known line exists or it does not. 反常识断言 is checked second because a supportable counterintuitive claim is a property of the mechanism, not a matter of phrasing. 对号入座 is the default and is not a failure state; most behavioural topics have no circulating advice and no genuinely backwards conclusion, and forcing one of the other two onto them produces a strawman or an overclaim.
+
+Tie-break, and only as a tie-break: when the preceding video in the same series used the hook that just passed, and another hook also passes its precondition, take the other one. Never downgrade fit for variety.
+
+Record the choice in `content/content-brief.md` under `## Opening hook`: name the hook, quote the circulating advice or the counterintuitive claim it rests on, and point at the evidence ID that supports it. A hook with no recorded precondition is a 对号入座 that was mislabelled.
+
+Whatever the hook, only the first two lines change. The rest of 问题 keeps its job in the same order: name what the pattern costs, rule out self-blame, then state the route in one line.
+
+#### 对号入座
+
+Invite the viewer to claim a pattern as their own.
+
+```text
+你有没有过这种情况：[普遍模式]。
+[代价，或它反复出现的样子]。
+```
+
+```text
+你有没有过这种情况：同样的问题，这个月已经处理过三次。
+每次都修好了。过两天，它自己回来。
+```
+
+The failure mode is landing on a named example instead of a pattern — "你有没有过这种情况：周报每周都迟" makes the video look like it is about 周报. State the pattern first; the example comes later.
+
+#### 反常识断言
+
+Lead with a conclusion that sounds backwards, then have the second line catch it with a pattern everyone recognizes.
+
+```text
+[听起来反着的一句，来自本期机制]。
+[紧接着的普遍模式，证明它不是标题党]。
+```
+
+```text
+修好问题，有时候才是让它反复出现的原因。
+同样的事这个月修了三次，每次都好了，过两天又回来。
+```
+
+```text
+越重要的事，你越想赶紧结束。
+重要的事草草交差，不重要的事反而能死磕很久。
+```
+
+The claim must be an unexpected consequence of the mechanism this video actually explains, and 原理 must be able to make good on it. Do not manufacture one from a statistic, a book title, or an author's name. Two failure modes: opening on a slogan whose pattern never lands, and announcing the method itself — "五个为什么，能解决反复出现的问题" is a table of contents, not a hook.
+
+#### 反建议
+
+Take a line the viewer has already heard, grant that it is right, then say what happens when they actually follow it.
+
+```text
+[那句广为流传的建议]。
+它没错。但[照做之后真实会发生什么]。
+```
+
+```text
+遇到问题要多问几个为什么——这话你肯定听过。
+它没错。但真照着问，大部分人第二层就问不下去了。
+```
+
+```text
+做事要有始有终——这话你从小听到大。
+它没错。但真照着做，你会在一件早就该收手的事上，磨到半夜。
+```
+
+Pick the advice that *produces* the failure this video explains, not one that merely sits next to it. 有始有终 is what keeps the viewer grinding, so correcting it is the video's actual subject; 要事优先 governs which task to pick, so a hook built on it has to swerve in line two to reach the closure urge, and the promise goes unpaid. When the nearest circulating advice only neighbours the mechanism, that is a signal the precondition failed — use 对号入座.
+
+Three constraints. The advice must be genuinely in circulation, not a strawman assembled to be knocked down. The concession — "它没错" — cannot be dropped, or the opening reads as attacking someone for attention. And the second line is a judgment about viewer behaviour, not a measurement: never dress it up with an invented statistic such as "90% 的人第二层就停了".
+
+### Openings for tools and repositories
 
 For GitHub projects, actively verify usable social proof online before writing the hook when web access is available:
 
@@ -267,6 +349,7 @@ Options were never named. The viewer cannot answer without rewatching.
 Before presenting the narration gate, check:
 
 - Does the first 20 seconds give a clear reason to keep watching?
+- Is the opening one of the three hooks, chosen by precondition rather than rotation, with the hook name and its precondition recorded in the brief? For 反建议, is the advice genuinely in circulation and the concession kept? For 反常识断言, does 原理 actually support the claim?
 - For GitHub projects, did you verify current project/author/social-proof signals online before using any numbers?
 - Is the video organized around a central mystery or thesis?
 - Did you pick the skeleton that matches the subject, and can you point to where each of its stages starts?

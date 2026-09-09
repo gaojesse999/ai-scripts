@@ -318,7 +318,7 @@ Turn the approved analysis into an editorial plan, not a full narration. Determi
 - target audience and assumed knowledge;
 - viewer problem and promised outcome;
 - one-sentence thesis;
-- opening hook;
+- opening hook, named from the three-hook pool together with the precondition that qualified it;
 - chapter structure, defaulting to the four stages 问题 → 原理 → 例子 → 总结;
 - what must be shown instead of merely said;
 - demonstration example;
@@ -331,7 +331,7 @@ When a reference style profile exists, also lock the canvas, chapter/progress tr
 
 Follow [reference/CONTENT_STRATEGY.md](reference/CONTENT_STRATEGY.md). Produce `content/content-brief.md`.
 
-The default chapter framework is 问题 → 原理 → 例子 → 总结: 问题 opens on something the viewer recognizes in themselves, 原理 explains the underlying cause, 例子 walks one concrete case out of that problem, and 总结 abstracts what the example did and closes. Treat the four as content stages, not as a slide count: allocate scenes by how much a stage actually carries. See [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) for each stage's failure mode and the two alternative skeletons for tool teardowns and tutorials. Record any deviation in the brief.
+The default chapter framework is 问题 → 原理 → 例子 → 总结: 问题 opens with one of the three hooks and lands on something the viewer recognizes in themselves, 原理 explains the underlying cause, 例子 walks one concrete case out of that problem, and 总结 abstracts what the example did and closes. Treat the four as content stages, not as a slide count: allocate scenes by how much a stage actually carries. See [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md) for each stage's failure mode and the two alternative skeletons for tool teardowns and tutorials. Record any deviation in the brief.
 
 Name the chapters after the stages themselves, so a heading reads `## S03 例子` rather than a clever title. The heading is what the chapter rail shows on screen, and a viewer who joins mid-video needs to know which stage they are in, not a second headline competing with the narration.
 
@@ -348,6 +348,12 @@ Prerequisite: Phase 1 and Phase 2 artifacts are ready.
 This phase produces exactly one artifact: `script/SCRIPT.md`. Narration is both the main retention driver and the part that gets rewritten most, so nothing is derived from it until the user approves it. Deriving a storyboard from a draft that is about to change spends a full visualisation pass per revision and leaves three copies of the same sentences to hand-sync.
 
 Draft the narration with the high-retention grammar in [reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md). Write 口语 that a human creator would actually say aloud, never 书面语, and keep every line grammatical enough to parse on first hearing: sharp opening, short spoken beats, failure-mode progression, concrete examples, and a reframing ending. For 解决问题-type topics, close on exactly one interaction line after the reframe, and it must be a two-option A/B 选择题 — question first, then the two labelled options separated by a semicolon.
+
+### Choose the opening hook by fit
+
+The first two spoken lines of 问题 are the hook, and there are exactly three: 对号入座 (`你有没有过这种情况：…`), 反常识断言, and 反建议. Choose by precondition, in that reference's order, and record the chosen hook plus the line that qualified it in the brief. See [Hook Selection](reference/POPULAR_KNOWLEDGE_SCRIPT_STYLE.md#hook-selection).
+
+Selection is a reading of the source material, not a coin flip. Ask whether the topic has advice already in wide circulation that this video corrects (反建议), then whether the mechanism yields a conclusion that sounds backwards and 原理 can actually support (反常识断言). Neither is common, so 对号入座 remains the default and is a correct answer, not a fallback to apologize for. Rotating hooks for variety is how a video ends up opening on a claim it never pays off, or knocking down advice nobody gives.
 
 Rules:
 
@@ -372,7 +378,7 @@ A narration line must not start with `#`, `>`, `|`, a backtick, `-`, `*`, `+`, o
 
 Headings are safe to keep in this file only because nothing reads it as speech: TTS text comes solely from `timing/chapters.json`, and derivation routes the heading to the chapter rail instead. Treat that isolation as enforced rather than natural — it holds because of the parser above, the guard in `produce_voice.py`, and the consistency check in `check_sync.py`. The existing coverage and pace checks cannot catch a leaked heading, because a heading inside a chunk appears on both sides of the comparison.
 
-End by presenting the complete narration, the chapter outline, the duration estimated from measured pace, and unresolved pronunciations. This is the default **narration approval gate**. Revisions in this phase touch only `SCRIPT.md`; do not generate a storyboard, a scene plan, or any timing until the user approves.
+End by presenting the complete narration, the chapter outline, the chosen opening hook with the one line that qualified it, the duration estimated from measured pace, and unresolved pronunciations. Naming the hook lets the user override it with one word instead of rewriting the opening themselves. This is the default **narration approval gate**. Revisions in this phase touch only `SCRIPT.md`; do not generate a storyboard, a scene plan, or any timing until the user approves.
 
 ## Phase 3B — Visual derivation
 
@@ -872,6 +878,7 @@ After presenting the narration gate or a chapter gate, stop the response. Do not
 - Never let PPT/HTML become an independent content fork. Derive both from `scene-plan.json`.
 - Never finalize animation timing before final voice timing exists.
 - Never estimate a caption or beat time by splitting a segment in proportion to character count. Chinese TTS is not constant-rate; measure it.
+- Never pick the opening hook by rotation. 反建议 needs advice that is genuinely in circulation, 反常识断言 needs a claim 原理 can support, and 对号入座 is the correct default when neither holds.
 - Never put anything in `SCRIPT.md` beyond chapter headings, blank lines, and narration lines. In particular, never encode delivery control with pseudo tags such as `<#1#>` or `[pause]`; use `script/voice-plan.json` for exact pauses.
 - Never write `timing/chapters.json` or a scene's `narration` by hand. Derive both from `SCRIPT.md`.
 - Never leave a keyframe as a literal second once alignment exists. Anchor it to a beat id so a re-record reaches it.

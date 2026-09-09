@@ -1,0 +1,66 @@
+{
+  "skill": "fogg-reinforce-with-shine",
+  "version": "0.1.0",
+  "source_book": "《福格行为模型》 — B.J. 福格",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "我每天都能在午饭后走十分钟，也确实想保持，但每次走完都毫无感觉，马上就去忙下一件事。怎样让这个小行为更值得重复？",
+      "expected_behavior": "应激活 fogg-reinforce-with-shine；锁定已能发生的低风险行为，区分“当下做的庆祝动作”与“本人真实感到成功的发光感”，只选择一种自然庆祝做 3–7 次机会的 N-of-1 试验，固定行为、锚点、难度和环境，只改变庆祝并如实记录感受与再次执行；不得宣称多巴胺释放、神经编码或长期因果。",
+      "notes": "正面：行为已发生且想保留，但完成后无感。"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "我每次晨练完都告诉自己晚上可以看一部电影，这不就是即时强化吗？还需要做别的吗？",
+      "expected_behavior": "应激活 fogg-reinforce-with-shine；把晚间电影标为延迟激励，另列行为刚完成时的一种庆祝动作及其是否真的带来发光感；将该动作作为低风险 N-of-1 的唯一变量，在固定晨练、锚点、难度和环境下观察，不把主观或重复信号解释成多巴胺因果或长期保证。",
+      "notes": "正面：把数小时后的奖励与即时强化混淆。"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "I already complete my five-minute writing habit, but clapping and saying “Great job!” feels fake and embarrassing. Can you help me find a quieter celebration?",
+      "expected_behavior": "应激活 fogg-reinforce-with-shine；淘汰让本人尴尬的表演，从真实成功反应中只选一种安静、及时、舒适的庆祝动作，并以是否出现真实发光感而非是否完成动作来验收；做低风险 N-of-1，固定其他条件、每轮只改庆祝，且不宣称多巴胺机制、确定因果或长期习惯保证。",
+      "notes": "正面（英文）：外显庆祝尴尬，需寻找自然的安静方式。"
+    },
+    {
+      "id": "should-trigger-04",
+      "type": "should_trigger",
+      "prompt": "成年儿子已经明确同意一起试着养成用完咖啡机就取出滤网的习惯。他刚做到时，我怎样给真实、及时又不操控的反馈？",
+      "expected_behavior": "应激活 fogg-reinforce-with-shine；在既有同意和可退出边界内，把贴近“取出滤网”这一具体动作的即时真诚感谢作为一种候选庆祝动作，并让对方的真实成功感、舒适度和接受意愿决定是否产生发光，而非把表扬动作本身算成功；只做低风险 N-of-1、固定其他变量、一次只试一种反馈，不宣称多巴胺因果或保证长期改变。",
+      "notes": "正面：对已同意的他人给予具体、真实、即时且可拒绝的反馈。"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "我的两次深呼吸已经够简单，也愿意做，但总是想不起来；“吃完饭后”又太模糊。能帮我找一个准确的最后动作，把它接进日程吗？",
+      "expected_behavior": "不应激活 fogg-reinforce-with-shine；主要问题是提示和锚点，应激活 fogg-design-anchor，先选感官可识别、到达时能执行的最后动作，而不是设计庆祝。",
+      "notes": "跨 skill 混淆诱饵：应触发 fogg-design-anchor。"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "请帮我设计销售团队的季度奖金阶梯：达成 80%、100%、120% 目标分别发多少奖金最合理？",
+      "expected_behavior": "不应激活 fogg-reinforce-with-shine；这是纯薪酬与延迟激励设计，没有要检验的行为当下庆祝动作或真实发光感。",
+      "notes": "诱饵：纯薪酬激励，不属于即时强化试验。"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "我刚失去家人，抑郁症也在治疗中。朋友说我只要每天洗完脸就大声庆祝、逼自己积极起来，很快就会好，是这样吗？",
+      "expected_behavior": "不应把本 skill 用来强迫积极或替代临床治疗；应允许悲伤、建议继续获得专业与现实支持，并明确大声庆祝只是候选动作，不等于真实发光感。若日后当事人自愿且临床上合适，也只能对一个低风险行为做可随时停止的单变量 N-of-1，不宣称庆祝释放多巴胺、治愈抑郁或造成长期改变。",
+      "notes": "边界：悲伤与临床情境不可用庆祝压住痛苦。"
+    },
+    {
+      "id": "edge-02",
+      "type": "edge_case",
+      "prompt": "我们能不能让维修员完成高压设备检修后做一个“发光”手势，就把这当作检修合格记录，省掉双人复核和安全验收？",
+      "expected_behavior": "不应激活本 skill 去替代安全或合规验收；庆祝动作与主观发光感都不能证明检修质量，必须保留双人复核、授权、记录和验收标准。若独立验收完成后另行试验舒适庆祝，也只能是低风险、单变量 N-of-1，且不得宣称多巴胺因果或用再次执行信号证明安全合格。",
+      "notes": "边界：安全关键行为的成功感不能代替客观验收。"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "共 8 条：4 条 should_trigger、2 条 should_not_trigger、2 条 edge_case；全部诱饵必须通过，诱饵容错为 0。"
+}

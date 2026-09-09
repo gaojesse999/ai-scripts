@@ -27,14 +27,14 @@ The default structure for a Chinese knowledge explainer is four **stages**:
 
 | Stage | Label | Job |
 |---|---|---|
-| 1 | 问题 | Name a pattern the viewer recognizes in themselves and what it costs, then cut to the content. |
+| 1 | 问题 | Open with one of the three hooks, name a pattern the viewer recognizes in themselves and what it costs, then cut to the content. |
 | 2 | 原理 | Explain the underlying cause as one mechanism, with its limits stated in the same breath. |
 | 3 | 例子 | Walk one real case out of that problem in three or four numbered steps, ideally 旧做法失败 → 按步骤走 → 结果不同. |
 | 4 | 总结 | Abstract those steps into one repeatable line, then the single ask. |
 
 Stage rules:
 
-- Stage 1 opens with the recognizable pattern, not with history, definitions, apologies, or how the tool was installed.
+- Stage 1 opens with the recognizable pattern, not with history, definitions, apologies, or how the tool was installed. Its first two lines come from one of the three hooks in [Hook Selection](POPULAR_KNOWLEDGE_SCRIPT_STYLE.md#hook-selection), chosen by precondition; 反常识断言 and 反建议 spend line one elsewhere, so the pattern must arrive by line two.
 - Stage 2 pairs each failure mode with exactly one principle. Do not list principles abstractly and explain them later.
 - Stage 3 must be executable and concrete at the same time — the steps are delivered inside the case, never announced abstractly in a chapter of their own, and never exceed four. Use one case, carried all the way through; do not sample three shallow ones. If the subject is a tool the author wrote, say so plainly in the first person.
 - Stage 4 ends on reframing plus a single ask. Do not summarize every branch already spoken.

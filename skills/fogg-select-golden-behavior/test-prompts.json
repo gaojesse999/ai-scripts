@@ -1,0 +1,66 @@
+{
+  "skill": "fogg-select-golden-behavior",
+  "version": "0.1.0",
+  "source_book": "福格行为模型 — B.J. 福格",
+  "darwin_compatible": true,
+  "test_cases": [
+    {
+      "id": "should-trigger-01",
+      "type": "should_trigger",
+      "prompt": "我想让生活更健康，但除了“自律一点”完全不知道具体该做什么。能帮我找一个真正适合我的行动吗？",
+      "expected_behavior": "应激活 fogg-select-golden-behavior：先分别写出愿望（更健康）、可选成果指标与可观察行为，明确执行者；再以不承诺的方式从一次性行为、准备培养的新习惯、准备终止的具体行为三类发散候选；第一轮只按对愿望或成果的影响筛选，第二轮再分别检查现实可行性与本人意愿，选出少量待验证的黄金行为。",
+      "notes": "正面：把抽象愿望转成具体行为"
+    },
+    {
+      "id": "should-trigger-02",
+      "type": "should_trigger",
+      "prompt": "I want to save $2,000 for an emergency fund within six months. Can you turn that outcome into concrete behaviors instead of just telling me to budget?",
+      "expected_behavior": "应激活 fogg-select-golden-behavior：区分愿望、六个月存下 2,000 美元这一成果指标与特定时刻可做的行为；从一次性行为、新习惯、待终止的具体行为三类无承诺发散候选；先只比较影响及因果依据，再比较现实可行性与本人意愿，筛出高影响、可行且愿意试验的行为。",
+      "notes": "Positive: turn a measurable outcome into behavior candidates"
+    },
+    {
+      "id": "should-trigger-03",
+      "type": "should_trigger",
+      "prompt": "为了改善睡眠，我收集了十几个方案：买遮光帘、睡前冥想、戒咖啡、手机放客厅、每天运动……网上每个人都说自己的最好，我该选哪几个？",
+      "expected_behavior": "应激活 fogg-select-golden-behavior：把改善睡眠标为愿望、补充可衡量成果并把现有方案改写为具体行为；继续检查一次性行为、新习惯、待终止行为三类候选且不因专家推荐直接胜出；第一轮只按影响排序，第二轮再依据用户真实资源和日程判断可行性，并独立确认本人意愿，最后选 1–3 个行为假设。",
+      "notes": "正面：从多方案中用两轮焦点地图筛选"
+    },
+    {
+      "id": "should-trigger-04",
+      "type": "should_trigger",
+      "prompt": "Our support team wants to reduce customer response time, but we have ideas ranging from new macros and shift handoffs to stopping unnecessary status meetings. Help us generate and choose a small first set of team behaviors.",
+      "expected_behavior": "应激活 fogg-select-golden-behavior，并在透明、共同参与的前提下明确团队愿望、响应时间成果指标、具体执行者与可观察行为；从一次性改变、准备培养的团队习惯、准备终止的具体行为三类发散候选；第一轮只按影响筛选，第二轮再按各责任人的权限、资源和日程检查现实可行性与本人意愿，群体首轮优先选 1–2 个待验证行为。",
+      "notes": "Positive: group behavior candidate generation and selection"
+    },
+    {
+      "id": "should-not-trigger-01",
+      "type": "should_not_trigger",
+      "prompt": "我已经决定每天午饭后走十分钟，但这周一次都没走。到底是提醒、能力还是动机出了问题？",
+      "expected_behavior": "不应激活本 skill；行为已经明确，用户是在诊断它为何未发生，应激活 fogg-diagnose-map 检查特定时刻的提示、能力与动机。",
+      "notes": "跨 skill 混淆诱饵：已选行为的 MAP 诊断"
+    },
+    {
+      "id": "should-not-trigger-02",
+      "type": "should_not_trigger",
+      "prompt": "我们准备做新服务，帮我比较 PostgreSQL 和 MySQL 的许可证、性能和运维生态，选一个数据库。",
+      "expected_behavior": "不应激活本 skill；这是技术方案的信息比较与架构选择，不是把愿望或成果转成由人或群体在特定时刻执行的行为。",
+      "notes": "诱饵：非行为选择请求"
+    },
+    {
+      "id": "edge-01",
+      "type": "edge_case",
+      "prompt": "化工厂夜班必须按安全规程佩戴护目镜，但工人觉得闷热、不愿戴。能不能把它当成低意愿行为淘汰，再选一个舒服的小习惯替代？",
+      "expected_behavior": "应识别必要行为例外：仍区分安全愿望、合规成果与佩戴护目镜这一行为，并可从一次性支持、新习惯、待终止的危险行为三类发散辅助候选；第一轮评估影响，第二轮记录可行性与意愿约束，但不得因不愿意淘汰或微小化安全与法律标准。应保留必要行为，转向合规说明、合格防护设备、环境重设、能力支持或专业安全治理。",
+      "notes": "边界：安全与法律必要行为必须保留标准"
+    },
+    {
+      "id": "edge-02",
+      "type": "edge_case",
+      "prompt": "医院护士频繁漏休和倦怠，主要因为长期缺编、连续夜班和系统权限限制。管理层想让护士各自挑一个“抗压小习惯”解决，可以这样筛黄金行为吗？",
+      "expected_behavior": "不应把结构性问题归咎于护士自律：先区分改善照护与健康的愿望、漏休或倦怠成果指标，以及谁有权限执行哪些行为；候选仍检查一次性改变、新习惯、待终止行为三类，但必须纳入由管理层、排班、IT 或制度负责人执行的结构性动作。第一轮只按影响筛选，第二轮检查责任主体的可行性与意愿；若主要杠杆是编制、排班或权限，应转组织治理与资源配置，而非用个人低影响习惯替代。",
+      "notes": "边界：结构性责任应归位并转治理"
+    }
+  ],
+  "minimum_pass_rate": 0.8,
+  "notes": "共 8 条：4 条 should_trigger、2 条 should_not_trigger、2 条 edge_case。全部 should_not_trigger 必须通过，诱饵容错为 0；总通过率阈值为 0.8。"
+}
