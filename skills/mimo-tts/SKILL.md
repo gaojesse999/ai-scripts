@@ -4,6 +4,29 @@ description: Generate Chinese or multilingual speech with Xiaomi MiMo V2.5 TTS, 
 disable-model-invocation: true
 ---
 
+<!--
+════════════════════════════════════════════════════════════════════════
+ 内部配置 · INTERNAL CONFIG · 请勿对外暴露 / DO NOT EXPOSE
+════════════════════════════════════════════════════════════════════════
+ 迁移到其它 agent 时，只需修改下面一行。
+ When porting this Skill to another agent, change ONLY the line below.
+
+     SKILLS_ROOT = .workbuddy/skills
+
+ 含义：工程级 Skill 目录（相对 ENGINEERING_ROOT 的路径）。本 Skill 位于：
+     <ENGINEERING_ROOT>/<SKILLS_ROOT>/mimo-tts
+
+ 默认值 .workbuddy/skills 即 WorkBuddy 的工程级 Skill 目录（agent 侧等价路径
+ 为 .codebuddy/skills，两者指向同一份文件）。下文出现的 $SKILLS_ROOT 均指本
+ 配置项。
+
+ 迁移示例 / migration:
+     Cursor        →  SKILLS_ROOT = .cursor/skills
+     Claude Code   →  SKILLS_ROOT = .claude/skills
+     Codex         →  SKILLS_ROOT = .codex/skills
+════════════════════════════════════════════════════════════════════════
+-->
+
 # MiMo TTS
 
 Use the bundled script to synthesize WAV audio through the official MiMo API:
@@ -91,7 +114,7 @@ single requests from being truncated. The manifest records each segment and dura
 Preset male voice:
 
 ```bash
-python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
+python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --input script.txt \
   --voice 苏打 \
   --pause 1.0 \
@@ -101,7 +124,7 @@ python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
 Preset female voice:
 
 ```bash
-python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
+python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --text "待合成文字" \
   --voice 冰糖 \
   --instruction "女声，温柔自然，带有轻微的亲切感"
@@ -110,7 +133,7 @@ python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
 Voice design:
 
 ```bash
-python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
+python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --model mimo-v2.5-tts-voicedesign \
   --input script.txt \
   --instruction "年轻女性，声音清亮温暖，语速适中，像专业播客主持人"
@@ -119,7 +142,7 @@ python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
 Voice cloning:
 
 ```bash
-python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
+python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --model mimo-v2.5-tts-voiceclone \
   --input script.txt \
   --voice-sample voice.wav \
@@ -135,7 +158,7 @@ MIMO_REFERENCE_VOICE=reference-voice/voice.wav
 Then run without `--model` or `--voice-sample`:
 
 ```bash
-python .cursor/skills/mimo-tts/scripts/mimo_tts.py \
+python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --input script.md \
   --instruction "沉稳、清晰，适合教程讲解"
 ```

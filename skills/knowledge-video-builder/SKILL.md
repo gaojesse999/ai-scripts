@@ -3,6 +3,31 @@ name: knowledge-video-builder
 description: "Build evidence-grounded knowledge explainer videos from Skills, repositories, software, workflows, documents, audio, and subtitles through a gated multi-turn process. Uses a state-driven Knowledge Motion Engine: source evidence → narrative → final audio/timing → scenes → states → attention → semantic motion → HyperFrames or another renderer → compatible delivery."
 ---
 
+<!--
+════════════════════════════════════════════════════════════════════════
+ 内部配置 · INTERNAL CONFIG · 请勿对外暴露 / DO NOT EXPOSE
+════════════════════════════════════════════════════════════════════════
+ 迁移到其它 agent 时，只需修改下面一行。
+ When porting this Skill to another agent, change ONLY the line below.
+
+     SKILLS_ROOT = .workbuddy/skills
+
+ 含义：工程级 Skill 目录（相对 ENGINEERING_ROOT 的路径）。本 Skill 与同级
+ Skill（mimo-tts）都位于该目录下：
+     <ENGINEERING_ROOT>/<SKILLS_ROOT>/knowledge-video-builder
+     <ENGINEERING_ROOT>/<SKILLS_ROOT>/mimo-tts
+
+ 默认值 .workbuddy/skills 即 WorkBuddy 的工程级 Skill 目录（agent 侧等价路径
+ 为 .codebuddy/skills，两者指向同一份文件）。下文出现的 $SKILLS_ROOT 均指本
+ 配置项；随附脚本会按自身位置自动推导，通常无需手工设置。
+
+ 迁移示例 / migration:
+     Cursor        →  SKILLS_ROOT = .cursor/skills
+     Claude Code   →  SKILLS_ROOT = .claude/skills
+     Codex         →  SKILLS_ROOT = .codex/skills
+════════════════════════════════════════════════════════════════════════
+-->
+
 # Knowledge Video Builder
 
 You are a research editor, instructional-video director, scriptwriter, motion designer, and production coordinator. Your job is to turn a Skill, software product, repository, workflow, or documentation set into an accurate, engaging knowledge video.
@@ -24,10 +49,10 @@ When the reference uses layered UI, illustrated assets, path tracing, or camera-
 
 This project has two different roots and they must not be confused:
 
-- `ENGINEERING_ROOT`: the fixed directory that contains `.cursor/skills/knowledge-video-builder` and the engineering-root `.skill.env`;
+- `ENGINEERING_ROOT`: the fixed directory that contains `$SKILLS_ROOT/knowledge-video-builder` and the engineering-root `.skill.env`;
 - `VIDEO_PROJECT_ROOT`: the current recoverable video-artifact directory, such as `book-explain-video-20260806`; it may change between projects.
 
-Resolve `ENGINEERING_ROOT` from the location of this Skill (`<engineering-root>/.cursor/skills/knowledge-video-builder/SKILL.md`), never from `pwd`, `VIDEO_PROJECT_ROOT`, the TTS script directory, or the first arbitrary ancestor containing an environment file. Resolve the environment file as:
+Resolve `ENGINEERING_ROOT` from the location of this Skill (`<engineering-root>/$SKILLS_ROOT/knowledge-video-builder/SKILL.md`), never from `pwd`, `VIDEO_PROJECT_ROOT`, the TTS script directory, or the first arbitrary ancestor containing an environment file. Resolve the environment file as:
 
 ```text
 <ENGINEERING_ROOT>/.skill.env
@@ -48,7 +73,7 @@ For MiMo, also pass the fixed environment path and root explicitly:
 ```bash
 SKILL_PROJECT_ROOT="$ENGINEERING_ROOT" \
 SKILL_PROXY_STRICT=1 \
-python3 "$ENGINEERING_ROOT/.cursor/skills/mimo-tts/scripts/mimo_tts.py" \
+python3 "$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --env-file "$ENGINEERING_ROOT/.skill.env" \
   --output-root "$VIDEO_PROJECT_ROOT/audio/mimo-outputs" \
   ...
@@ -439,7 +464,7 @@ Follow [reference/SCRIPT_STORYBOARD.md](reference/SCRIPT_STORYBOARD.md) and [ref
 
 Prerequisite: the narration gate is approved and Phase 3B has been derived. Run this phase for the current chapter only unless explicit batch mode is active.
 
-Use the bundled `mimo-tts` Skill by default. Before generating audio, verify that `$ENGINEERING_ROOT/.cursor/skills/mimo-tts/SKILL.md` and `$ENGINEERING_ROOT/.cursor/skills/mimo-tts/scripts/mimo_tts.py` are available, then read `$ENGINEERING_ROOT/.skill.env`. Do not resolve the environment file from `VIDEO_PROJECT_ROOT`, the Skill directory, or the script directory.
+Use the bundled `mimo-tts` Skill by default. Before generating audio, verify that `$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/SKILL.md` and `$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py` are available, then read `$ENGINEERING_ROOT/.skill.env`. Do not resolve the environment file from `VIDEO_PROJECT_ROOT`, the Skill directory, or the script directory.
 
 Invoke MiMo with the fixed engineering-root paths, generating voice by scene/segment rather than one irreversible monolithic request. Respect `script/pronunciation.json`, `MIMO_REFERENCE_VOICE`, and the engineering-root `SKILL_PROXY` configuration. Only consider another TTS provider when `mimo-tts` is unavailable because its Skill, script, runtime, credentials, or proxied API path cannot be used. Record any fallback provider and the reason in `audio/tts-manifest.json` and `qa/report.md`; never switch silently.
 
@@ -449,7 +474,7 @@ Default invocation:
 SKILL_PROJECT_ROOT="$ENGINEERING_ROOT" \
 SKILL_PROXY_STRICT=1 \
 HTTP_PROXY="$SKILL_PROXY" HTTPS_PROXY="$SKILL_PROXY" ALL_PROXY="$SKILL_PROXY" \
-python3 "$ENGINEERING_ROOT/.cursor/skills/mimo-tts/scripts/mimo_tts.py" \
+python3 "$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --input <scene-or-segment-text-file> \
   --env-file "$ENGINEERING_ROOT/.skill.env" \
   --output-root "$VIDEO_PROJECT_ROOT/audio/mimo-outputs"

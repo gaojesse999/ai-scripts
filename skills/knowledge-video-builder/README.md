@@ -29,7 +29,7 @@ python scripts/project.py init ./my-project --title "My Explainer" --source ./in
 
 ## Engineering-root network proxy and keys
 
-Keep one `.skill.env` in the fixed engineering root—the directory containing `.cursor/skills/knowledge-video-builder`—rather than copying it into each video artifact directory. Set `SKILL_PROXY` before external source inspection, TTS, transcription, HyperFrames, or dependency downloads:
+Keep one `.skill.env` in the fixed engineering root—the directory containing `$SKILLS_ROOT/knowledge-video-builder`—rather than copying it into each video artifact directory. Set `SKILL_PROXY` before external source inspection, TTS, transcription, HyperFrames, or dependency downloads:
 
 ```text
 SKILL_PROXY=http://xxx.xxx.xxx.xxx:xxxx

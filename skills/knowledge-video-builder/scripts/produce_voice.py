@@ -40,6 +40,25 @@ from derive_script_artifacts import narration_line_error
 BREAK_CHARS = set("，、；：。！？!?;:")
 
 
+def _skills_dir() -> Path:
+    """Sibling-Skill directory (the parent of this Skill's own directory).
+
+    Internal config. Default: derived from this file's location, so the Skill
+    stays portable across agents with no edit. Override with the SKILLS_ROOT
+    environment variable, either absolute or relative to ENGINEERING_ROOT.
+    """
+    env = (os.environ.get("SKILLS_ROOT") or "").strip()
+    if env:
+        candidate = Path(env)
+        if candidate.is_absolute():
+            return candidate
+        return Path(__file__).resolve().parents[4] / candidate
+    return Path(__file__).resolve().parents[2]
+
+
+SKILLS_DIR = _skills_dir()
+
+
 def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -629,7 +648,7 @@ def synthesize(
     output_root = project / "audio/voice-candidates"
     command = [
         "python3",
-        str(engineering_root / ".cursor/skills/mimo-tts/scripts/mimo_tts.py"),
+        str(SKILLS_DIR / "mimo-tts/scripts/mimo_tts.py"),
         "--text", request_text(chunk),
         "--title", f"{chunk['id']}-take-{attempt}",
         "--instruction", instruction,
@@ -1362,7 +1381,7 @@ def generate(
         }
         write_json(project / "audio/voice-production.json", production)
 
-    scripts = engineering_root / ".cursor/skills/knowledge-video-builder/scripts"
+    scripts = SKILLS_DIR / "knowledge-video-builder/scripts"
     align = scripts / "align_audio.py"
     align_command = [
         "python3", str(align), "--project", str(project),

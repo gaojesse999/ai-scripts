@@ -104,7 +104,7 @@ def to_pcm16k(wav: Path, dest: Path) -> Path:
 
 
 def engineering_root() -> Path:
-    """The directory holding .cursor/skills and the single .skill.env."""
+    """The directory holding <SKILLS_ROOT> and the single .skill.env."""
     return Path(__file__).resolve().parents[4]
 
 

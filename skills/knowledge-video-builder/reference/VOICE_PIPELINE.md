@@ -2,7 +2,7 @@
 
 ## MiMo-first workflow
 
-The default TTS provider is the local `mimo-tts` Skill. `knowledge-video-builder` uses a fixed `ENGINEERING_ROOT`: the directory containing `.cursor/skills/knowledge-video-builder` and the engineering-root `.skill.env`. Do not derive this path from the current video artifact directory.
+The default TTS provider is the local `mimo-tts` Skill. `knowledge-video-builder` uses a fixed `ENGINEERING_ROOT`: the directory containing `$SKILLS_ROOT/knowledge-video-builder` and the engineering-root `.skill.env`. Do not derive this path from the current video artifact directory.
 
 Run the bundled script with the fixed Skill path and explicit environment file:
 
@@ -10,7 +10,7 @@ Run the bundled script with the fixed Skill path and explicit environment file:
 SKILL_PROJECT_ROOT="$ENGINEERING_ROOT" \
 SKILL_PROXY_STRICT=1 \
 HTTP_PROXY="$SKILL_PROXY" HTTPS_PROXY="$SKILL_PROXY" ALL_PROXY="$SKILL_PROXY" \
-python3 "$ENGINEERING_ROOT/.cursor/skills/mimo-tts/scripts/mimo_tts.py" \
+python3 "$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --env-file "$ENGINEERING_ROOT/.skill.env" \
   --input <scene-or-segment-text-file> \
   --output-root "$VIDEO_PROJECT_ROOT/audio/mimo-outputs"
