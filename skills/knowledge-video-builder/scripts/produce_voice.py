@@ -18,6 +18,7 @@ import math
 import os
 import re
 import subprocess
+import time
 import tempfile
 import wave
 from datetime import datetime, timezone
@@ -617,6 +618,8 @@ def synthesize(
     env.update({
         "SKILL_PROJECT_ROOT": str(engineering_root),
         "SKILL_PROXY_STRICT": "1",
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUTF8": "1",
         "HTTP_PROXY": proxy,
         "HTTPS_PROXY": proxy,
         "ALL_PROXY": proxy,
@@ -634,16 +637,36 @@ def synthesize(
         "--env-file", str(env_file),
         "--output-root", str(output_root),
     ]
-    result = subprocess.run(
-        command,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=240,
-    )
-    if result.returncode:
-        detail = (result.stdout + result.stderr)[-1200:]
-        raise RuntimeError(f"MiMo failed for {chunk['id']} take {attempt}:\n{detail}")
+    result = None
+    detail = ""
+    for retry in range(6):
+        result = subprocess.run(
+            command,
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=240,
+        )
+        if result.returncode == 0:
+            break
+        detail = (result.stdout or "") + (result.stderr or "")
+        rate_limited = "429" in detail or "Too many requests" in detail
+        if not rate_limited:
+            raise RuntimeError(
+                f"MiMo failed for {chunk['id']} take {attempt}:\n{detail[-1200:]}"
+            )
+        wait = 20 * (retry + 1)
+        print(
+            f"{chunk['id']} take {attempt}: rate-limited, retry in {wait}s",
+            flush=True,
+        )
+        time.sleep(wait)
+    else:
+        raise RuntimeError(
+            f"MiMo failed for {chunk['id']} take {attempt}:\n{detail[-1200:]}"
+        )
     paths = [
         Path(line.strip())
         for line in result.stdout.splitlines()
