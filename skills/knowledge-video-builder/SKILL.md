@@ -7,24 +7,46 @@ description: "Build evidence-grounded knowledge explainer videos from Skills, re
 ════════════════════════════════════════════════════════════════════════
  内部配置 · INTERNAL CONFIG · 请勿对外暴露 / DO NOT EXPOSE
 ════════════════════════════════════════════════════════════════════════
- 迁移到其它 agent 时，只需修改下面一行。
- When porting this Skill to another agent, change ONLY the line below.
+ 本 Skill 的全部配置项集中在工程根（ENGINEERING_ROOT）的 `.skill.env` 里，
+ 模板见本 Skill 目录下的 `.skill.env.example`。迁移 / 换机器时**只改那个文件**。
+ All settings for this Skill live in `<ENGINEERING_ROOT>/.skill.env`; the template
+ is this Skill's sibling `.skill.env.example`. Port or re-host by editing that file only.
 
-     SKILLS_ROOT = .workbuddy/skills
+     SKILLS_ROOT = 工程级 Skill 目录（相对 ENGINEERING_ROOT 的路径）。
+                   默认 .workbuddy/skills —— 即 WorkBuddy 的工程级 Skill 目录
+                   （agent 侧等价路径 .codebuddy/skills，两者指向同一份文件）。
+     PYTHON_EXE  = 执行本 Skill 全部脚本的 Python 解释器（绝对路径）。
+                   需自带 numpy（align_audio.py 的 speech_edges() 依赖它）
+                   且 Python ≥ 3.9。留空则依次回退到启动脚本的解释器
+                   （sys.executable）与 PATH 上的 python3。
+     TTS_PACE_RANGE = TTS 取音的语速闸门（字/秒），**必须与所选参考音色匹配**。
+                   两种写法，二选一：
+                     `3.8,7.9`  显式窗口
+                     `5.85`     该音色说 5.85 字/秒，窗口 = 该值 ±35%
+                               （provider 实测跨度，见 DEFAULT_PACE_SPREAD）
+                   任一写法同时决定 target / 绝对窗口 / 相邻窗口三项，不会互相漂移。
+                   换音色后用 `tools/measure_reference_pace.py` 重量，把读数填进来。
+                   留空则回退到 project-config.json 的 voice.consistency。
 
- 含义：工程级 Skill 目录（相对 ENGINEERING_ROOT 的路径）。本 Skill 与同级
- Skill（mimo-tts）都位于该目录下：
+ 为什么语速闸门放在这里而不是项目里：它是**音色的属性**，而音色本身就在这个文件里选
+ （MIMO_REFERENCE_VOICE）。放一起，换音色时两个值同改，不会再出现「闸门比音色慢 21%、
+ 每个 take 都被拒」那种情况。抓缺陷靠的是 max_internal_gap_seconds 与 min_asr_coverage，
+ 不是语速闸门。
+
+ 本 Skill 与同级 Skill（mimo-tts）都位于：
      <ENGINEERING_ROOT>/<SKILLS_ROOT>/knowledge-video-builder
      <ENGINEERING_ROOT>/<SKILLS_ROOT>/mimo-tts
 
- 默认值 .workbuddy/skills 即 WorkBuddy 的工程级 Skill 目录（agent 侧等价路径
- 为 .codebuddy/skills，两者指向同一份文件）。下文出现的 $SKILLS_ROOT 均指本
- 配置项；随附脚本会按自身位置自动推导，通常无需手工设置。
+ 下文出现的 $SKILLS_ROOT / $PYTHON_EXE 均指上述两项。它们的值从 `.skill.env`
+ 读取；随附脚本会自行读取该文件，通常无需手工设置。读 `.skill.env` 时不要
+ 打印其中的 API key 或代理凭据。
 
- 迁移示例 / migration:
-     Cursor        →  SKILLS_ROOT = .cursor/skills
-     Claude Code   →  SKILLS_ROOT = .claude/skills
-     Codex         →  SKILLS_ROOT = .codex/skills
+ 迁移示例 / migration（改 `.skill.env` 的 SKILLS_ROOT 一行即可）:
+     Cursor        →  SKILLS_ROOT=.cursor/skills
+     Claude Code   →  SKILLS_ROOT=.claude/skills
+     Codex         →  SKILLS_ROOT=.codex/skills
+ PYTHON_EXE 与 agent 无关，只跟机器有关：换机器时改成该机器上装了 numpy 的
+ 解释器绝对路径即可（conda env、venv 或系统 Python 都行）。
 ════════════════════════════════════════════════════════════════════════
 -->
 
@@ -62,24 +84,25 @@ Before making any external network request for source inspection, documentation 
 
 1. Require `<ENGINEERING_ROOT>/.skill.env`; if it is missing, stop and report the configuration error.
 2. Read `SKILL_PROXY` from that file without printing its value; use the bundled `.skill.env.example` as the configuration reference.
-3. Require a non-empty `SKILL_PROXY` for this Skill. Do not silently fall back to a direct connection.
-4. For subprocesses that do not read `.skill.env` themselves, export the proxy as `HTTP_PROXY`, `HTTPS_PROXY`, and `ALL_PROXY` for that command only.
-5. If the proxied request fails, stop and report the proxy failure. Retry directly only after the user explicitly authorizes a direct connection.
+3. `SKILL_PROXY` is optional. When it is set, route every external request through it and never fall back to a direct connection. When it is empty, connect directly.
+4. For subprocesses that do not read `.skill.env` themselves, export the proxy as `HTTP_PROXY`, `HTTPS_PROXY`, and `ALL_PROXY` for that command only — and only when `SKILL_PROXY` is set.
+5. If a proxied request fails, stop and report the proxy failure. Never switch between proxied and direct mid-run without telling the user.
 
-Tools that do not expose a proxy parameter, including generic web-search or web-fetch integrations, cannot be guaranteed to use `SKILL_PROXY`. Under this strict policy, do not call those tools for external data; use a local/proxy-aware subprocess instead, or ask the user to explicitly authorize the unproxied tool.
+Tools that do not expose a proxy parameter, including generic web-search or web-fetch integrations, cannot be guaranteed to use `SKILL_PROXY`. While a proxy is configured, do not call those tools for external data; use a local/proxy-aware subprocess instead, or ask the user to explicitly authorize the unproxied tool. With no proxy configured they are safe to use directly.
 
 For MiMo, also pass the fixed environment path and root explicitly:
 
 ```bash
+# SKILL_PROXY_STRICT=1 only when .skill.env defines a non-empty SKILL_PROXY.
 SKILL_PROJECT_ROOT="$ENGINEERING_ROOT" \
-SKILL_PROXY_STRICT=1 \
-python3 "$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
+SKILL_PROXY_STRICT="${SKILL_PROXY:+1}" \
+"$PYTHON_EXE" "$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --env-file "$ENGINEERING_ROOT/.skill.env" \
   --output-root "$VIDEO_PROJECT_ROOT/audio/mimo-outputs" \
   ...
 ```
 
-Treat `SKILL_PROXY` as the single proxy URL for HTTP and HTTPS. Do not expose proxy credentials, API keys, or other hidden environment values in logs, manifests, generated files, or responses. The engineering-root `.skill.env` is configuration, not an artifact to copy into every video project.
+When set, treat `SKILL_PROXY` as the single proxy URL for HTTP and HTTPS. Do not expose proxy credentials, API keys, or other hidden environment values in logs, manifests, generated files, or responses. The engineering-root `.skill.env` is configuration, not an artifact to copy into every video project.
 
 ## When to use
 
@@ -253,7 +276,7 @@ Use the output filenames above verbatim. `final-*` is reserved for the assembled
 Initialize with:
 
 ```bash
-python scripts/project.py init <project-dir> --title "<title>" --source "<source>" [--aspect 21:9|16:9]
+"$PYTHON_EXE" scripts/project.py init <project-dir> --title "<title>" --source "<source>" [--aspect 21:9|16:9]
 ```
 
 Read [reference/STATE_MACHINE.md](reference/STATE_MACHINE.md) before changing phases.
@@ -414,8 +437,8 @@ First, review the paragraph breaks. Scene ids come from segment ids, so a paragr
 Then derive the machine-readable artifacts:
 
 ```bash
-python3 scripts/derive_script_artifacts.py --project <project-dir>
-python3 scripts/derive_script_artifacts.py --project <project-dir> --write
+"$PYTHON_EXE" scripts/derive_script_artifacts.py --project <project-dir>
+"$PYTHON_EXE" scripts/derive_script_artifacts.py --project <project-dir> --write
 ```
 
 The first form is a dry run. The write pass produces `timing/chapters.json` and fills `chapter` and `narration` in `script/scene-plan.json`, leaving hand-authored visual fields untouched. Run it again after every later narration edit, and read its unit-id shift report: inserting a line mid-paragraph renumbers the `Sxx.n` ids that `voice-plan.json` and `motion-plan.yaml` point at.
@@ -471,10 +494,12 @@ Invoke MiMo with the fixed engineering-root paths, generating voice by scene/seg
 Default invocation:
 
 ```bash
+# SKILL_PROXY_STRICT=1 only when .skill.env defines a non-empty SKILL_PROXY;
+# empty *_PROXY values are ignored by urllib, so the exports stay harmless.
 SKILL_PROJECT_ROOT="$ENGINEERING_ROOT" \
-SKILL_PROXY_STRICT=1 \
+SKILL_PROXY_STRICT="${SKILL_PROXY:+1}" \
 HTTP_PROXY="$SKILL_PROXY" HTTPS_PROXY="$SKILL_PROXY" ALL_PROXY="$SKILL_PROXY" \
-python3 "$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
+"$PYTHON_EXE" "$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --input <scene-or-segment-text-file> \
   --env-file "$ENGINEERING_ROOT/.skill.env" \
   --output-root "$VIDEO_PROJECT_ROOT/audio/mimo-outputs"
@@ -486,8 +511,8 @@ performs candidate generation, objective selection, normalization, merge,
 structured pauses, final alignment, timing rebuild, and the sync gate:
 
 ```bash
-python3 scripts/produce_voice.py --project <project-dir>
-python3 scripts/produce_voice.py --project <project-dir> --generate
+"$PYTHON_EXE" scripts/produce_voice.py --project <project-dir>
+"$PYTHON_EXE" scripts/produce_voice.py --project <project-dir> --generate
 ```
 
 `produce_voice.py` calls `mimo-tts` unchanged. Provider limits, selection
@@ -578,7 +603,7 @@ Automatic and manual pauses coexist:
 For an exact intra-segment pause, synthesize clean text first, align that unpaused take, then run:
 
 ```bash
-python3 scripts/apply_voice_plan.py \
+"$PYTHON_EXE" scripts/apply_voice_plan.py \
   --project <project-dir> \
   --chapter S01
 ```
@@ -592,10 +617,10 @@ Estimating a cue by splitting a segment in proportion to its character count is 
 The fix is forced alignment, not transcription. The script is already known and authoritative; the recogniser only has to say *when* each character was spoken. That distinction is what makes the approach robust — recognition errors are absorbed rather than propagated.
 
 ```bash
-python3 scripts/align_audio.py --project <project-dir>
-python3 scripts/build_timing.py --project <project-dir>
-python3 scripts/apply_timing.py --project <project-dir>
-python3 scripts/check_sync.py  --project <project-dir>
+"$PYTHON_EXE" scripts/align_audio.py --project <project-dir>
+"$PYTHON_EXE" scripts/build_timing.py --project <project-dir>
+"$PYTHON_EXE" scripts/apply_timing.py --project <project-dir>
+"$PYTHON_EXE" scripts/check_sync.py  --project <project-dir>
 ```
 
 The alignment runs in three layers, each correcting the one before it:
@@ -606,7 +631,7 @@ The alignment runs in three layers, each correcting the one before it:
 
 Expect roughly ±0.2 s accuracy. Layer 3 owns boundary precision, so do not reach for a larger model to fix a sync complaint; check the match rate first. But do not dismiss the match rate as cosmetic either — an unmatched run of characters is interpolated instead of measured, which is exactly how a caption ends up 0.9 s late.
 
-Recognition is hosted on Groq and needs only `GROQ_API_KEY` and `SKILL_PROXY` in `.skill.env` — no model download, no local build. There is no local fallback on purpose: the pipeline already needs the network for TTS, so a machine that cannot reach Groq has no narration to align. Input may be any container ffmpeg can decode. See "Recognition runs on Groq" in [reference/VOICE_PIPELINE.md](reference/VOICE_PIPELINE.md).
+Recognition is hosted on Groq and needs only `GROQ_API_KEY` in `.skill.env` (plus `SKILL_PROXY` when the machine reaches the internet only through a proxy) — no model download, no local build. There is no local fallback on purpose: the pipeline already needs the network for TTS, so a machine that cannot reach Groq has no narration to align. Input may be any container ffmpeg can decode. See "Recognition runs on Groq" in [reference/VOICE_PIPELINE.md](reference/VOICE_PIPELINE.md).
 
 If recognition is unreachable, write the timing manifest with `status: needs_alignment` and say plainly that Phase 4 is incomplete.
 
@@ -658,7 +683,7 @@ Prerequisite: the current chapter's Phase 4 voice and timing artifacts are ready
 First convert the canonical scene plan plus real timing into a review artifact:
 
 ```bash
-python scripts/build_review.py <project-dir>
+"$PYTHON_EXE" scripts/build_review.py <project-dir>
 ```
 
 The review HTML must show, per scene:
@@ -682,16 +707,15 @@ For a reference with asset-led or layered motion, the review artifact must also 
 After review direction is accepted, generate or update the HyperFrames project:
 
 ```bash
-python scripts/build_hyperframes.py <project-dir>
+"$PYTHON_EXE" scripts/build_hyperframes.py <project-dir>
 ```
 
 Then use the official HyperFrames development loop when available:
 
 ```bash
 cd <project-dir>/hyperframes
-export HTTP_PROXY="$SKILL_PROXY"
-export HTTPS_PROXY="$SKILL_PROXY"
-export ALL_PROXY="$SKILL_PROXY"
+# Only when .skill.env defines a non-empty SKILL_PROXY:
+[ -n "$SKILL_PROXY" ] && export HTTP_PROXY="$SKILL_PROXY" HTTPS_PROXY="$SKILL_PROXY" ALL_PROXY="$SKILL_PROXY"
 npx hyperframes doctor
 npx hyperframes lint
 npx hyperframes inspect
@@ -699,7 +723,7 @@ npx hyperframes snapshot --frames 8
 npx hyperframes preview
 ```
 
-`npx`, Playwright, and browser package managers do not read `.skill.env` automatically. The proxy exports above are required for those subprocesses and must be set from `$ENGINEERING_ROOT/.skill.env` without printing the file or its secrets. If the proxy request fails, stop; do not silently retry through a direct connection.
+`npx`, Playwright, and browser package managers do not read `.skill.env` automatically. When `SKILL_PROXY` is set, the exports above are required for those subprocesses and must be taken from `$ENGINEERING_ROOT/.skill.env` without printing the file or its secrets; when it is empty, leave them unset so those tools connect directly. If a proxied request fails, stop; do not silently switch to a direct connection mid-run.
 
 HyperFrames rules:
 
@@ -755,8 +779,8 @@ Prerequisite: the current chapter's Phase 5 visual artifacts are ready. This is 
 Run:
 
 ```bash
-python scripts/validate_project.py <project-dir> --phase render
-python3 scripts/check_sync.py --project <project-dir>
+"$PYTHON_EXE" scripts/validate_project.py <project-dir> --phase render
+"$PYTHON_EXE" scripts/check_sync.py --project <project-dir>
 ```
 
 The sync gate blocks the render on Critical and High findings. It exists for a failure that no amount of watching catches reliably: a script line is edited, that one chapter is not re-recorded, and every downstream number stays plausible while the voice says something else. Alignment makes that measurable — a line whose characters the recogniser cannot find in the audio is either misrecognised or genuinely not spoken there. The gate prints both the script text and what was heard, which separates the two cases at a glance.
@@ -764,12 +788,11 @@ The sync gate blocks the render on Critical and High findings. It exists for a f
 Then, when HyperFrames is available:
 
 ```bash
-python3 scripts/plan_workers.py --project <project-dir>
+"$PYTHON_EXE" scripts/plan_workers.py --project <project-dir>
 
 cd <project-dir>/hyperframes
-export HTTP_PROXY="$SKILL_PROXY"
-export HTTPS_PROXY="$SKILL_PROXY"
-export ALL_PROXY="$SKILL_PROXY"
+# Only when .skill.env defines a non-empty SKILL_PROXY:
+[ -n "$SKILL_PROXY" ] && export HTTP_PROXY="$SKILL_PROXY" HTTPS_PROXY="$SKILL_PROXY" ALL_PROXY="$SKILL_PROXY"
 npx hyperframes lint --json
 npx hyperframes inspect --json
 npx hyperframes render --fps 30 --quality high -o ../outputs/final-1080p.mp4
@@ -851,10 +874,10 @@ Before every response in an existing project:
 Use:
 
 ```bash
-python scripts/project.py status <project-dir>
-python scripts/project.py approve <project-dir> <phase> --note "<approval note>"
-python scripts/project.py revise <project-dir> <phase> --note "<requested revision>"
-python scripts/project.py rollback <project-dir> <phase> --note "<reason>"
+"$PYTHON_EXE" scripts/project.py status <project-dir>
+"$PYTHON_EXE" scripts/project.py approve <project-dir> <phase> --note "<approval note>"
+"$PYTHON_EXE" scripts/project.py revise <project-dir> <phase> --note "<requested revision>"
+"$PYTHON_EXE" scripts/project.py rollback <project-dir> <phase> --note "<reason>"
 ```
 
 Valid phase IDs:

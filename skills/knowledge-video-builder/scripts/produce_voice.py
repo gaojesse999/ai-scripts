@@ -18,6 +18,7 @@ import math
 import os
 import re
 import subprocess
+import sys
 import time
 import tempfile
 import wave
@@ -40,23 +41,91 @@ from derive_script_artifacts import narration_line_error
 BREAK_CHARS = set("，、；：。！？!?;:")
 
 
+ENGINEERING_ROOT = Path(__file__).resolve().parents[4]
+
+
+def _config(key: str) -> str:
+    """Read one Skill setting: environment variable first, then .skill.env.
+
+    Internal config. Every setting lives in <ENGINEERING_ROOT>/.skill.env; a real
+    environment variable of the same name wins, which lets a caller override a
+    single value for one command without editing the file.
+    """
+    env = (os.environ.get(key) or "").strip()
+    if env:
+        return env
+    values = load_env(ENGINEERING_ROOT / ".skill.env")
+    return (values.get(key) or "").strip()
+
+
+# Half-width of the accepted pace window when TTS_PACE_RANGE names a single rate.
+# Measured, not guessed: across one project's eleven selected takes the provider's
+# own spread was 4.01-7.12 chars/s around a 5.85 target, i.e. +/-35%. See
+# reference/VOICE_PIPELINE.md, "Silence inside a chunk is measured, not hoped for".
+DEFAULT_PACE_SPREAD = 0.35
+
+
+def _pace_window(value: str):
+    """Parse TTS_PACE_RANGE into (target_rate, tolerance), or None if unset/invalid.
+
+    Internal config. The pace gate has to be calibrated to the reference voice
+    actually in use, and that voice is chosen in .skill.env too, so the gate lives
+    there as one setting. Two accepted forms:
+
+        TTS_PACE_RANGE=3.8,7.9   an explicit window in characters per second
+        TTS_PACE_RANGE=5.85      this voice speaks at 5.85 chars/s; the window is
+                                 that rate +/- DEFAULT_PACE_SPREAD
+
+    Either form yields both the target and the tolerance, so there is no second
+    number to keep in step. A bare rate is what tools/measure_reference_pace.py
+    reports; the window form is for pinning the range by hand.
+    """
+    parts = [p.strip() for p in value.replace("，", ",").split(",") if p.strip()]
+    try:
+        numbers = [float(p) for p in parts]
+    except ValueError:
+        return None
+    if len(numbers) == 1 and numbers[0] > 0:
+        return numbers[0], DEFAULT_PACE_SPREAD
+    if len(numbers) == 2 and numbers[0] > 0 and numbers[1] > numbers[0]:
+        low, high = numbers
+        return (low + high) / 2, (high - low) / (high + low)
+    return None
+
+
 def _skills_dir() -> Path:
     """Sibling-Skill directory (the parent of this Skill's own directory).
 
     Internal config. Default: derived from this file's location, so the Skill
-    stays portable across agents with no edit. Override with the SKILLS_ROOT
-    environment variable, either absolute or relative to ENGINEERING_ROOT.
+    stays portable across agents with no edit. Override with SKILLS_ROOT in
+    .skill.env, either absolute or relative to ENGINEERING_ROOT.
     """
-    env = (os.environ.get("SKILLS_ROOT") or "").strip()
+    env = _config("SKILLS_ROOT")
     if env:
         candidate = Path(env)
         if candidate.is_absolute():
             return candidate
-        return Path(__file__).resolve().parents[4] / candidate
+        return ENGINEERING_ROOT / candidate
     return Path(__file__).resolve().parents[2]
 
 
 SKILLS_DIR = _skills_dir()
+
+
+def _python_exe() -> str:
+    """Interpreter used for this Skill's own subprocess calls.
+
+    Internal config. Resolution order:
+      1. PYTHON_EXE, as an environment variable or in .skill.env;
+      2. sys.executable - whatever interpreter is running this file, so
+         launching with the configured interpreter propagates to every child
+         process with no extra setup.
+    The chosen interpreter must ship numpy (align_audio.py) and be >= 3.9.
+    """
+    return _config("PYTHON_EXE") or sys.executable or "python3"
+
+
+PYTHON_EXE = _python_exe()
 
 
 def load_json(path: Path):
@@ -214,6 +283,19 @@ def settings(project: Path) -> dict:
     audio = config.setdefault("audio", {})
     voice = config.setdefault("voice", {})
     consistency = voice.setdefault("consistency", {})
+
+    target_rate = float(consistency.get("target_chars_per_second", 4.6))
+    rate_tolerance = float(consistency.get("pace_tolerance_ratio", 0.18))
+    adjacent_tolerance = float(consistency.get("max_adjacent_pace_ratio", 0.15))
+
+    # The gate has to match the voice actually in use. When .skill.env names a pace,
+    # it wins over project-config.json, and it sets the target, the absolute window
+    # and the adjacent window together so they cannot drift apart.
+    pace = _pace_window(_config("TTS_PACE_RANGE"))
+    if pace:
+        target_rate, rate_tolerance = pace
+        adjacent_tolerance = rate_tolerance
+
     return {
         "max_seconds": float(audio.get("tts_request_max_seconds", 30)),
         "target_seconds": float(audio.get("tts_request_target_seconds", 25)),
@@ -225,11 +307,9 @@ def settings(project: Path) -> dict:
         "chunk_gap": float(audio.get("tts_chunk_pause_seconds", 0.12)),
         "candidate_count": int(consistency.get("candidate_count", 2)),
         "max_attempts": int(consistency.get("max_attempts_per_chunk", 4)),
-        "target_rate": float(consistency.get("target_chars_per_second", 4.6)),
-        "rate_tolerance": float(consistency.get("pace_tolerance_ratio", 0.18)),
-        "adjacent_tolerance": float(
-            consistency.get("max_adjacent_pace_ratio", 0.15)
-        ),
+        "target_rate": target_rate,
+        "rate_tolerance": rate_tolerance,
+        "adjacent_tolerance": adjacent_tolerance,
         "max_internal_gap": float(
             consistency.get("max_internal_gap_seconds", 1.0)
         ),
@@ -630,24 +710,27 @@ def synthesize(
 ) -> Path:
     env_file = engineering_root / ".skill.env"
     values = load_env(env_file)
-    proxy = values.get("SKILL_PROXY", "")
-    if not proxy:
-        raise RuntimeError(f"SKILL_PROXY is required in {env_file}")
+    proxy = values.get("SKILL_PROXY", "").strip()
     env = os.environ.copy()
     env.update({
         "SKILL_PROJECT_ROOT": str(engineering_root),
-        "SKILL_PROXY_STRICT": "1",
+        # Strict only when a proxy is configured. With no proxy the run is
+        # explicitly direct, so there is no fallback to forbid.
+        "SKILL_PROXY_STRICT": "1" if proxy else "0",
         "PYTHONIOENCODING": "utf-8",
         "PYTHONUTF8": "1",
-        "HTTP_PROXY": proxy,
-        "HTTPS_PROXY": proxy,
-        "ALL_PROXY": proxy,
-        "http_proxy": proxy,
-        "https_proxy": proxy,
     })
+    if proxy:
+        env.update({
+            "HTTP_PROXY": proxy,
+            "HTTPS_PROXY": proxy,
+            "ALL_PROXY": proxy,
+            "http_proxy": proxy,
+            "https_proxy": proxy,
+        })
     output_root = project / "audio/voice-candidates"
     command = [
-        "python3",
+        PYTHON_EXE,
         str(SKILLS_DIR / "mimo-tts/scripts/mimo_tts.py"),
         "--text", request_text(chunk),
         "--title", f"{chunk['id']}-take-{attempt}",
@@ -1384,7 +1467,7 @@ def generate(
     scripts = SKILLS_DIR / "knowledge-video-builder/scripts"
     align = scripts / "align_audio.py"
     align_command = [
-        "python3", str(align), "--project", str(project),
+        PYTHON_EXE, str(align), "--project", str(project),
         "--chapters", *chapters,
         "--model", asr.model,
     ]
@@ -1396,7 +1479,7 @@ def generate(
         if chapter_pauses(voice_plan, chapter):
             run_checked(
                 [
-                    "python3", str(scripts / "apply_voice_plan.py"),
+                    PYTHON_EXE, str(scripts / "apply_voice_plan.py"),
                     "--project", str(project),
                     "--chapter", chapter,
                 ],
@@ -1427,15 +1510,15 @@ def generate(
     write_json(project / "audio/voice-production.json", production)
 
     run_checked(
-        ["python3", str(scripts / "build_timing.py"), "--project", str(project)],
+        [PYTHON_EXE, str(scripts / "build_timing.py"), "--project", str(project)],
         engineering_root,
     )
     run_checked(
-        ["python3", str(scripts / "apply_timing.py"), "--project", str(project)],
+        [PYTHON_EXE, str(scripts / "apply_timing.py"), "--project", str(project)],
         engineering_root,
     )
     run_checked(
-        ["python3", str(scripts / "check_sync.py"), "--project", str(project)],
+        [PYTHON_EXE, str(scripts / "check_sync.py"), "--project", str(project)],
         engineering_root,
     )
 

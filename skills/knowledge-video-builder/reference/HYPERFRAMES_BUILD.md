@@ -56,7 +56,8 @@ hyperframes and the cache lookup matches it exactly, so take the version from
 the CLI's own download message instead of guessing:
 
 ```bash
-curl --proxy "$SKILL_PROXY" -Lo /tmp/chs.zip \
+# Only when .skill.env defines a non-empty SKILL_PROXY:
+curl ${SKILL_PROXY:+--proxy "$SKILL_PROXY"} -Lo /tmp/chs.zip \
   https://storage.googleapis.com/chrome-for-testing-public/<version>/win64/chrome-headless-shell-win64.zip
 unzip -q /tmp/chs.zip -d ~/.cache/hyperframes/chrome/chrome-headless-shell/win64-<version>/
 ```
@@ -197,6 +198,28 @@ Compositions generated before this was fixed carry placeholder content that viol
 
 Their timelines also animate everything inside the first ~1.5 s and then pad with `tl.set({}, {}, duration)`, leaving the scene static for the remainder. Replace them.
 
+## apply_timing.py targets chapter files, not scene files
+
+`scripts/apply_timing.py` rewrites exactly two paths, and it skips silently when they
+do not exist:
+
+```text
+hyperframes/compositions/<CHAPTER>.html            gets const D + const BEATS + B/BE/W/WE
+hyperframes/_chapter-indexes/index-<CHAPTER>.html  also gets const cues
+```
+
+`scripts/build_hyperframes.py` writes a **scene-level** layout instead —
+`compositions/<SCENE>.html` plus one root `index.html` — so running it and then
+`apply_timing.py` leaves every scene without a `BEATS` table, and the composition
+freezes on its initial state. The scaffold is a starting point; restructure it so one
+composition owns one **chapter**, with that chapter's scenes as timed layers inside it,
+before injecting timing. Nesting scenes through `data-composition-src` instead would
+leave the scene files without the beats they anchor on.
+
+Two contract details the same script enforces: the composition must contain a literal
+`const D = ...;` line for the block to anchor on, and the chapter index must contain a
+`const cues = ...;` line. Both raise `SystemExit` when absent.
+
 ## Persistent elements belong to the root composition
 
 Anything that spans the whole video — chapter rail, chapter label, captions, watermark — goes in the root composition, never inside each scene.
@@ -244,7 +267,7 @@ A hard cut must also land on content that is already there. Give the incoming sc
 
 ```bash
 ffmpeg -v error -i frame.png -vf "crop=iw:700:0:150,format=gray" -f rawvideo - | \
-  python3 -c "import sys;d=sys.stdin.buffer.read();print(sum(b>45 for b in d)/len(d)*100)"
+  "$PYTHON_EXE" -c "import sys;d=sys.stdin.buffer.read();print(sum(b>45 for b in d)/len(d)*100)"
 ```
 
 **Pick the brightness threshold per region, or the measurement lies.** A threshold of 45 separates content from the stage background, but a progress rail sits on its own track colour that is itself brighter than that. Measuring a `#3a3d3a` track (grey ≈ 60) at threshold 45 counts the empty track as filled and reports a flawless 100% at every timestamp — a reading that looks like a pass and proves nothing. Set the threshold between the track and the fill: for `#ff9f0a` fill (grey ≈ 171) on a `#3a3d3a` track, 120 works. Sanity-check any coverage number against what it should be before trusting it; a rail reading should equal `t / total` within a fraction of a percent.
@@ -318,7 +341,7 @@ When `project.style_profile` is `editorial-technical-dark` or a reference profil
 
 Use this **only** when HyperFrames genuinely cannot run, and only as a replacement for it — never alongside it.
 
-**HyperFrames will not drive a `window.renderAt` composition.** Its runtime reads `window.__timelines[<data-composition-id>]` and accepts the entry only if it exposes `duration()`, `time()`, `seek()`, `play()`, and `pause()`. Verified against hyperframes 0.7.94: the string `__seek` does not appear in the runtime at all, and a `{ duration, renderAt }` object fails the interface check. The failure is silent — `lint` passes, the page looks right in a browser, the render completes, and every frame is the composition's initial state.
+**HyperFrames will not drive a `window.renderAt` composition.** Its runtime reads `window.__timelines[<data-composition-id>]` and accepts the entry only if it exposes `duration()`, `time()`, `seek()`, `play()`, and `pause()`. Verified against hyperframes 0.7.94: there is no `window.__seek` entry point in the runtime, and a `{ duration, renderAt }` object fails the interface check. Re-checked against hyperframes 0.8.41 — the contract is unchanged: `renderAt` appears nowhere in `dist/hyperframe-runtime.js`, `window.__timelines` is still the registry, and registry entries are still gated on `duration()` and on `play()`/`pause()`. (In 0.8.41 the substring `__seek` *does* occur in `dist/cli.js`, but only as the internal render-loop variables `__seekMode`, `__seekDiagnostics`, `__seekStep`, `__seekOffsetFraction` — none of them is a page-facing API.) The failure is silent — `lint` passes, the page looks right in a browser, the render completes, and every frame is the composition's initial state.
 
 So before writing a fallback, exhaust the environment fixes below. A missing shared library is not "HyperFrames is unavailable".
 

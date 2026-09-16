@@ -24,26 +24,26 @@ instead of three hand-synced copies.
 ## Initialize a project
 
 ```bash
-python scripts/project.py init ./my-project --title "My Explainer" --source ./input.skill
+"$PYTHON_EXE" scripts/project.py init ./my-project --title "My Explainer" --source ./input.skill
 ```
 
 ## Engineering-root network proxy and keys
 
-Keep one `.skill.env` in the fixed engineering root—the directory containing `$SKILLS_ROOT/knowledge-video-builder`—rather than copying it into each video artifact directory. Set `SKILL_PROXY` before external source inspection, TTS, transcription, HyperFrames, or dependency downloads:
+Keep one `.skill.env` in the fixed engineering root—the directory containing `$SKILLS_ROOT/knowledge-video-builder`—rather than copying it into each video artifact directory. Set `SKILL_PROXY` only when the machine reaches the internet through a proxy; leave it empty to connect directly:
 
 ```text
-SKILL_PROXY=http://xxx.xxx.xxx.xxx:xxxx
+SKILL_PROXY=
 GROQ_API_KEY=your-groq-api-key
 ```
 
 `GROQ_API_KEY` is required: forced alignment and candidate scoring both recognise speech through Groq's hosted `whisper-large-v3`. There is no local recogniser to install.
 
-When this Skill is active, the proxy is required and direct fallback is disabled. Export `HTTP_PROXY`, `HTTPS_PROXY`, and `ALL_PROXY` for subprocesses such as `npx` and Playwright; those tools do not read `.skill.env` automatically. Keep the real `.skill.env` local-only and never copy it into generated video artifacts.
+`SKILL_PROXY` is optional. When it is set, every request goes through it and there is no direct fallback; export `HTTP_PROXY`, `HTTPS_PROXY`, and `ALL_PROXY` for subprocesses such as `npx` and Playwright, which do not read `.skill.env` automatically. When it is empty, leave those variables unset and connect directly. Keep the real `.skill.env` local-only and never copy it into generated video artifacts.
 
 ## Check status
 
 ```bash
-python scripts/project.py status ./my-project
+"$PYTHON_EXE" scripts/project.py status ./my-project
 ```
 
 ## Derive artifacts from the approved narration
@@ -54,8 +54,8 @@ reports the segment ids, any unit ids whose words changed, and the pauses and
 motion anchors that point at them:
 
 ```bash
-python3 scripts/derive_script_artifacts.py --project ./my-project
-python3 scripts/derive_script_artifacts.py --project ./my-project --write
+"$PYTHON_EXE" scripts/derive_script_artifacts.py --project ./my-project
+"$PYTHON_EXE" scripts/derive_script_artifacts.py --project ./my-project --write
 ```
 
 Re-run it after every later narration edit. Chapters whose text did not change
@@ -68,8 +68,8 @@ matches needs `--force` to confirm the re-record.
 plan, and generate:
 
 ```bash
-python3 scripts/produce_voice.py --project ./my-project
-python3 scripts/produce_voice.py --project ./my-project --generate
+"$PYTHON_EXE" scripts/produce_voice.py --project ./my-project
+"$PYTHON_EXE" scripts/produce_voice.py --project ./my-project --generate
 ```
 
 `--generate` runs candidate selection, normalization, merge, structured pauses,
@@ -77,17 +77,17 @@ final alignment, timing rebuild, and the sync gate. The same steps are available
 individually for debugging a single chapter:
 
 ```bash
-python3 scripts/align_audio.py  --project ./my-project
-python3 scripts/build_timing.py --project ./my-project
-python3 scripts/apply_timing.py --project ./my-project
-python3 scripts/check_sync.py   --project ./my-project
+"$PYTHON_EXE" scripts/align_audio.py  --project ./my-project
+"$PYTHON_EXE" scripts/build_timing.py --project ./my-project
+"$PYTHON_EXE" scripts/apply_timing.py --project ./my-project
+"$PYTHON_EXE" scripts/check_sync.py   --project ./my-project
 ```
 
 ## Generate review and HyperFrames scaffold
 
 ```bash
-python scripts/build_review.py ./my-project
-python scripts/build_hyperframes.py ./my-project
+"$PYTHON_EXE" scripts/build_review.py ./my-project
+"$PYTHON_EXE" scripts/build_hyperframes.py ./my-project
 ```
 
 The scaffold is a starting point, not a deliverable: every scene still needs its
@@ -96,8 +96,8 @@ own art direction and the beats from `motion/motion-plan.yaml`.
 ## Validate and render
 
 ```bash
-python scripts/validate_project.py ./my-project --phase render
-python3 scripts/plan_workers.py --project ./my-project
+"$PYTHON_EXE" scripts/validate_project.py ./my-project --phase render
+"$PYTHON_EXE" scripts/plan_workers.py --project ./my-project
 ```
 
 Pass the recommended `--workers` value to `npx hyperframes render`; HyperFrames

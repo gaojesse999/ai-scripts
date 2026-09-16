@@ -7,16 +7,17 @@ The default TTS provider is the local `mimo-tts` Skill. `knowledge-video-builder
 Run the bundled script with the fixed Skill path and explicit environment file:
 
 ```bash
+# SKILL_PROXY_STRICT=1 only when .skill.env defines a non-empty SKILL_PROXY.
 SKILL_PROJECT_ROOT="$ENGINEERING_ROOT" \
-SKILL_PROXY_STRICT=1 \
+SKILL_PROXY_STRICT="${SKILL_PROXY:+1}" \
 HTTP_PROXY="$SKILL_PROXY" HTTPS_PROXY="$SKILL_PROXY" ALL_PROXY="$SKILL_PROXY" \
-python3 "$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
+"$PYTHON_EXE" "$ENGINEERING_ROOT/$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --env-file "$ENGINEERING_ROOT/.skill.env" \
   --input <scene-or-segment-text-file> \
   --output-root "$VIDEO_PROJECT_ROOT/audio/mimo-outputs"
 ```
 
-The proxy is mandatory for this Skill. Do not retry directly after a proxy failure.
+When `SKILL_PROXY` is set it is mandatory, and a proxy failure is reported rather than retried directly. When it is empty, the run connects directly.
 
 Only consider another TTS provider when `mimo-tts` is unavailable because its Skill, script, Python runtime, credentials, or API/network path cannot be used. Record the fallback reason in `audio/tts-manifest.json` and `qa/report.md`; do not silently switch providers.
 
@@ -60,7 +61,7 @@ Character count is only a conservative request-size guard, never final timing. C
 Build the request plan before spending API calls:
 
 ```bash
-python3 scripts/produce_voice.py --project <project-dir>
+"$PYTHON_EXE" scripts/produce_voice.py --project <project-dir>
 ```
 
 The command writes `audio/tts-plan.json`. It never puts a scene or chapter into
@@ -71,7 +72,7 @@ rate. The returned audio duration remains the hard authority.
 Generate only after reviewing the plan:
 
 ```bash
-python3 scripts/produce_voice.py --project <project-dir> --generate
+"$PYTHON_EXE" scripts/produce_voice.py --project <project-dir> --generate
 ```
 
 For each chunk, the orchestrator:
@@ -339,10 +340,10 @@ Timing must be generated from the final merged audio or from final approved segm
 ### Procedure
 
 ```bash
-python3 scripts/align_audio.py --project <project-dir>
-python3 scripts/build_timing.py --project <project-dir>
-python3 scripts/apply_timing.py --project <project-dir>
-python3 scripts/check_sync.py  --project <project-dir>
+"$PYTHON_EXE" scripts/align_audio.py --project <project-dir>
+"$PYTHON_EXE" scripts/build_timing.py --project <project-dir>
+"$PYTHON_EXE" scripts/apply_timing.py --project <project-dir>
+"$PYTHON_EXE" scripts/check_sync.py  --project <project-dir>
 ```
 
 `align_audio.py` reads `timing/chapters.json` for the authoritative text and `audio/segments/<chapter>.<ext>` for the audio, and writes `timing/align/<chapter>.json`. Any container ffmpeg can decode is accepted — wav, flac, mp3, m4a, ogg, opus, aac, mp4, webm — because both recognition and the energy pass run on a 16 kHz mono copy made with ffmpeg rather than on the delivered file.
@@ -365,7 +366,7 @@ This pipeline used to run whisper.cpp locally, and the reason that is gone is wo
 
 Accuracy moved the same direction, which is the part that actually changes the output. Match rates on those five chapters went from 88.3–96.2% to 92.5–100%. On one chapter the local model heard `计划里的事就被忘了` as `计划里的视觉被忘了` and `干货` as `钢火`; those unmatched characters cost anchors, and the line that should start at 7.27 s — where the measured onset of `你` actually is — landed at 8.20 s. A caption 0.9 s late is a sync complaint, and the energy pass cannot recover it because it only snaps to the *nearest* edge.
 
-There is no local fallback, and that is deliberate rather than an oversight: the pipeline already needs the network and `SKILL_PROXY` for TTS, so a machine that cannot reach Groq cannot produce narration to align in the first place. A second recogniser would only add a code path that is never exercised and a second set of timings to reconcile.
+There is no local fallback, and that is deliberate rather than an oversight: the pipeline already needs network access for TTS, so a machine that cannot reach Groq cannot produce narration to align in the first place. A second recogniser would only add a code path that is never exercised and a second set of timings to reconcile.
 
 Uploads are re-encoded to 16 kHz mono FLAC first. The service downsamples to that anyway, so it is a straight saving over the proxy: 2.1 MB instead of 20 MB on a 104 s take. Takes long enough to exceed the 25 MB limit are split at the middle of a detected silence and the timestamps offset back, so a seam never lands inside a word.
 
@@ -382,7 +383,7 @@ The per-unit anchor ratio is a drift detector, not just a quality score. A line 
 
 ### Environment
 
-`GROQ_API_KEY` and `SKILL_PROXY` in the engineering root's `.skill.env`, plus ffmpeg. Nothing to install, no model to download.
+`GROQ_API_KEY` in the engineering root's `.skill.env` (plus `SKILL_PROXY` when the machine reaches the internet only through a proxy), and ffmpeg. Nothing to install, no model to download.
 
 A `1010` response is an edge rejection, not a bad key; a `429` is retried with backoff up to four times. If recognition stays unreachable, create a timing manifest with `status: needs_alignment` and do not claim Phase 4 is complete.
 

@@ -34,6 +34,9 @@ from pathlib import Path
 # Read out of hyperframes 0.7.107 dist/cli.js (parallelCoordinator.ts,
 # systemMemory.ts). Kept here so the recommendation can be compared against
 # what the renderer would have done unaided.
+# Re-checked against hyperframes 0.8.41: all five values below are unchanged
+# (MEMORY_PER_WORKER_MB, MIN_FRAMES_PER_WORKER, DEFAULT_CONFIG2.minParallelFrames,
+# LOW_MEMORY_TOTAL_MB_THRESHOLD, ABSOLUTE_MAX_WORKERS).
 HF_MEMORY_PER_WORKER_MB = 1536
 HF_MIN_FRAMES_PER_WORKER = 30
 HF_MIN_PARALLEL_FRAMES = 120

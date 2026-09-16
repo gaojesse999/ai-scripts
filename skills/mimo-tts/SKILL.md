@@ -8,22 +8,32 @@ disable-model-invocation: true
 ════════════════════════════════════════════════════════════════════════
  内部配置 · INTERNAL CONFIG · 请勿对外暴露 / DO NOT EXPOSE
 ════════════════════════════════════════════════════════════════════════
- 迁移到其它 agent 时，只需修改下面一行。
- When porting this Skill to another agent, change ONLY the line below.
+ 本 Skill 的全部配置项集中在工程根（ENGINEERING_ROOT）的 `.skill.env` 里，
+ 模板见本 Skill 目录下的 `.skill.env.example`。迁移 / 换机器时**只改那个文件**。
+ All settings for this Skill live in `<ENGINEERING_ROOT>/.skill.env`; the template
+ is this Skill's sibling `.skill.env.example`. Port or re-host by editing that file only.
 
-     SKILLS_ROOT = .workbuddy/skills
+     SKILLS_ROOT = 工程级 Skill 目录（相对 ENGINEERING_ROOT 的路径）。
+                   默认 .workbuddy/skills —— 即 WorkBuddy 的工程级 Skill 目录
+                   （agent 侧等价路径 .codebuddy/skills，两者指向同一份文件）。
+     PYTHON_EXE  = 执行本 Skill 脚本的 Python 解释器（绝对路径）。mimo_tts.py
+                   只用标准库，但调用方（knowledge-video-builder）的脚本需要
+                   numpy，为保持一致请指向同一个解释器。留空则依次回退到
+                   启动脚本的解释器（sys.executable）与 PATH 上的 python3。
 
- 含义：工程级 Skill 目录（相对 ENGINEERING_ROOT 的路径）。本 Skill 位于：
+ 本 Skill 位于：
      <ENGINEERING_ROOT>/<SKILLS_ROOT>/mimo-tts
 
- 默认值 .workbuddy/skills 即 WorkBuddy 的工程级 Skill 目录（agent 侧等价路径
- 为 .codebuddy/skills，两者指向同一份文件）。下文出现的 $SKILLS_ROOT 均指本
- 配置项。
+ 下文出现的 $SKILLS_ROOT / $PYTHON_EXE 均指上述两项。它们的值从 `.skill.env`
+ 读取；随附脚本会自行读取该文件，通常无需手工设置。读 `.skill.env` 时不要
+ 打印其中的 API key 或代理凭据。
 
- 迁移示例 / migration:
-     Cursor        →  SKILLS_ROOT = .cursor/skills
-     Claude Code   →  SKILLS_ROOT = .claude/skills
-     Codex         →  SKILLS_ROOT = .codex/skills
+ 迁移示例 / migration（改 `.skill.env` 的 SKILLS_ROOT 一行即可）:
+     Cursor        →  SKILLS_ROOT=.cursor/skills
+     Claude Code   →  SKILLS_ROOT=.claude/skills
+     Codex         →  SKILLS_ROOT=.codex/skills
+ PYTHON_EXE 与 agent 无关，只跟机器有关：换机器时改成该机器上装了 numpy 的
+ 解释器绝对路径即可（conda env、venv 或系统 Python 都行）。
 ════════════════════════════════════════════════════════════════════════
 -->
 
@@ -47,7 +57,8 @@ Expected local configuration:
 # .skill.env passed through --env-file, never the video artifact directory.
 MIMO_API_KEY=replace-with-your-key
 # Optional. Leave empty or omit for direct connection.
-SKILL_PROXY=http://xxx.xxx.xxx.xxx:xxxx
+# Example: SKILL_PROXY=http://10.0.0.1:8080
+SKILL_PROXY=
 # Optional. Leave empty for standard MiMo synthesis.
 # Relative paths are resolved from the project root.
 # Example: MIMO_REFERENCE_VOICE=reference-voice/my-teacher-voice.wav
@@ -70,7 +81,9 @@ When invoked by `knowledge-video-builder`, the caller should set:
 
 ```text
 SKILL_PROJECT_ROOT=<fixed engineering root>
-SKILL_PROXY_STRICT=1
+# 1 only when the engineering-root .skill.env defines a non-empty SKILL_PROXY;
+# 0 (or unset) makes an empty SKILL_PROXY mean a direct connection.
+SKILL_PROXY_STRICT=${SKILL_PROXY:+1}
 ```
 
 and pass `--env-file <engineering-root>/.skill.env`. This keeps relative
@@ -114,7 +127,7 @@ single requests from being truncated. The manifest records each segment and dura
 Preset male voice:
 
 ```bash
-python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
+"$PYTHON_EXE" "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --input script.txt \
   --voice 苏打 \
   --pause 1.0 \
@@ -124,7 +137,7 @@ python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
 Preset female voice:
 
 ```bash
-python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
+"$PYTHON_EXE" "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --text "待合成文字" \
   --voice 冰糖 \
   --instruction "女声，温柔自然，带有轻微的亲切感"
@@ -133,7 +146,7 @@ python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
 Voice design:
 
 ```bash
-python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
+"$PYTHON_EXE" "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --model mimo-v2.5-tts-voicedesign \
   --input script.txt \
   --instruction "年轻女性，声音清亮温暖，语速适中，像专业播客主持人"
@@ -142,7 +155,7 @@ python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
 Voice cloning:
 
 ```bash
-python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
+"$PYTHON_EXE" "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --model mimo-v2.5-tts-voiceclone \
   --input script.txt \
   --voice-sample voice.wav \
@@ -158,7 +171,7 @@ MIMO_REFERENCE_VOICE=reference-voice/voice.wav
 Then run without `--model` or `--voice-sample`:
 
 ```bash
-python "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
+"$PYTHON_EXE" "$SKILLS_ROOT/mimo-tts/scripts/mimo_tts.py" \
   --input script.md \
   --instruction "沉稳、清晰，适合教程讲解"
 ```
