@@ -9,7 +9,7 @@ description: >-
   哪条视频为什么火/为什么没流量、导出抖音创作者数据、批量分析某几天的视频、口播脚本复盘、
   数据中心/作品管理导出、抖音视频分析”，哪怕只给出一个日期区间，都应使用本技能。
   仅用于下载和分析用户本人账号的作品，禁止用于抓取他人内容。
-compatibility: "需要 computer_use_tool(plane=bu) 浏览器、ffmpeg、Python(openpyxl) 与 .skill.env 的 GROQ_API_KEY。"
+compatibility: "支持双环境分支：① 豆包类沙盒（内置 computer_use_tool(plane=bu) / aha_browser_use）；② Antigravity 等本地系统级 Agent（通过 Playwright 驱动本地 Edge/Chrome）。需 ffmpeg、Python(openpyxl) 与 .skill.env 的 GROQ_API_KEY。"
 ---
 
 # 抖音视频全流程复盘分析器
@@ -25,12 +25,14 @@ compatibility: "需要 computer_use_tool(plane=bu) 浏览器、ffmpeg、Python(o
 - 不要把该方法用于批量下载他人视频，也不要公开 CDN 签名地址。
 - 分析是自我复盘，数据解读需区分“已查证事实”和“推断”，并对冷启动期做口径校准。
 
-## 环境依赖（开工前先确认）
+## 环境依赖与分支判断（开工前确认）
 
 - `ffmpeg` / `ffprobe` 可用（PATH 或 `.skill.env` 的 `FFMPEG_PATH`）；
 - Python 及 `openpyxl`（`.skill.env` 的 `PYTHON_EXE` 指向的环境）；
 - `.skill.env` 已配 `GROQ_API_KEY`（语音转写用，`audio-stt` 直连 `api.groq.com`，无需代理）；
-- 浏览器自动化 `computer_use_tool(plane="bu")` 可用，登录扫码需用户配合。
+- **浏览器执行分支（自动匹配）**：
+  - **分支 A（豆包/Coze 等内置沙盒 Agent）**：调用环境内的 `computer_use_tool(plane="bu")`，利用 `aha_browser_use` 进行操作，扫码时调用 `interaction.request_action(type="browserControl")` 交接。
+  - **分支 B（Antigravity 等本地系统级 Agent，无内置浏览器沙盒）**：通过 Playwright 驱动本地真实浏览器（默认推荐 Edge 或 Chrome），运行 `scripts/auto_douyin_sync.py`。该脚本显式启动前台置顶浏览器窗口，引导用户扫码一次（登录态持久化在 `.douyin_automation_profile`），并全自动完成三表导出与 CDN 视频抓取。
 
 环境缺失时先停下报告，不要用“大概能跑”继续。
 
@@ -63,9 +65,9 @@ compatibility: "需要 computer_use_tool(plane=bu) 浏览器、ffmpeg、Python(o
 | 6 | 转 MP3、转口播脚本、抽关键帧 | 脚本 `media_pipeline.py`、`extract_frames.py` |
 | 7 | 三层归因 + 生成复盘报告 | 脚本出骨架，Agent 写分析 |
 
-浏览器操作**必须**由你在 `computer_use_tool(plane="bu")` 里实时执行，不能做成无人值守脚本
-（页面要扫码、有动态加载、下载地址带时效签名）。具体操作步骤见
-**[references/BROWSER_RUNBOOK.md](./references/BROWSER_RUNBOOK.md)**，每一步都先观察再操作。
+浏览器操作根据所在环境执行相应分支：
+- **分支 A（豆包/Coze 具备 bu 工具）**：在 `computer_use_tool(plane="bu")` 里按 [BROWSER_RUNBOOK.md](./references/BROWSER_RUNBOOK.md) 逐步执行。
+- **分支 B（Antigravity 无 bu 工具）**：在终端直接运行 `& $py .agents/skills/douyin-video-analyzer/scripts/auto_douyin_sync.py --start <起> --end <止>`，该脚本使用 Playwright 显式拉起前台 Edge/Chrome 窗口接管全流程。
 
 ---
 

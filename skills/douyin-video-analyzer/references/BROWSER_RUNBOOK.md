@@ -1,11 +1,9 @@
 # 浏览器操作手册（BROWSER_RUNBOOK）
 
-本文件指导 Agent 在 `computer_use_tool(plane="bu")` 里实时完成登录、导出三表、下载视频。
-所有浏览器操作都遵循 browser-use-automation 的「先观察 → 再操作 → 再观察」闭环：
-每次导航/点击后先 `bu.snapshot()` 或 `bu.wait_for_load()` 确认状态，再做下一步。
-页面 DOM 会变，下面给的是**语义定位与实测有效的兜底手段**，不要把坐标写死。
-
-> 所有代码都在一个 `computer_use_tool(plane="bu", code=...)` cell 内用 `import aha_browser_use as bu` 执行。
+本手册指导 Agent 执行创作者中心的登录、导出三表与下载视频。
+支持两种环境分支：
+- **分支 A（豆包/Coze 等内置沙盒环境）**：在 `computer_use_tool(plane="bu")` 里实时执行，遵循 `import aha_browser_use as bu` 操作规范。
+- **分支 B（Antigravity 等本地系统级 Agent）**：无原生内置浏览器沙盒，统一调用 `scripts/auto_douyin_sync.py`（基于 Playwright），由系统直接唤起前台 Edge/Chrome 进行全自动导出与 CDN 抓流。
 
 ---
 
