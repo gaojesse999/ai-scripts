@@ -103,6 +103,28 @@ def find_ffmpeg(exe: str = "ffmpeg") -> str:
     sys.exit(f"未找到 {exe}，请安装 ffmpeg 并加入 PATH，或在 .skill.env 配置 FFMPEG_PATH。")
 
 
+def find_browser() -> str:
+    """定位前台自动化浏览器（Edge 或 Chrome）：优先 .skill.env 的 EDGE_PATH/BROWSER_PATH，其次常见安装路径。"""
+    env = load_env()
+    for key in ("EDGE_PATH", "BROWSER_PATH"):
+        if env.get(key) and os.path.isfile(env[key]):
+            return env[key]
+    win_candidates = [
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+    ]
+    for c in win_candidates:
+        if os.path.isfile(c):
+            return c
+    for name in ("msedge", "chrome"):
+        p = shutil.which(name)
+        if p and os.path.isfile(p):
+            return p
+    sys.exit("未找到 Edge 或 Chrome 浏览器，请在 .skill.env 中配置 EDGE_PATH。")
+
+
 def get_downloads_dir() -> Path:
     """浏览器下载目录（bu.download / 导出按钮的落点）。"""
     home = Path.home()

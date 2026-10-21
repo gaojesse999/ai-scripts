@@ -32,7 +32,7 @@ compatibility: "支持双环境分支：① 豆包类沙盒（内置 computer_us
 - `.skill.env` 已配 `GROQ_API_KEY`（语音转写用，`audio-stt` 直连 `api.groq.com`，无需代理）；
 - **浏览器执行分支（自动匹配）**：
   - **分支 A（豆包/Coze 等内置沙盒 Agent）**：调用环境内的 `computer_use_tool(plane="bu")`，利用 `aha_browser_use` 进行操作，扫码时调用 `interaction.request_action(type="browserControl")` 交接。
-  - **分支 B（Antigravity 等本地系统级 Agent，无内置浏览器沙盒）**：通过 Playwright 驱动本地真实浏览器（默认推荐 Edge 或 Chrome），运行 `scripts/auto_douyin_sync.py`。该脚本显式启动前台置顶浏览器窗口，引导用户扫码一次（登录态持久化在 `.douyin_automation_profile`），并全自动完成三表导出与 CDN 视频抓取。
+  - **分支 B（Antigravity 等本地系统级 Agent，Windows 环境）**：通过 CDP 接管本地前台真实 Edge/Chrome 浏览器，运行 `scripts/auto_douyin_cdp.py --date <YYYY-MM-DD>`。脚本为纯 Python 实现，内置自动检测与自启机制（优先读取 `.skill.env` 的 `EDGE_PATH`，无需手动双击任何外部批处理文件），登录态持久化在 `.douyin_automation_cdp`，全流程全自动完成三表导出与 CDN 视频抓取。
 
 环境缺失时先停下报告，不要用“大概能跑”继续。
 
@@ -67,7 +67,7 @@ compatibility: "支持双环境分支：① 豆包类沙盒（内置 computer_us
 
 浏览器操作根据所在环境执行相应分支：
 - **分支 A（豆包/Coze 具备 bu 工具）**：在 `computer_use_tool(plane="bu")` 里按 [BROWSER_RUNBOOK.md](./references/BROWSER_RUNBOOK.md) 逐步执行。
-- **分支 B（Antigravity 无 bu 工具）**：在终端直接运行 `& $py .agents/skills/douyin-video-analyzer/scripts/auto_douyin_sync.py --start <起> --end <止>`，该脚本使用 Playwright 显式拉起前台 Edge/Chrome 窗口接管全流程。
+- **分支 B（Antigravity 无 bu 工具，Windows 环境）**：在终端直接运行 `& $py .agents/skills/douyin-video-analyzer/scripts/auto_douyin_cdp.py --date <YYYY-MM-DD>`，该脚本纯 Python 实现，自动检测并拉起前台 Edge/Chrome 窗口接管全流程。
 
 ---
 

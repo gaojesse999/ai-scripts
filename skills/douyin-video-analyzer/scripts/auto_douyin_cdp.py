@@ -20,32 +20,95 @@ import json
 import urllib.request
 import subprocess
 import argparse
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
 DOWNLOAD_DIR = Path(os.environ.get("USERPROFILE", "")) / "Downloads"
-VAULT_ROOT = Path(__file__).resolve().parents[3]
+VAULT_ROOT = Path(__file__).resolve().parents[4]
 SKILL_ROOT = VAULT_ROOT / ".agents" / "skills" / "douyin-video-analyzer"
 PYTHON_EXE = sys.executable
 
-def wait_for_cdp_ready(port=9225, timeout=600):
-    print(f">>> 正在等待前台浏览器启动并开启调试端口 {port}...", flush=True)
+sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+try:
+    from common import clean_title, find_browser, probe_media
+except ImportError:
+    def clean_title(t, max_len=14):
+        return str(t)[:max_len]
+    def find_browser():
+        return r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+    def probe_media(p):
+        return {"ok": True}
+
+def get_target_work_title(target_date):
+    try:
+        import openpyxl
+        hits = sorted(
+            [f for f in DOWNLOAD_DIR.glob("*作品列表*.xlsx") if not f.name.startswith("~$")],
+            key=lambda f: f.stat().st_mtime, reverse=True
+        )
+        if not hits:
+            return None
+        wb = openpyxl.load_workbook(hits[0], data_only=True)
+        ws = wb.active
+        headers = [str(c.value).strip() if c.value else "" for c in ws[1]]
+        title_col = None
+        time_col = None
+        for i, h in enumerate(headers):
+            if "作品名称" in h or "标题" in h:
+                title_col = i
+            elif "发布时间" in h or "时间" in h:
+                time_col = i
+        if title_col is None:
+            title_col = 0
+        target_fmt = target_date.replace("-", "")
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if not row or len(row) <= title_col:
+                continue
+            t_val = str(row[title_col] or "").strip()
+            time_val = str(row[time_col] or "").strip() if time_col is not None and len(row) > time_col else ""
+            if target_date in time_val or target_fmt in time_val:
+                return t_val
+    except Exception as e:
+        print(f">>> 尝试读取作品列表标题提示: {e}", flush=True)
+    return None
+
+def is_cdp_port_open(port=9225):
+    try:
+        url = f"http://127.0.0.1:{port}/json/version"
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(url, timeout=1) as resp:
+            return resp.status == 200
+    except Exception:
+        return False
+
+def ensure_browser_running(port=9225, timeout=30):
+    if is_cdp_port_open(port):
+        print(f">>> √ 前台调试浏览器已在运行中 (端口 {port})，直接建立 CDP 连接！", flush=True)
+        return True
+
+    print(f">>> 检测到调试端口 {port} 未开启，正在通过 Python 自动启动前台浏览器...", flush=True)
+    browser_exe = find_browser()
+    user_dir = Path.home() / ".douyin_automation_cdp"
+    user_dir.mkdir(parents=True, exist_ok=True)
+    target_url = "https://creator.douyin.com/creator-micro/data-center/operation"
+    
+    # 在 Windows 上调用 start 独立进程派发，确保窗口在前台主桌面正常显示且不阻塞 Python 执行
+    cmd_str = f'start "" "{browser_exe}" --remote-debugging-port={port} --no-proxy-server --user-data-dir="{user_dir}" --start-maximized "{target_url}"'
+    os.system(cmd_str)
+    
+    print(f">>> 浏览器启动指令已发出，正在等待 CDP 调试端口 {port} 就绪...", flush=True)
     for i in range(timeout):
-        try:
-            url = f"http://127.0.0.1:{port}/json/version"
-            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-            with opener.open(url, timeout=1) as resp:
-                if resp.status == 200:
-                    print(f">>> √ 前台浏览器已就绪，成功建立 CDP 连接！", flush=True)
-                    return True
-        except Exception:
-            pass
-        if i % 10 == 0 and i > 0:
-            print(f">>> 等待浏览器启动中...（请双击桌面的『启动采集浏览器.bat』）已等待 {i} 秒", flush=True)
         time.sleep(1)
-    print(">>> 等待浏览器启动超时！", flush=True)
+        if is_cdp_port_open(port):
+            print(f">>> √ 前台浏览器已成功启动并就绪 (耗时 {i+1} 秒)！", flush=True)
+            return True
+        if (i + 1) % 5 == 0:
+            print(f">>> 等待浏览器调试端口响应中... 已等待 {i+1} 秒", flush=True)
+            
+    print(f">>> 错误: 自动启动浏览器超时 (已等待 {timeout} 秒)！", flush=True)
     return False
 
 def get_douyin_page(context):
@@ -128,49 +191,83 @@ def export_works_list(page):
 
 def download_period_video(context, page, target_date, period_dir):
     print(f">>> [步骤 3/4] 正在定位 {target_date} 作品并捕获视频流...", flush=True)
-    if "creator-micro/content/manage" not in page.url:
-        page.goto("https://creator.douyin.com/creator-micro/content/manage", wait_until="domcontentloaded")
-        time.sleep(4)
-        
-    formatted_date = target_date.replace("-", "年") + "日" if "-" in target_date else target_date
-    covers = page.locator(".video-card-cover-QkeRHf").all()
-    
-    clicked = False
-    cards = page.query_selector_all("div[class*='video-card']")
-    for idx, card in enumerate(cards):
-        txt = card.inner_text()
-        if target_date in txt or formatted_date in txt or (idx == 1 and len(cards) > 1):
-            print(f">>> 匹配到目标作品卡片 (索引 {idx})，正在触发播放预览...", flush=True)
-            if idx < len(covers):
-                covers[idx].click()
-            else:
-                card.click()
-            clicked = True
-            break
-            
-    if not clicked and covers:
-        print(">>> 默认点击首个作品封面触发播放...", flush=True)
-        covers[0].click()
-        
+    known_title = get_target_work_title(target_date)
+    if known_title:
+        cleaned_short = clean_title(known_title, max_len=14)
+        print(f">>> 从导出的作品列表中识别到目标作品: 『{known_title}』 (短码: {cleaned_short})", flush=True)
+    else:
+        cleaned_short = ""
+
+    # 优先使用个人主页提取直链（符合 BROWSER_RUNBOOK 规范，直观且免弹窗阻断）
+    user_url = "https://www.douyin.com/user/self"
+    print(f">>> 导航至个人主页提取作品直链: {user_url} ...", flush=True)
+    page.goto(user_url, wait_until="domcontentloaded")
     time.sleep(5)
-    
-    video_url = None
-    preview_page = None
-    for pg in context.pages:
-        if "douyin.com/user/self" in pg.url or "modal_id" in pg.url:
-            preview_page = pg
-            vids = pg.query_selector_all("video")
-            for v in vids:
-                src = v.get_attribute("src") or pg.evaluate("el => el.currentSrc", v)
-                if src and ("douyinvod.com" in src or "tos-cn-v" in src):
-                    video_url = src
-                    break
-            if video_url:
+
+    works = page.evaluate("""() => {
+        const links = [...document.querySelectorAll('a[href*="/video/"]')];
+        return links.map((a, i) => ({
+            index: i,
+            href: a.href,
+            text: (a.innerText || '').slice(0, 80).replace(/\\n/g, ' ')
+        }));
+    }""")
+    print(f">>> 个人主页解析到 {len(works)} 个作品卡片", flush=True)
+
+    target_href = None
+    if works:
+        for w in works:
+            t = w.get("text", "")
+            if known_title and (cleaned_short in t or known_title[:6] in t):
+                target_href = w.get("href")
+                print(f">>> √ 按标题匹配到作品: {t[:40]} -> {target_href}", flush=True)
                 break
-                
+            if target_date in t or target_date.replace("-", "") in t:
+                target_href = w.get("href")
+                print(f">>> √ 按日期匹配到作品: {t[:40]} -> {target_href}", flush=True)
+                break
+        
+        # 若为单天分析且未精准命中，非置顶的第 1 条通常是最新的目标作品
+        if not target_href and len(works) > 1:
+            for w in works:
+                if "置顶" not in w.get("text", ""):
+                    target_href = w.get("href")
+                    print(f">>> 自动选中最新发布作品: {w.get('text', '')[:40]} -> {target_href}", flush=True)
+                    break
+
+    video_url = None
+    if target_href:
+        print(f">>> 导航至目标视频播放页捕获流: {target_href} ...", flush=True)
+        page.goto(target_href, wait_until="domcontentloaded")
+        time.sleep(6)
+
+        vids = page.query_selector_all("video")
+        for v in vids:
+            src = v.get_attribute("src") or page.evaluate("el => el.currentSrc", v)
+            if src and ("douyinvod.com" in src or "tos-cn-v" in src):
+                video_url = src
+                break
+
+        if not video_url:
+            try:
+                entries = page.evaluate('''() => {
+                    return window.performance.getEntriesByType('resource')
+                        .map(e => e.name)
+                        .filter(u => u.includes('douyinvod.com') || u.includes('/video/tos/'));
+                }''')
+                for u in entries:
+                    if 'douyinvod.com' in u or '/video/tos/' in u:
+                        video_url = u
+                        break
+            except Exception:
+                pass
+
     if video_url:
         print(f">>> √ 成功捕获真实视频流 URL: {video_url[:80]}...", flush=True)
-        filename = f"{target_date.replace('-', '')}-发布视频.mp4"
+        if known_title:
+            filename = f"{target_date.replace('-', '')}-{clean_title(known_title, max_len=14)}.mp4"
+        else:
+            filename = f"{target_date.replace('-', '')}-发布视频.mp4"
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
         req = urllib.request.Request(video_url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -179,17 +276,14 @@ def download_period_video(context, page, target_date, period_dir):
         try:
             with opener.open(req) as resp:
                 data = resp.read()
-                (period_dir / filename).write_bytes(data)
+                save_period = period_dir / filename
+                save_period.write_bytes(data)
                 (DOWNLOAD_DIR / filename).write_bytes(data)
                 print(f">>> √ 视频已保存至周期目录与下载目录: {filename} ({len(data)} 字节)", flush=True)
+                info = probe_media(save_period)
+                print(f">>> √ 媒体完整性校验: {info}", flush=True)
         except Exception as e:
             print(f">>> 视频下载失败: {e}", flush=True)
-            
-        if preview_page:
-            try:
-                preview_page.close()
-            except Exception:
-                pass
     else:
         print(">>> 提示: 未能自动截获视频流，可手动下载后放入周期目录。", flush=True)
 
@@ -229,7 +323,7 @@ def main():
     print(f" 目标日期: {target_date}")
     print("=" * 60)
     
-    if not wait_for_cdp_ready(port=args.port, timeout=600):
+    if not ensure_browser_running(port=args.port):
         sys.exit(1)
         
     with sync_playwright() as p:
